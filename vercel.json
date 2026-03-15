@@ -6,7 +6,6 @@
       "use": "@vercel/static"
     }
   ],
-  "cleanUrls": true,
   "redirects": [
     {
       "source": "/",
