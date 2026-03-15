@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Búsqueda de Alumnos - CMS Cobranzas</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5567ff">
+
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CRoboto:400,500%7CExo+2:600&display=swap"
+        rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/spinkit.css" rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/perfect-scrollbar.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/material-icons.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* Toast notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast-msg {
+            min-width: 320px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .toast-msg.success {
+            background: #27ae60;
+        }
+
+        .toast-msg.error {
+            background: #e74c3c;
+        }
+
+        .toast-msg .material-icons {
+            margin-right: 10px;
+            font-size: 22px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(80px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Search suggestions dropdown */
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            z-index: 100;
+            max-height: 260px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .search-suggestions .suggestion-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-suggestions .suggestion-item:hover {
+            background: #f5f7fa;
+        }
+
+        .search-suggestions .suggestion-header {
+            padding: 6px 16px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            color: #999;
+            background: #fafafa;
+            font-weight: 600;
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+    </style>
+</head>
+
+<body class="layout-app ">
+    <div class="preloader">
+        <div class="sk-chase">
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="mdk-drawer-layout js-mdk-drawer-layout" data-push data-responsive-width="992px">
+        <div class="mdk-drawer-layout__content page-content">
+
+            <!-- Navbar -->
+            <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
+                <button class="navbar-toggler w-auto mr-16pt d-block d-lg-none rounded-0" type="button"
+                    data-toggle="sidebar">
+                    <span class="material-icons">short_text</span>
+                </button>
+                <a href="index.html" class="navbar-brand mr-16pt">
+                    <span class="avatar avatar-sm navbar-brand-icon mr-0 mr-lg-8pt">
+                        <span class="avatar-title rounded bg-primary"><img
+                                src="../../public/images/illustration/student/128/white.svg" alt="logo"
+                                class="img-fluid" /></span>
+                    </span>
+                    <span class="d-none d-lg-block">CMS Cobranzas</span>
+                </a>
+            </div>
+
+            <div class="py-32pt bg-alt border-bottom-2">
+                <div class="container page__container">
+                    <div class="d-flex flex-column flex-md-row align-items-center">
+                        <div class="flex">
+                            <h2 class="mb-0">Búsqueda Centralizada</h2>
+                            <p class="lead text-50">Buscá por DNI o nombre para ver el historial y realizar cobros.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-section container page__container">
+
+                <!-- Search Box -->
+                <div class="card card-body mb-32pt">
+                    <div class="search-wrapper">
+                        <div class="search-form search-form--light input-group-lg">
+                            <input type="text" id="searchInput" class="form-control"
+                                placeholder="DNI o nombre del alumno ..." autocomplete="off">
+                            <button class="btn" type="button" id="searchBtn"><i
+                                    class="material-icons">search</i></button>
+                        </div>
+                        <div class="search-suggestions" id="searchSuggestions"></div>
+                    </div>
+                </div>
+
+                <!-- Student Info (Hidden initially) -->
+                <div id="studentCard" class="card mb-32pt d-none">
+                    <div class="card-body d-flex flex-column flex-md-row align-items-center">
+                        <div class="flex">
+                            <h4 id="studentName">—</h4>
+                            <p class="text-50 mb-0">
+                                DNI: <span id="studentDni"></span> |
+                                Sucursal: <span id="studentBranch"></span> |
+                                Estado: <span id="studentStatus" class="badge badge-success">activo</span>
+                            </p>
+                        </div>
+                        <div class="mt-16pt mt-md-0 d-flex align-items-center">
+                            <div class="text-right mr-16pt">
+                                <h3 class="mb-0" id="totalDebt">$0.00</h3>
+                                <p class="text-50 mb-0">Deuda Pendiente</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary mr-8pt" id="btnEditStudent">
+                                <i class="material-icons icon--left">edit</i> EDITAR
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" id="btnDeactivateStudent">
+                                <i class="material-icons icon--left">person_off</i> DAR DE BAJA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Installments Table -->
+                <div id="installmentsTable" class="card mb-0 d-none">
+                    <div class="table-responsive" data-toggle="lists" data-lists-values='["js-lists-values-num"]'>
+                        <table class="table mb-0 thead-border-top-0 table-nowrap">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Vencimiento</th>
+                                    <th>Monto</th>
+                                    <th>Estado</th>
+                                    <th class="text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="list" id="installmentsBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Loader -->
+                <div id="loader" class="text-center d-none">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+
+                <!-- No Results -->
+                <div id="noResults" class="alert alert-soft-warning d-none">
+                    No se encontró ningún alumno con ese criterio.
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="mdk-drawer js-mdk-drawer" id="default-drawer">
+            <div class="mdk-drawer__content">
+                <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
+                    <a href="index.html" class="sidebar-brand">
+                        <span class="avatar avatar-xl sidebar-brand-icon h-auto">
+                            <span class="avatar-title rounded bg-primary"><img
+                                    src="../../public/images/illustration/student/128/white.svg" class="img-fluid"
+                                    alt="logo" /></span>
+                        </span>
+                        <span>CMS Cobranzas</span>
+                    </a>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="registration.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
+                                <span class="sidebar-menu-text">Inscripción</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item active">
+                            <a class="sidebar-menu-button" href="search.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span>
+                                <span class="sidebar-menu-text">Buscar Alumno</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="dashboard.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
+                                <span class="sidebar-menu-text" id="sidebarDashLabel">Admin Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
+                                <span
+                                    class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
+                                <span class="sidebar-menu-text">Cerrar Sesión</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Editar Alumno -->
+    <div class="modal fade" id="editStudentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Alumno</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editStudentId">
+                    <div class="form-group">
+                        <label class="form-label">Nombre Completo</label>
+                        <input type="text" class="form-control" id="editFullName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="editPhone">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Monto de Cuota (afecta cuotas futuras pendientes)</label>
+                        <input type="number" class="form-control" id="editAmount" step="0.01" min="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnSaveEdit">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Confirmar Baja -->
+    <div class="modal fade" id="deactivateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Dar de Baja al Alumno</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de dar de baja a <strong id="deactivateName"></strong>?</p>
+                    <div class="alert alert-soft-warning">
+                        <strong>Atención:</strong> Todas las cuotas pendientes pasarán a estado <span
+                            class="badge badge-dark">ANULADO</span> y el alumno quedará inactivo.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmDeactivate">Confirmar Baja</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../public/vendor/jquery.min.js"></script>
+    <script src="../../public/vendor/popper.min.js"></script>
+    <script src="../../public/vendor/bootstrap.min.js"></script>
+    <script src="../../public/vendor/perfect-scrollbar.min.js"></script>
+    <script src="../../public/vendor/dom-factory.js"></script>
+    <script src="../../public/vendor/material-design-kit.js"></script>
+    <script src="../../public/js/app.js"></script>
+    <script src="../../public/js/preloader.js"></script>
+
+    <script>
+        // CONFIGURACIÓN DE SUPABASE
+        const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+
+        // Current student context
+        var currentStudent = null;
+
+        // Check authentication
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            if (!session) {
+                window.location.replace('login.html');
+            }
+        });
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.replace('login.html');
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(function () { });
+        }
+
+        // Get current user ID for audit logging
+        var currentUserId = null;
+        supabaseClient.auth.getUser().then(function (res) {
+            if (res.data && res.data.user) currentUserId = res.data.user.id;
+        });
+
+        // ═══════════════════════════════════════
+        //  TOAST NOTIFICATIONS
+        // ═══════════════════════════════════════
+        function showToast(message, type) {
+            var icon = type === 'success' ? 'check_circle' : 'error';
+            var toast = $('<div class="toast-msg ' + type + '">' +
+                '<i class="material-icons">' + icon + '</i>' + message + '</div>');
+            $('#toastContainer').append(toast);
+            setTimeout(function () { toast.fadeOut(400, function () { toast.remove(); }); }, 3500);
+        }
+
+        // ═══════════════════════════════════════
+        //  RECENT SEARCHES (localStorage)
+        // ═══════════════════════════════════════
+        function getRecentSearches() {
+            try {
+                return JSON.parse(localStorage.getItem('cms_recent_searches') || '[]');
+            } catch (e) { return []; }
+        }
+        function addRecentSearch(student) {
+            var recents = getRecentSearches().filter(function (r) { return r.dni !== student.dni; });
+            recents.unshift({ dni: student.dni, name: student.full_name, branch: student.branchName || '' });
+            if (recents.length > 5) recents = recents.slice(0, 5);
+            localStorage.setItem('cms_recent_searches', JSON.stringify(recents));
+        }
+
+        // ═══════════════════════════════════════
+        //  DOCUMENT READY
+        // ═══════════════════════════════════════
+        $(document).ready(function () {
+            checkRoleAndUI();
+
+            $('#searchBtn').click(function () { doSearch($('#searchInput').val()); });
+            $('#searchInput').keypress(function (e) { if (e.which == 13) doSearch($('#searchInput').val()); });
+
+            // Live search suggestions
+            var searchTimer;
+            $('#searchInput').on('input', function () {
+                clearTimeout(searchTimer);
+                var val = $(this).val().trim();
+                if (val.length < 2) { $('#searchSuggestions').hide(); showRecentSearches(); return; }
+                searchTimer = setTimeout(function () { fetchSuggestions(val); }, 300);
+            });
+
+            $('#searchInput').on('focus', function () {
+                var val = $(this).val().trim();
+                if (val.length < 2) showRecentSearches();
+            });
+
+            // Hide suggestions when clicking outside
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('.search-wrapper').length) {
+                    $('#searchSuggestions').hide();
+                }
+            });
+
+            // Edit modal save
+            $('#btnSaveEdit').click(saveStudentEdit);
+
+            // Edit / Deactivate buttons
+            $('#btnEditStudent').click(openEditModal);
+            $('#btnDeactivateStudent').click(openDeactivateModal);
+            $('#btnConfirmDeactivate').click(confirmDeactivate);
+        });
+
+        // ═══════════════════════════════════════
+        //  SEARCH SUGGESTIONS
+        // ═══════════════════════════════════════
+        function showRecentSearches() {
+            var recents = getRecentSearches();
+            if (recents.length === 0) { $('#searchSuggestions').hide(); return; }
+            var html = '<div class="suggestion-header">Búsquedas Recientes</div>';
+            recents.forEach(function (r) {
+                html += '<div class="suggestion-item" data-dni="' + r.dni + '">' +
+                    '<span><strong>' + r.name + '</strong></span>' +
+                    '<span class="text-50" style="font-size:0.85em">DNI: ' + r.dni + '</span></div>';
+            });
+            $('#searchSuggestions').html(html).show();
+            $('#searchSuggestions .suggestion-item').click(function () {
+                var dni = $(this).data('dni');
+                $('#searchInput').val(dni);
+                $('#searchSuggestions').hide();
+                doSearch(dni);
+            });
+        }
+
+        async function fetchSuggestions(query) {
+            var sug = $('#searchSuggestions');
+            // Check: is it a number (DNI) or text (name)?
+            var isNumeric = /^\d+$/.test(query);
+            var results;
+
+            if (isNumeric) {
+                var res = await supabaseClient.from('students').select('id, dni, full_name, branches(name)')
+                    .ilike('dni', query + '%').eq('status', 'activo').limit(5);
+                results = res.data;
+            } else {
+                var res = await supabaseClient.from('students').select('id, dni, full_name, branches(name)')
+                    .ilike('full_name', '%' + query + '%').eq('status', 'activo').limit(5);
+                results = res.data;
+            }
+
+            if (!results || results.length === 0) {
+                sug.html('<div class="suggestion-item text-50">Sin resultados</div>').show();
+                return;
+            }
+
+            var html = '<div class="suggestion-header">Resultados</div>';
+            results.forEach(function (s) {
+                var branch = s.branches ? s.branches.name : '';
+                html += '<div class="suggestion-item" data-dni="' + s.dni + '">' +
+                    '<span><strong>' + s.full_name + '</strong> <small class="text-50">' + branch + '</small></span>' +
+                    '<span class="text-50" style="font-size:0.85em">DNI: ' + s.dni + '</span></div>';
+            });
+            sug.html(html).show();
+            sug.find('.suggestion-item').click(function () {
+                var dni = $(this).data('dni');
+                $('#searchInput').val(dni);
+                sug.hide();
+                doSearch(dni);
+            });
+        }
+
+        // ═══════════════════════════════════════
+        //  MAIN SEARCH LOGIC
+        // ═══════════════════════════════════════
+        async function doSearch(query) {
+            if (!query || !query.trim()) return;
+            query = query.trim();
+            resetUI();
+            $('#loader').removeClass('d-none');
+            $('#searchSuggestions').hide();
+
+            try {
+                var student = null;
+
+                // unified search (DNI strict or name partial)
+                var res = await supabaseClient.from('students').select('*, branches(name)')
+                    .or('dni.eq.' + query + ',full_name.ilike.%' + query + '%').limit(1).single();
+
+                if (!res.error && res.data) {
+                    student = res.data;
+                } else {
+                    $('#noResults').removeClass('d-none');
+                    return;
+                }
+
+                // Save to context
+                currentStudent = student;
+                currentStudent.branchName = student.branches ? student.branches.name : 'N/A';
+
+                // Add to recent searches
+                addRecentSearch(currentStudent);
+
+                // Display student info
+                $('#studentName').text(student.full_name);
+                $('#studentDni').text(student.dni);
+                $('#studentBranch').text(currentStudent.branchName);
+                var statusClass = student.status === 'activo' ? 'badge-success' : 'badge-danger';
+                $('#studentStatus').text(student.status.toUpperCase()).removeClass('badge-success badge-danger').addClass(statusClass);
+                $('#studentCard').removeClass('d-none');
+
+                // Toggle deactivate button visibility
+                if (student.status !== 'activo') {
+                    $('#btnDeactivateStudent').hide();
+                } else {
+                    $('#btnDeactivateStudent').show();
+                }
+
+                // Load installments
+                var iRes = await supabaseClient.from('installments').select('*')
+                    .eq('student_id', student.id).order('installment_number', { ascending: true });
+
+                if (iRes.data) {
+                    renderInstallments(iRes.data);
+                    $('#installmentsTable').removeClass('d-none');
+                }
+
+            } catch (err) {
+                console.error(err);
+                showToast('Error al buscar alumno.', 'error');
+            } finally {
+                $('#loader').addClass('d-none');
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  RENDER INSTALLMENTS TABLE
+        // ═══════════════════════════════════════
+        function renderInstallments(installments) {
+            var body = $('#installmentsBody');
+            body.empty();
+            var totalDebt = 0;
+            var totalCount = installments.length;
+
+            var studentName = $('#studentName').text();
+            var studentDni = $('#studentDni').text();
+
+            installments.forEach(function (item) {
+                var isPaid = item.status === 'pagado';
+                var isAnulado = item.status === 'anulado';
+                if (!isPaid && !isAnulado) totalDebt += parseFloat(item.amount);
+
+                var statusBadge;
+                if (isPaid) statusBadge = '<span class="badge badge-success">PAGADO</span>';
+                else if (isAnulado) statusBadge = '<span class="badge badge-dark">ANULADO</span>';
+                else statusBadge = '<span class="badge badge-warning">PENDIENTE</span>';
+
+                var formattedAmount = fmt.format(item.amount);
+                var actionBtn = '';
+
+                if (isPaid) {
+                    actionBtn = '<button class="btn btn-sm btn-outline-secondary btn-ticket"' +
+                        ' data-id="' + item.id + '"' +
+                        ' data-num="' + item.installment_number + '"' +
+                        ' data-total="' + totalCount + '"' +
+                        ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
+                        ' data-dni="' + studentDni + '"' +
+                        ' data-date="' + item.due_date + '"' +
+                        ' data-amount="' + item.amount + '">Ticket</button>';
+                } else if (!isAnulado) {
+                    actionBtn = '<button class="btn btn-sm btn-primary btn-cobrar"' +
+                        ' data-id="' + item.id + '"' +
+                        ' data-amount="' + item.amount + '"' +
+                        ' data-num="' + item.installment_number + '"' +
+                        ' data-total="' + totalCount + '"' +
+                        ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
+                        ' data-dni="' + studentDni + '"' +
+                        ' data-date="' + item.due_date + '">Cobrar</button>';
+                }
+
+                body.append(
+                    '<tr>' +
+                    '<td><strong class="js-lists-values-num">' + item.installment_number + ' de ' + totalCount + '</strong></td>' +
+                    '<td>' + item.due_date + '</td>' +
+                    '<td>' + formattedAmount + '</td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '<td class="text-right">' + actionBtn + '</td>' +
+                    '</tr>'
+                );
+            });
+
+            // Bind Cobrar buttons
+            $('.btn-cobrar').off('click').on('click', function (e) {
+                e.preventDefault();
+                var btn = $(this);
+                payInstallment(
+                    btn.data('id'), btn.data('amount'), btn.data('num'),
+                    btn.data('name'), btn.data('dni'), btn.data('date'), btn.data('total')
+                );
+            });
+
+            // Bind Ticket buttons
+            $('.btn-ticket').off('click').on('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var btn = $(this);
+                printTicket(btn.data('id'), btn.data('num'), btn.data('name'),
+                    btn.data('dni'), btn.data('date'), btn.data('amount'), btn.data('total'));
+            });
+
+            $('#totalDebt').text(fmt.format(totalDebt));
+        }
+
+        // ═══════════════════════════════════════
+        //  PAY INSTALLMENT (with toast + auto-ticket)
+        // ═══════════════════════════════════════
+        async function payInstallment(id, amount, num, name, dni, date, total) {
+            if (!confirm('¿Confirmar cobro de ' + fmt.format(amount) + '?')) return;
+
+            try {
+                var res = await supabaseClient.from('installments')
+                    .update({ status: 'pagado', paid_at: new Date() }).eq('id', id);
+                if (res.error) throw res.error;
+
+                // Audit log
+                await supabaseClient.from('audit_log').insert({
+                    user_id: currentUserId,
+                    action: 'pago',
+                    entity_type: 'installment',
+                    entity_id: id,
+                    details: { student_name: name, dni: dni, installment_number: num, amount: parseFloat(amount) }
+                });
+
+                showToast('¡Pago de ' + fmt.format(amount) + ' registrado exitosamente!', 'success');
+
+                // Auto-print ticket
+                printTicket(id, num, name, dni, date, amount, total);
+
+                // Reload data
+                doSearch($('#searchInput').val());
+            } catch (err) {
+                showToast('Error al registrar el pago.', 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  EDIT STUDENT
+        // ═══════════════════════════════════════
+        function openEditModal() {
+            if (!currentStudent) return;
+            $('#editStudentId').val(currentStudent.id);
+            $('#editFullName').val(currentStudent.full_name);
+            $('#editEmail').val(currentStudent.email || '');
+            $('#editPhone').val(currentStudent.phone || '');
+            $('#editAmount').val(currentStudent.monthly_amount || '');
+            $('#editStudentModal').modal('show');
+        }
+
+        async function saveStudentEdit() {
+            var sid = $('#editStudentId').val();
+            var newName = $('#editFullName').val().trim();
+            var newEmail = $('#editEmail').val().trim();
+            var newPhone = $('#editPhone').val().trim();
+            var newAmount = parseFloat($('#editAmount').val());
+
+            if (!newName) { showToast('El nombre no puede estar vacío.', 'error'); return; }
+
+            try {
+                // Update student record
+                var updateData = { full_name: newName, email: newEmail, phone: newPhone };
+                var res = await supabaseClient.from('students').update(updateData).eq('id', sid);
+                if (res.error) throw res.error;
+
+                // If amount changed, update all PENDING installments
+                if (newAmount > 0) {
+                    var iRes = await supabaseClient.from('installments')
+                        .update({ amount: newAmount }).eq('student_id', sid).eq('status', 'pendiente');
+                    if (iRes.error) throw iRes.error;
+                }
+
+                // Audit log
+                await supabaseClient.from('audit_log').insert({
+                    user_id: currentUserId,
+                    action: 'edicion_alumno',
+                    entity_type: 'student',
+                    entity_id: sid,
+                    details: { student_name: newName, changes: 'nombre/email/tel/monto' }
+                });
+
+                showToast('Datos del alumno actualizados correctamente.', 'success');
+                $('#editStudentModal').modal('hide');
+
+                // Reload
+                doSearch($('#searchInput').val());
+            } catch (err) {
+                showToast('Error al guardar: ' + err.message, 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  DEACTIVATE STUDENT
+        // ═══════════════════════════════════════
+        function openDeactivateModal() {
+            if (!currentStudent) return;
+            $('#deactivateName').text(currentStudent.full_name);
+            $('#deactivateModal').modal('show');
+        }
+
+        async function confirmDeactivate() {
+            if (!currentStudent) return;
+            try {
+                // Count pending installments before cancelling
+                var countRes = await supabaseClient.from('installments')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('student_id', currentStudent.id).eq('status', 'pendiente');
+                var cancelledCount = countRes.count || 0;
+
+                // 1. Mark all pending installments as 'anulado'
+                var iRes = await supabaseClient.from('installments')
+                    .update({ status: 'anulado' }).eq('student_id', currentStudent.id).eq('status', 'pendiente');
+                if (iRes.error) throw iRes.error;
+
+                // 2. Set student status to 'inactivo'
+                var sRes = await supabaseClient.from('students')
+                    .update({ status: 'inactivo' }).eq('id', currentStudent.id);
+                if (sRes.error) throw sRes.error;
+
+                // Audit log
+                await supabaseClient.from('audit_log').insert({
+                    user_id: currentUserId,
+                    action: 'baja_alumno',
+                    entity_type: 'student',
+                    entity_id: currentStudent.id,
+                    details: { student_name: currentStudent.full_name, installments_cancelled: cancelledCount }
+                });
+
+                showToast('Alumno dado de baja. ' + cancelledCount + ' cuotas anuladas.', 'success');
+                $('#deactivateModal').modal('hide');
+
+                // Reload
+                doSearch($('#searchInput').val());
+            } catch (err) {
+                showToast('Error al dar de baja: ' + err.message, 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  HELPER FUNCTIONS
+        // ═══════════════════════════════════════
+        function resetUI() {
+            $('#studentCard').addClass('d-none');
+            $('#installmentsTable').addClass('d-none');
+            $('#noResults').addClass('d-none');
+            $('#loader').addClass('d-none');
+        }
+
+        function printTicket(id, num, name, dni, date, amount, total) {
+            var params = new URLSearchParams({
+                id: id,
+                num: num,
+                name: name,
+                dni: dni,
+                date: date,
+                amount: amount,
+                total: total || ''
+            });
+            window.open('ticket.html?' + params.toString(), 'Comprobante', 'width=600,height=700');
+        }
+
+        async function checkRoleAndUI() {
+            var res = await supabaseClient.auth.getUser();
+            if (!res.data || !res.data.user) return;
+            var pRes = await supabaseClient.from('profiles').select('role').eq('id', res.data.user.id).single();
+            if (pRes.data && pRes.data.role === 'cajero') {
+                $('#sidebarDashLabel').text('Panel Sucursal');
+            }
+        }
+    </script>
+</body>
+
+</html>

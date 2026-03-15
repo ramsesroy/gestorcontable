@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "name": "cms-cobranzas",
+  "builds": [
+    {
+      "src": "**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/$",
+      "dest": "/Demos/CMS/login.html"
+    },
+    {
+      "src": "^/login$",
+      "dest": "/Demos/CMS/login.html"
+    },
+    {
+      "src": "^/dashboard$",
+      "dest": "/Demos/CMS/dashboard.html"
+    },
+    {
+      "src": "^/search$",
+      "dest": "/Demos/CMS/search.html"
+    }
+  ]
+}

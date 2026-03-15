@@ -1,0 +1,17 @@
+{
+    "name": "CMS Cobranzas",
+    "short_name": "CMS",
+    "description": "Sistema de Gestión de Cobranzas para sucursales",
+    "start_url": "./login.html",
+    "display": "standalone",
+    "background_color": "#5567ff",
+    "theme_color": "#5567ff",
+    "icons": [
+        {
+            "src": "../../public/images/illustration/student/128/white.svg",
+            "sizes": "128x128",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

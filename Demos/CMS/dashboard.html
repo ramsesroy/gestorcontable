@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Panel de Control - CMS Cobranzas</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5567ff">
+
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CRoboto:400,500%7CExo+2:600&display=swap"
+        rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/spinkit.css" rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/perfect-scrollbar.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/material-icons.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SheetJS (xlsx) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        .audit-entry {
+            font-size: 0.9em;
+            border-left: 3px solid #5567ff;
+        }
+
+        .audit-entry.pago {
+            border-left-color: #27ae60;
+        }
+
+        .audit-entry.baja {
+            border-left-color: #e74c3c;
+        }
+
+        .audit-entry.edicion {
+            border-left-color: #f39c12;
+        }
+
+        .audit-entry.inscripcion {
+            border-left-color: #3498db;
+        }
+
+        .cajero-welcome {
+            background: linear-gradient(135deg, #5567ff 0%, #6C63FF 100%);
+            color: #fff;
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .cajero-welcome h3 {
+            margin: 0;
+        }
+
+        .cajero-stat {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .cajero-stat h2 {
+            font-size: 2rem;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body class="layout-app ">
+    <div class="preloader">
+        <div class="sk-chase">
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+        </div>
+    </div>
+
+    <div class="mdk-drawer-layout js-mdk-drawer-layout" data-push data-responsive-width="992px">
+        <div class="mdk-drawer-layout__content page-content">
+
+            <!-- Navbar -->
+            <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
+                <button class="navbar-toggler w-auto mr-16pt d-block d-lg-none rounded-0" type="button"
+                    data-toggle="sidebar">
+                    <span class="material-icons">short_text</span>
+                </button>
+                <a href="index.html" class="navbar-brand mr-16pt">
+                    <span class="avatar avatar-sm navbar-brand-icon mr-0 mr-lg-8pt">
+                        <span class="avatar-title rounded bg-primary"><img
+                                src="../../public/images/illustration/student/128/white.svg" alt="logo"
+                                class="img-fluid" /></span>
+                    </span>
+                    <span class="d-none d-lg-block">CMS Cobranzas</span>
+                </a>
+            </div>
+
+            <!-- ═══════════════════════════════════════ -->
+            <!--  ADMIN VIEW (hidden for cajeros)       -->
+            <!-- ═══════════════════════════════════════ -->
+            <div id="adminView">
+                <div class="py-32pt bg-alt border-bottom-2">
+                    <div class="container page__container">
+                        <div class="d-flex flex-column flex-md-row align-items-center">
+                            <div class="flex">
+                                <h2 class="mb-0">Dashboard Administrativo</h2>
+                                <p class="lead text-50">Control global de ingresos y alumnos en las 4 sucursales.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Filter Bar -->
+                <div class="container page__container mt-24pt">
+                    <div class="card card-body">
+                        <div class="d-flex flex-column flex-md-row align-items-end">
+                            <div class="form-group mb-md-0 mr-md-16pt flex">
+                                <label class="form-label" for="dateFrom">Desde:</label>
+                                <input type="date" id="dateFrom" class="form-control">
+                            </div>
+                            <div class="form-group mb-md-0 mr-md-16pt flex">
+                                <label class="form-label" for="dateTo">Hasta:</label>
+                                <input type="date" id="dateTo" class="form-control">
+                            </div>
+                            <div class="form-group mb-md-0 mr-md-8pt">
+                                <button class="btn btn-primary" onclick="applyFilter()">
+                                    <i class="material-icons mr-4pt">filter_list</i> Filtrar
+                                </button>
+                            </div>
+                            <div class="form-group mb-md-0">
+                                <button class="btn btn-success" onclick="exportToExcel()">
+                                    <i class="material-icons mr-4pt">file_download</i> Descargar Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-8pt">
+                            <button class="btn btn-sm btn-outline-secondary mr-8pt"
+                                onclick="setQuickFilter('today')">Hoy</button>
+                            <button class="btn btn-sm btn-outline-secondary mr-8pt"
+                                onclick="setQuickFilter('week')">Últimos 7 días</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="setQuickFilter('month')">Mes
+                                Actual</button>
+                            <span class="ml-16pt text-50" id="filterLabel">Período: Mes Actual</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-section container page__container">
+                    <div class="row">
+                        <div class="col-lg-4 col-md-6 mb-24pt">
+                            <div class="card card-body flex-row align-items-center m-0">
+                                <div class="flex">
+                                    <h4 class="mb-0" id="totalIncome">$0.00</h4>
+                                    <p class="text-50 mb-0">Ingresos del Período</p>
+                                </div>
+                                <div class="avatar avatar-sm ml-12pt">
+                                    <span class="avatar-title rounded bg-soft-success text-success"><i
+                                            class="material-icons">trending_up</i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6 mb-24pt">
+                            <div class="card card-body flex-row align-items-center m-0">
+                                <div class="flex">
+                                    <h4 class="mb-0" id="activeStudents">0</h4>
+                                    <p class="text-50 mb-0">Alumnos Activos</p>
+                                </div>
+                                <div class="avatar avatar-sm ml-12pt">
+                                    <span class="avatar-title rounded bg-soft-primary text-primary"><i
+                                            class="material-icons">people</i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6 mb-24pt">
+                            <div class="card card-body flex-row align-items-center m-0">
+                                <div class="flex">
+                                    <h4 class="mb-0" id="todayCollections">0</h4>
+                                    <p class="text-50 mb-0">Inscriptos en Período</p>
+                                </div>
+                                <div class="avatar avatar-sm ml-12pt">
+                                    <span class="avatar-title rounded bg-soft-warning text-warning"><i
+                                            class="material-icons">receipt</i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="page-separator">
+                                <div class="page-separator__text">Ingresos por Sucursal</div>
+                            </div>
+                            <div class="card card-body">
+                                <div class="chart" style="height: 250px;">
+                                    <canvas id="branchChart" class="chart-canvas"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="page-separator">
+                                <div class="page-separator__text">Pagos Recientes</div>
+                            </div>
+                            <div class="card">
+                                <ul class="list-group list-group-flush" id="recentPayments"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audit Log Section (Admin only) -->
+                    <div class="row mt-24pt">
+                        <div class="col-12">
+                            <div class="page-separator">
+                                <div class="page-separator__text">Historial de Acciones (Auditoría)</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-16pt">
+                                        <span class="text-50">Últimas 20 acciones del sistema</span>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="loadAuditLog()">
+                                            <i class="material-icons mr-4pt" style="font-size:16px">refresh</i>
+                                            Actualizar
+                                        </button>
+                                    </div>
+                                    <div id="auditLogList">
+                                        <p class="text-50 text-center">Cargando...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Massive Update Section (Admin only) -->
+                    <div class="row mt-24pt">
+                        <div class="col-12">
+                            <div class="page-separator">
+                                <div class="page-separator__text">Gestión Avanzada: Actualización de Aranceles</div>
+                            </div>
+                            <div class="card card-body">
+                                <div class="alert alert-soft-danger mb-24pt">
+                                    <div class="d-flex align-items-center">
+                                        <i class="material-icons mr-12pt">warning</i>
+                                        <div class="flex">
+                                            <strong>Zona Crítica:</strong> Esta herramienta modificará el monto de TODAS
+                                            las cuotas pendientes del sistema o sucursal seleccionada.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row align-items-end">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-0">
+                                            <label class="form-label" for="massUpdateBranch">Sucursal:</label>
+                                            <select id="massUpdateBranch" class="form-control">
+                                                <option value="all">Todas las sucursales</option>
+                                                <!-- Branches will be loaded here -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group mb-0">
+                                            <label class="form-label" for="updatePercent">Porcentaje de Aumento:</label>
+                                            <div class="input-group input-group-merge">
+                                                <input type="number" id="updatePercent" class="form-control"
+                                                    placeholder="Ej: 15" min="1">
+                                                <div class="input-group-append">
+                                                    <div class="input-group-text">%</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <button class="btn btn-danger btn-block" onclick="massiveUpdate()">
+                                            <i class="material-icons mr-8pt">trending_up</i> Aplicar Aumento a Cuotas
+                                            Pendientes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════ -->
+            <!--  CAJERO VIEW (hidden for admins)       -->
+            <!-- ═══════════════════════════════════════ -->
+            <div id="cajeroView" style="display:none;">
+                <div class="py-32pt bg-alt border-bottom-2">
+                    <div class="container page__container">
+                        <div class="d-flex flex-column flex-md-row align-items-center">
+                            <div class="flex">
+                                <h3 class="mb-8pt">¡Bienvenido/a! 👋</h3>
+                                <p class="mb-0" id="cajeroGreeting">Tu resumen del día</p>
+                            </div>
+                            <div class="mt-16pt mt-md-0 d-flex flex-wrap">
+                                <button class="btn btn-outline-secondary mr-8pt mb-8pt"
+                                    onclick="generateReport('today')">
+                                    <i class="material-icons mr-4pt">print</i> Cierre del Día
+                                </button>
+                                <button class="btn btn-outline-secondary mr-8pt mb-8pt"
+                                    onclick="generateReport('week')">
+                                    <i class="material-icons mr-4pt">history</i> Cierre Semanal
+                                </button>
+                                <button class="btn btn-outline-secondary mb-8pt" onclick="generateReport('month')">
+                                    <i class="material-icons mr-4pt">calendar_view_month</i> Cierre Mensual
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-section container page__container">
+                    <div class="row">
+                        <div class="col-md-4 mb-24pt">
+                            <div class="card card-body cajero-stat m-0">
+                                <div class="avatar avatar-sm mx-auto mb-8pt">
+                                    <span class="avatar-title rounded bg-soft-success text-success"><i
+                                            class="material-icons">attach_money</i></span>
+                                </div>
+                                <h2 class="text-success" id="cajeroTodayTotal">$0</h2>
+                                <p class="text-50 mb-0">Sucursal: Cobros Hoy</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-24pt">
+                            <div class="card card-body cajero-stat m-0">
+                                <div class="avatar avatar-sm mx-auto mb-8pt">
+                                    <span class="avatar-title rounded bg-soft-primary text-primary"><i
+                                            class="material-icons">receipt_long</i></span>
+                                </div>
+                                <h2 class="text-primary" id="cajeroTodayCount">0</h2>
+                                <p class="text-50 mb-0">Sucursal: Pagos Hoy</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-24pt">
+                            <div class="card card-body cajero-stat m-0">
+                                <div class="avatar avatar-sm mx-auto mb-8pt">
+                                    <span class="avatar-title rounded bg-soft-warning text-warning"><i
+                                            class="material-icons">calendar_month</i></span>
+                                </div>
+                                <h2 class="text-warning" id="cajeroMonthTotal">$0</h2>
+                                <p class="text-50 mb-0">Sucursal: Total Mes</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="page-separator">
+                        <div class="page-separator__text">Últimos Movimientos de Sucursal</div>
+                    </div>
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table class="table mb-0 thead-border-top-0 table-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>Alumno</th>
+                                        <th>Cuota</th>
+                                        <th>Monto</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cajeroRecentBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="mdk-drawer js-mdk-drawer" id="default-drawer">
+            <div class="mdk-drawer__content">
+                <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
+                    <a href="index.html" class="sidebar-brand">
+                        <span class="avatar avatar-xl sidebar-brand-icon h-auto">
+                            <span class="avatar-title rounded bg-primary"><img
+                                    src="../../public/images/illustration/student/128/white.svg" class="img-fluid"
+                                    alt="logo" /></span>
+                        </span>
+                        <span>CMS Cobranzas</span>
+                    </a>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="registration.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
+                                <span class="sidebar-menu-text">Inscripción</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="search.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span>
+                                <span class="sidebar-menu-text">Buscar Alumno</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item active">
+                            <a class="sidebar-menu-button" href="dashboard.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
+                                <span class="sidebar-menu-text" id="sidebarDashLabel">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
+                                <span
+                                    class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
+                                <span class="sidebar-menu-text">Cerrar Sesión</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../public/vendor/jquery.min.js"></script>
+    <script src="../../public/vendor/popper.min.js"></script>
+    <script src="../../public/vendor/bootstrap.min.js"></script>
+    <script src="../../public/vendor/perfect-scrollbar.min.js"></script>
+    <script src="../../public/vendor/dom-factory.js"></script>
+    <script src="../../public/vendor/material-design-kit.js"></script>
+    <script src="../../public/vendor/Chart.min.js"></script>
+    <script src="../../public/js/app.js"></script>
+    <script src="../../public/js/preloader.js"></script>
+
+    <script>
+        // CONFIGURACIÓN DE SUPABASE
+        const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+        var branchChartInstance = null;
+        var currentUserRole = null;
+        var recentPaymentsOffset = 0;
+        var PAYMENTS_PER_PAGE = 8;
+
+        // Check authentication
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            if (!session) window.location.replace('login.html');
+        });
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.replace('login.html');
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(function () { });
+        }
+
+        // ═══════════════════════════════════════
+        //  TIMEZONE HELPERS (Argentina UTC-3)
+        // ═══════════════════════════════════════
+        function toArgDate(dateStr) { return dateStr + 'T00:00:00-03:00'; }
+        function toArgDateEnd(dateStr) { return dateStr + 'T23:59:59-03:00'; }
+        function todayISO() {
+            var n = new Date();
+            return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+        }
+
+        function getDefaultRange() {
+            var now = new Date();
+            var y = now.getFullYear();
+            var m = String(now.getMonth() + 1).padStart(2, '0');
+            var lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+            return { from: y + '-' + m + '-01', to: y + '-' + m + '-' + String(lastDay).padStart(2, '0') };
+        }
+
+        // ═══════════════════════════════════════
+        //  INIT: DETECT ROLE AND SHOW CORRECT VIEW
+        // ═══════════════════════════════════════
+        $(document).ready(function () {
+            initDashboard();
+        });
+
+        async function initDashboard() {
+            var res = await supabaseClient.auth.getUser();
+            if (!res.data || !res.data.user) return;
+            var userId = res.data.user.id;
+
+            var pRes = await supabaseClient.from('profiles').select('role, branch_id, first_name').eq('id', userId).single();
+            var profile = pRes.data;
+
+            if (profile && profile.role === 'cajero') {
+                currentUserRole = 'cajero';
+                $('#adminView').hide();
+                $('#cajeroView').show();
+                $('#sidebarDashLabel').text('Panel Sucursal');
+
+                // Get branch name
+                var bName = 'N/A';
+                if (profile.branch_id) {
+                    var bRes = await supabaseClient.from('branches').select('name').eq('id', profile.branch_id).single();
+                    if (bRes.data) bName = bRes.data.name;
+                }
+
+                var greeting = profile.first_name ? ('Hola, ' + profile.first_name + '!') : '¡Bienvenido/a!';
+                $('#cajeroGreeting').text(greeting + ' — Resumen de sucursal: ' + bName);
+                loadCajeroDashboard(userId, profile.branch_id);
+            } else {
+                $('#sidebarDashLabel').text('Admin Dashboard');
+                setQuickFilter('month');
+                loadAuditLog();
+                loadMassiveUpdateBranches();
+            }
+        }
+
+        async function loadMassiveUpdateBranches() {
+            var { data: branches } = await supabaseClient.from('branches').select('*');
+            if (branches) {
+                var select = $('#massUpdateBranch');
+                branches.forEach(b => {
+                    select.append('<option value="' + b.id + '">' + b.name + '</option>');
+                });
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  CAJERO MINI-DASHBOARD
+        // ═══════════════════════════════════════
+        async function loadCajeroDashboard(userId, branchId) {
+            var today = todayISO();
+            var isoFrom = toArgDate(today);
+            var isoTo = toArgDateEnd(today);
+            var range = getDefaultRange();
+            var isoMonthFrom = toArgDate(range.from);
+            var isoMonthTo = toArgDateEnd(range.to);
+
+            try {
+                // Get all user IDs in this branch to filter audit_log
+                var { data: branchUsers } = await supabaseClient.from('profiles').select('id').eq('branch_id', branchId);
+                var branchUserIds = (branchUsers || []).map(u => u.id);
+
+                if (branchUserIds.length === 0) branchUserIds = [userId];
+
+                // BRANCH Today collections
+                var todayRes = await supabaseClient.from('audit_log')
+                    .select('details')
+                    .in('user_id', branchUserIds)
+                    .eq('action', 'pago')
+                    .gte('created_at', isoFrom)
+                    .lte('created_at', isoTo);
+
+                var todayTotal = 0;
+                var todayCount = 0;
+                if (todayRes.data) {
+                    todayCount = todayRes.data.length;
+                    todayRes.data.forEach(function (entry) {
+                        if (entry.details && entry.details.amount) todayTotal += parseFloat(entry.details.amount);
+                    });
+                }
+                $('#cajeroTodayTotal').text(fmt.format(todayTotal));
+                $('#cajeroTodayCount').text(todayCount);
+
+                // BRANCH Month total
+                var monthRes = await supabaseClient.from('audit_log')
+                    .select('details')
+                    .in('user_id', branchUserIds)
+                    .eq('action', 'pago')
+                    .gte('created_at', isoMonthFrom)
+                    .lte('created_at', isoMonthTo);
+
+                var monthTotal = 0;
+                if (monthRes.data) {
+                    monthRes.data.forEach(function (entry) {
+                        if (entry.details && entry.details.amount) monthTotal += parseFloat(entry.details.amount);
+                    });
+                }
+                $('#cajeroMonthTotal').text(fmt.format(monthTotal));
+
+                // BRANCH Recent Movements table (last 10)
+                var lastRes = await supabaseClient.from('audit_log')
+                    .select('*, profiles(first_name)')
+                    .in('user_id', branchUserIds)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                var body = $('#cajeroRecentBody');
+                body.empty();
+                if (lastRes.data) {
+                    lastRes.data.forEach(function (entry) {
+                        var date = new Date(entry.created_at).toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+                        var student = entry.details ? (entry.details.student_name || 'N/A') : 'N/A';
+                        var amount = entry.details ? (entry.details.amount || 0) : 0;
+                        var user = entry.profiles ? entry.profiles.first_name : 'Sistema';
+
+                        var actionLabel = entry.action === 'pago' ? ('Cuota ' + (entry.details.installment_number || '')) : entry.action.replace('_', ' ');
+
+                        body.append(
+                            '<tr>' +
+                            '<td>' + student + '</td>' +
+                            '<td>' + actionLabel + ' <small class="text-50">(' + user + ')</small></td>' +
+                            '<td>' + fmt.format(amount) + '</td>' +
+                            '<td>' + date + '</td>' +
+                            '</tr>'
+                        );
+                    });
+                }
+            } catch (err) {
+                console.error('Error cargando dash cajero:', err);
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  ADMIN: FILTER CONTROLS
+        // ═══════════════════════════════════════
+        function setQuickFilter(type) {
+            var now = new Date();
+            var from, to;
+            var pad = function (n) { return String(n).padStart(2, '0'); };
+            var toISO = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+
+            if (type === 'today') {
+                from = to = toISO(now);
+                $('#filterLabel').text('Período: Hoy');
+            } else if (type === 'week') {
+                var weekAgo = new Date(now);
+                weekAgo.setDate(now.getDate() - 6);
+                from = toISO(weekAgo);
+                to = toISO(now);
+                $('#filterLabel').text('Período: Últimos 7 días');
+            } else {
+                var range = getDefaultRange();
+                from = range.from;
+                to = range.to;
+                $('#filterLabel').text('Período: Mes Actual');
+            }
+            $('#dateFrom').val(from);
+            $('#dateTo').val(to);
+            loadDashboardData(from, to);
+        }
+
+        function applyFilter() {
+            var from = $('#dateFrom').val();
+            var to = $('#dateTo').val();
+            if (!from || !to) { alert('Seleccioná ambas fechas.'); return; }
+            if (from > to) { alert('La fecha "Desde" no puede ser posterior a "Hasta".'); return; }
+            $('#filterLabel').text('Período: ' + from + ' — ' + to);
+            loadDashboardData(from, to);
+        }
+
+        // ═══════════════════════════════════════
+        //  ADMIN: LOAD DASHBOARD DATA
+        // ═══════════════════════════════════════
+        async function loadDashboardData(dateFrom, dateTo) {
+            var isoFrom = toArgDate(dateFrom);
+            var isoTo = toArgDateEnd(dateTo);
+
+            try {
+                var scRes = await supabaseClient.from('students')
+                    .select('*', { count: 'exact', head: true }).eq('status', 'activo');
+                $('#activeStudents').text(scRes.count || 0);
+
+                var piRes = await supabaseClient.from('installments').select('amount')
+                    .eq('status', 'pagado').gte('paid_at', isoFrom).lte('paid_at', isoTo);
+                var total = 0;
+                if (piRes.data) { total = piRes.data.reduce(function (s, i) { return s + parseFloat(i.amount); }, 0); }
+                $('#totalIncome').text(fmt.format(total));
+
+                var nsRes = await supabaseClient.from('students')
+                    .select('*', { count: 'exact', head: true }).gte('created_at', isoFrom).lte('created_at', isoTo);
+                $('#todayCollections').text(nsRes.count || 0);
+
+                await renderBranchChart(isoFrom, isoTo);
+                await loadRecentPayments(isoFrom, isoTo);
+            } catch (err) {
+                console.error('Error cargando dashboard:', err);
+            }
+        }
+
+        async function renderBranchChart(isoFrom, isoTo) {
+            var bRes = await supabaseClient.from('branches').select('*');
+            if (!bRes.data) return;
+            var labels = bRes.data.map(function (b) { return b.name; });
+            var branchData = [];
+
+            var branchTotals = {};
+            bRes.data.forEach(function (b) { branchTotals[b.id] = 0; });
+
+            // Solo 1 consulta traiendo el "branch_id" vinculado usando !inner join de Supabase
+            var pRes = await supabaseClient.from('installments')
+                .select('amount, students!inner(branch_id)')
+                .eq('status', 'pagado').gte('paid_at', isoFrom).lte('paid_at', isoTo);
+
+            if (pRes.data) {
+                pRes.data.forEach(function (row) {
+                    if (row.students && row.students.branch_id) {
+                        branchTotals[row.students.branch_id] += parseFloat(row.amount);
+                    }
+                });
+            }
+
+            for (var i = 0; i < bRes.data.length; i++) {
+                branchData.push(branchTotals[bRes.data[i].id]);
+            }
+
+            if (branchChartInstance) branchChartInstance.destroy();
+            var ctx = document.getElementById('branchChart').getContext('2d');
+            branchChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Ingresos por Sucursal ($)',
+                        data: branchData,
+                        backgroundColor: ['#5567ff', '#00BCD4', '#66BB6A', '#FFA726']
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: { yAxes: [{ ticks: { beginAtZero: true, callback: function (v) { return fmt.format(v); } } }] },
+                    tooltips: { callbacks: { label: function (item) { return fmt.format(item.yLabel); } } }
+                }
+            });
+        }
+
+        async function loadRecentPayments(isoFrom, isoTo, append = false) {
+            var list = $('#recentPayments');
+            if (!append) {
+                recentPaymentsOffset = 0;
+                list.empty();
+            }
+
+            $('#loadMoreBtn').remove();
+
+            var rpRes = await supabaseClient.from('installments')
+                .select('amount, paid_at, installment_number, students!inner(full_name, branches(name))')
+                .eq('status', 'pagado').gte('paid_at', isoFrom).lte('paid_at', isoTo)
+                .order('paid_at', { ascending: false })
+                .range(recentPaymentsOffset, recentPaymentsOffset + PAYMENTS_PER_PAGE - 1);
+
+            if (rpRes.data && rpRes.data.length > 0) {
+                rpRes.data.forEach(function (p) {
+                    var name = p.students ? p.students.full_name : 'N/A';
+                    var branch = (p.students && p.students.branches) ? p.students.branches.name : '';
+                    var date = p.paid_at ? new Date(p.paid_at).toLocaleDateString('es-AR') : '';
+                    list.append(
+                        '<li class="list-group-item d-flex justify-content-between align-items-center">' +
+                        '<div><strong>' + name + '</strong><br><small class="text-50">Cuota ' + p.installment_number + ' — ' + branch + '</small></div>' +
+                        '<div class="text-right"><strong class="text-success">' + fmt.format(p.amount) + '</strong><br><small class="text-50">' + date + '</small></div></li>'
+                    );
+                });
+
+                if (rpRes.data.length === PAYMENTS_PER_PAGE) {
+                    list.append('<li class="list-group-item text-center" id="loadMoreBtn"><button class="btn btn-sm btn-outline-primary" onclick="loadMoreRecentPayments()">Ver más</button></li>');
+                }
+            } else if (!append) {
+                list.append('<li class="list-group-item text-center text-50">Sin pagos en este período.</li>');
+            }
+        }
+
+        function loadMoreRecentPayments() {
+            recentPaymentsOffset += PAYMENTS_PER_PAGE;
+            var dateFrom = $('#dateFrom').val();
+            var dateTo = $('#dateTo').val();
+            var isoFrom = toArgDate(dateFrom);
+            var isoTo = toArgDateEnd(dateTo);
+            loadRecentPayments(isoFrom, isoTo, true);
+        }
+
+        // ═══════════════════════════════════════
+        //  ADMIN: AUDIT LOG
+        // ═══════════════════════════════════════
+        async function loadAuditLog() {
+            var container = $('#auditLogList');
+            container.html('<p class="text-50 text-center">Cargando...</p>');
+
+            try {
+                var res = await supabaseClient.from('audit_log')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+
+                if (!res.data || res.data.length === 0) {
+                    container.html('<p class="text-50 text-center">No hay acciones registradas aún. Las entradas aparecerán cuando los cajeros empiecen a operar.</p>');
+                    return;
+                }
+
+                var html = '';
+                res.data.forEach(function (entry) {
+                    var d = entry.details || {};
+                    var icon = 'info';
+                    var cssClass = '';
+                    var description = '';
+
+                    switch (entry.action) {
+                        case 'pago':
+                            icon = 'attach_money';
+                            cssClass = 'pago';
+                            description = 'Cobro de <strong>' + fmt.format(d.amount || 0) + '</strong> — ' +
+                                (d.student_name || 'N/A') + ' (Cuota ' + (d.installment_number || '?') + ')';
+                            break;
+                        case 'edicion_alumno':
+                            icon = 'edit';
+                            cssClass = 'edicion';
+                            description = 'Editó al alumno <strong>' + (d.student_name || 'N/A') + '</strong>';
+                            if (d.changes) description += ' — Cambios: ' + d.changes;
+                            break;
+                        case 'baja_alumno':
+                            icon = 'person_off';
+                            cssClass = 'baja';
+                            description = 'Dio de baja a <strong>' + (d.student_name || 'N/A') + '</strong>' +
+                                (d.installments_cancelled ? ' (' + d.installments_cancelled + ' cuotas anuladas)' : '');
+                            break;
+                        case 'inscripcion':
+                            icon = 'person_add';
+                            cssClass = 'inscripcion';
+                            description = 'Inscribió a <strong>' + (d.student_name || 'N/A') + '</strong> — ' +
+                                fmt.format(d.monthly_amount || 0) + '/mes';
+                            break;
+                        default:
+                            description = entry.action + ': ' + JSON.stringify(d);
+                    }
+
+                    var dateStr = new Date(entry.created_at).toLocaleString('es-AR');
+                    html += '<div class="audit-entry ' + cssClass + ' p-12pt mb-8pt rounded">' +
+                        '<div class="d-flex align-items-start">' +
+                        '<i class="material-icons mr-8pt text-50" style="font-size:20px">' + icon + '</i>' +
+                        '<div class="flex">' + description +
+                        '<br><small class="text-50">Usuario: ' + (entry.user_id ? entry.user_id.substring(0, 8) + '...' : 'sistema') +
+                        ' — ' + dateStr + '</small></div></div></div>';
+                });
+                container.html(html);
+            } catch (err) {
+                container.html('<p class="text-danger">Error cargando auditoría: ' + err.message + '</p>');
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  ADMIN: EXPORT TO EXCEL
+        // ═══════════════════════════════════════
+        async function exportToExcel() {
+            var dateFrom = $('#dateFrom').val();
+            var dateTo = $('#dateTo').val();
+            if (!dateFrom || !dateTo) { alert('Seleccioná un rango de fechas primero.'); return; }
+            var isoFrom = toArgDate(dateFrom);
+            var isoTo = toArgDateEnd(dateTo);
+
+            try {
+                var bRes = await supabaseClient.from('branches').select('*');
+                var scRes = await supabaseClient.from('students').select('*', { count: 'exact', head: true }).eq('status', 'activo');
+                var summaryRows = [];
+                var grandTotal = 0;
+
+                var branchTotals = {};
+                bRes.data.forEach(function (b) { branchTotals[b.id] = 0; });
+
+                var pRes = await supabaseClient.from('installments')
+                    .select('amount, students!inner(branch_id)')
+                    .eq('status', 'pagado').gte('paid_at', isoFrom).lte('paid_at', isoTo);
+
+                if (pRes.data) {
+                    pRes.data.forEach(function (row) {
+                        if (row.students && row.students.branch_id) {
+                            branchTotals[row.students.branch_id] += parseFloat(row.amount);
+                        }
+                    });
+                }
+
+                for (var b = 0; b < bRes.data.length; b++) {
+                    var branch = bRes.data[b];
+                    var branchIncome = branchTotals[branch.id];
+                    grandTotal += branchIncome;
+                    summaryRows.push({ 'Sucursal': branch.name, 'Ingresos del Período': branchIncome });
+                }
+                summaryRows.push({ 'Sucursal': '', 'Ingresos del Período': '' });
+                summaryRows.push({ 'Sucursal': 'TOTAL INGRESOS', 'Ingresos del Período': grandTotal });
+                summaryRows.push({ 'Sucursal': 'Alumnos Activos', 'Ingresos del Período': scRes.count || 0 });
+                summaryRows.push({ 'Sucursal': 'Período', 'Ingresos del Período': dateFrom + ' a ' + dateTo });
+
+                var allPaid = await supabaseClient.from('installments')
+                    .select('amount, paid_at, installment_number, students(full_name, dni, branches(name))')
+                    .eq('status', 'pagado').gte('paid_at', isoFrom).lte('paid_at', isoTo)
+                    .order('paid_at', { ascending: false });
+                var detailRows = [];
+                if (allPaid.data) {
+                    allPaid.data.forEach(function (p) {
+                        detailRows.push({
+                            'Fecha': p.paid_at ? new Date(p.paid_at).toLocaleDateString('es-AR') : '',
+                            'Alumno': p.students ? p.students.full_name : 'N/A',
+                            'DNI': p.students ? p.students.dni : '',
+                            'Sucursal': (p.students && p.students.branches) ? p.students.branches.name : '',
+                            'N° Cuota': p.installment_number,
+                            'Monto': parseFloat(p.amount)
+                        });
+                    });
+                }
+                if (detailRows.length === 0) {
+                    detailRows.push({ 'Fecha': 'Sin pagos', 'Alumno': '', 'DNI': '', 'Sucursal': '', 'N° Cuota': '', 'Monto': '' });
+                }
+
+                var wb = XLSX.utils.book_new();
+                var ws1 = XLSX.utils.json_to_sheet(summaryRows);
+                ws1['!cols'] = [{ wch: 30 }, { wch: 25 }];
+                XLSX.utils.book_append_sheet(wb, ws1, 'Resumen');
+                var ws2 = XLSX.utils.json_to_sheet(detailRows);
+                ws2['!cols'] = [{ wch: 14 }, { wch: 28 }, { wch: 14 }, { wch: 22 }, { wch: 10 }, { wch: 14 }];
+                XLSX.utils.book_append_sheet(wb, ws2, 'Detalle de Pagos');
+
+                var now = new Date();
+                var fileName = 'Reporte_Cobranzas_' + String(now.getDate()).padStart(2, '0') + '-' +
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' + now.getFullYear() + '.xlsx';
+                XLSX.writeFile(wb, fileName);
+            } catch (err) {
+                console.error('Error exportando Excel:', err);
+                alert('Error al generar el reporte: ' + err.message);
+            }
+        }
+        // ═══════════════════════════════════════
+        //  PHASE 2: REPORTS & MASSIVE UPDATES
+        // ═══════════════════════════════════════
+        function generateReport(type) {
+            var branchId = null;
+            // Get current user branch_id
+            supabaseClient.auth.getUser().then(async res => {
+                if (!res.data.user) return;
+                var pRes = await supabaseClient.from('profiles').select('branch_id').eq('id', res.data.user.id).single();
+                if (!pRes.data) return;
+                branchId = pRes.data.branch_id;
+
+                var from, to;
+                var now = new Date();
+
+                if (type === 'today') {
+                    var t = todayISO();
+                    from = t; to = t;
+                } else if (type === 'week') {
+                    var lastWeek = new Date();
+                    lastWeek.setDate(now.getDate() - 7);
+                    from = lastWeek.toISOString().split('T')[0];
+                    to = todayISO();
+                } else if (type === 'month') {
+                    var range = getDefaultRange();
+                    from = range.from;
+                    to = range.to;
+                }
+
+                var params = new URLSearchParams({
+                    branch_id: branchId,
+                    from: from,
+                    to: to,
+                    type: type
+                });
+                window.open('report.html?' + params.toString(), 'CierreCaja', 'width=900,height=800');
+            });
+        }
+
+        async function massiveUpdate() {
+            var percent = parseFloat($('#updatePercent').val());
+            var branch = $('#massUpdateBranch').val();
+
+            if (isNaN(percent) || percent <= 0) {
+                alert('Elija un porcentaje de aumento válido (ej: 15).');
+                return;
+            }
+
+            var branchText = branch === 'all' ? 'TODAS LAS SUCURSALES' : ('la sucursal #' + branch);
+            if (!confirm('!!! ADVERTENCIA !!!\n\n¿Seguro que desea aumentar un ' + percent + '% a todas las cuotas pendientes de ' + branchText + '?\n\nEsta operación no se puede deshacer fácilmente.')) return;
+
+            try {
+                // 1. Get IDs of installments to update
+                var query;
+                if (branch === 'all') {
+                    query = supabaseClient.from('installments').select('id, amount').eq('status', 'pendiente');
+                } else {
+                    // Use !inner to filter by a joined table field
+                    query = supabaseClient.from('installments')
+                        .select('id, amount, students!inner(branch_id)')
+                        .eq('status', 'pendiente')
+                        .eq('students.branch_id', branch);
+                }
+
+                var { data: pending, error: fError } = await query;
+                if (fError) throw fError;
+
+                if (!pending || pending.length === 0) {
+                    alert('No se encontraron cuotas pendientes para actualizar.');
+                    return;
+                }
+
+                var count = 0;
+                var factor = 1 + (percent / 100);
+
+                for (var i = 0; i < pending.length; i++) {
+                    var item = pending[i];
+                    var newAmount = (parseFloat(item.amount) * factor).toFixed(2);
+
+                    await supabaseClient.from('installments').update({ amount: newAmount }).eq('id', item.id);
+                    count++;
+                }
+
+                // Audit log
+                await supabaseClient.from('audit_log').insert({
+                    user_id: (await supabaseClient.auth.getUser()).data.user.id,
+                    action: 'actualizacion_masiva',
+                    details: { percentage: percent, branch: branch, records_updated: count }
+                });
+
+                alert('Éxito: Se actualizaron ' + count + ' cuotas con un aumento del ' + percent + '%.');
+                window.location.reload();
+
+            } catch (err) {
+                console.error(err);
+                alert('Error en la actualización: ' + err.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

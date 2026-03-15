@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Inscripción de Alumnos - CMS Cobranzas</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CRoboto:400,500%7CExo+2:600&display=swap"
+        rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/spinkit.css" rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/perfect-scrollbar.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/material-icons.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5567ff">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="layout-app ">
+    <div class="preloader">
+        <div class="sk-chase">
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+        </div>
+    </div>
+
+    <div class="mdk-drawer-layout js-mdk-drawer-layout" data-push data-responsive-width="992px">
+        <div class="mdk-drawer-layout__content page-content">
+
+            <!-- Navbar -->
+            <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
+                <button class="navbar-toggler w-auto mr-16pt d-block d-lg-none rounded-0" type="button"
+                    data-toggle="sidebar">
+                    <span class="material-icons">short_text</span>
+                </button>
+                <a href="index.html" class="navbar-brand mr-16pt">
+                    <span class="avatar avatar-sm navbar-brand-icon mr-0 mr-lg-8pt">
+                        <span class="avatar-title rounded bg-primary"><img
+                                src="../../public/images/illustration/student/128/white.svg" alt="logo"
+                                class="img-fluid" /></span>
+                    </span>
+                    <span class="d-none d-lg-block">CMS Cobranzas</span>
+                </a>
+            </div>
+
+            <div class="py-32pt bg-alt border-bottom-2">
+                <div class="container page__container">
+                    <div class="d-flex flex-column flex-md-row align-items-center">
+                        <div class="flex">
+                            <h2 class="mb-0">Inscripción Inteligente</h2>
+                            <p class="lead text-50">Carga un nuevo alumno y genera automáticamente su plan de cuotas.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-section container page__container">
+                <div class="col-lg-8 p-0 mx-auto">
+                    <div class="card card-body">
+                        <form id="enrollmentForm">
+                            <div class="form-row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="dni">DNI / Cédula:</label>
+                                    <input id="dni" type="text" class="form-control" placeholder="Ej: 12345678"
+                                        required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="fullName">Nombre Completo:</label>
+                                    <input id="fullName" type="text" class="form-control" placeholder="Ej: Juan Pérez"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="email">Email:</label>
+                                    <input id="email" type="email" class="form-control" placeholder="email@ejemplo.com">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="phone">Teléfono:</label>
+                                    <input id="phone" type="text" class="form-control" placeholder="Ej: 011 1234-5678">
+                                </div>
+                            </div>
+                            <div class="form-group mb-24pt">
+                                <label class="form-label" for="branch">Sucursal de Origen:</label>
+                                <select id="branch" class="form-control custom-select" required>
+                                    <option value="" disabled selected>Selecciona una sucursal</option>
+                                    <!-- Options will be loaded from Supabase -->
+                                </select>
+                            </div>
+
+                            <div class="page-separator">
+                                <div class="page-separator__text">Plan de Cuotas</div>
+                            </div>
+
+                            <div class="form-group mb-24pt">
+                                <label class="form-label" for="amount">Monto de la cuota mensual:</label>
+                                <div class="input-group input-group-merge">
+                                    <input id="amount" type="number" class="form-control form-control-prepended"
+                                        placeholder="Ej: 5000" required>
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">$</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-24pt">
+                                <label class="form-label" for="installmentsCount">Cantidad de cuotas a generar:</label>
+                                <input id="installmentsCount" type="number" class="form-control" value="12" min="1"
+                                    max="60" required>
+                                <small class="text-muted">Se generarán las cuotas mensuales consecutivas a partir del
+                                    mes actual.</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                                <span id="btnText">Inscribir Alumno y Generar Plan</span>
+                                <span id="btnLoader" class="spinner-border spinner-border-sm d-none"
+                                    role="status"></span>
+                            </button>
+
+                            <!-- Feedback Alerts -->
+                            <div id="successAlert" class="alert alert-soft-success d-none mt-3">
+                                <strong>¡Éxito!</strong> Alumno inscrito y plan de cuotas generado correctamente.
+                            </div>
+                            <div id="errorAlert" class="alert alert-soft-danger d-none mt-3"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="mdk-drawer js-mdk-drawer" id="default-drawer">
+            <div class="mdk-drawer__content">
+                <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
+                    <a href="index.html" class="sidebar-brand">
+                        <span class="avatar avatar-xl sidebar-brand-icon h-auto">
+                            <span class="avatar-title rounded bg-primary"><img
+                                    src="../../public/images/illustration/student/128/white.svg" class="img-fluid"
+                                    alt="logo" /></span>
+                        </span>
+                        <span>CMS Cobranzas</span>
+                    </a>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-menu-item active">
+                            <a class="sidebar-menu-button" href="registration.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
+                                <span class="sidebar-menu-text">Inscripción</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="search.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span>
+                                <span class="sidebar-menu-text">Buscar Alumno</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="dashboard.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
+                                <span class="sidebar-menu-text" id="sidebarDashLabel">Admin Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
+                                <span
+                                    class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
+                                <span class="sidebar-menu-text">Cerrar Sesión</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../public/vendor/jquery.min.js"></script>
+    <script src="../../public/vendor/popper.min.js"></script>
+    <script src="../../public/vendor/bootstrap.min.js"></script>
+    <script src="../../public/vendor/perfect-scrollbar.min.js"></script>
+    <script src="../../public/vendor/dom-factory.js"></script>
+    <script src="../../public/vendor/material-design-kit.js"></script>
+    <script src="../../public/js/app.js"></script>
+    <script src="../../public/js/preloader.js"></script>
+
+    <script>
+        // CONFIGURACIÓN DE SUPABASE (Completar con tus credenciales)
+        const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Check authentication
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            if (!session) {
+                window.location.replace('login.html');
+            }
+        });
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.replace('login.html');
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(function () { });
+        }
+
+        // Get current user ID for audit logging
+        var currentUserId = null;
+        supabaseClient.auth.getUser().then(function (res) {
+            if (res.data && res.data.user) currentUserId = res.data.user.id;
+        });
+
+        $(document).ready(async function () {
+            // Cargar Sucursales
+            const { data: branches, error: bError } = await supabaseClient.from('branches').select('*');
+            if (branches) {
+                $('#branch').empty();
+                branches.forEach(branch => {
+                    $('#branch').append(`<option value="${branch.id}">${branch.name}</option>`);
+                });
+            }
+
+            // Cargar datos al inicio
+            checkRoleAndUI();
+
+            $('#enrollmentForm').on('submit', async function (e) {
+                e.preventDefault();
+                setLoading(true);
+                $('#successAlert, #errorAlert').addClass('d-none');
+
+                const studentData = {
+                    dni: $('#dni').val(),
+                    full_name: $('#fullName').val(),
+                    email: $('#email').val(),
+                    phone: $('#phone').val(),
+                    branch_id: $('#branch').val()
+                };
+
+                const amount = parseFloat($('#amount').val());
+                const installmentsCount = parseInt($('#installmentsCount').val()) || 12;
+
+                try {
+                    // 1. Insertar Alumno
+                    const { data: student, error: sError } = await supabaseClient.from('students').insert([studentData]).select().single();
+                    if (sError) throw sError;
+
+                    // 2. Generar Cuotas Dinámicas
+                    const installments = [];
+                    const startDate = new Date();
+                    for (let i = 1; i <= installmentsCount; i++) {
+                        const dueDate = new Date(startDate.getFullYear(), startDate.getMonth() + i - 1, 10); // Día 10 de cada mes
+                        installments.push({
+                            student_id: student.id,
+                            installment_number: i,
+                            due_date: dueDate.toISOString().split('T')[0],
+                            amount: amount,
+                            status: 'pendiente'
+                        });
+                    }
+
+                    const { error: iError } = await supabaseClient.from('installments').insert(installments);
+                    if (iError) throw iError;
+
+                    // Audit log
+                    await supabaseClient.from('audit_log').insert({
+                        user_id: currentUserId,
+                        action: 'inscripcion',
+                        entity_type: 'student',
+                        entity_id: student.id,
+                        details: { student_name: student.full_name, monthly_amount: amount }
+                    });
+
+                    $('#successAlert').removeClass('d-none');
+                    $('#enrollmentForm')[0].reset();
+                } catch (err) {
+                    console.error(err);
+                    $('#errorAlert').removeClass('d-none').text('Error: ' + err.message);
+                } finally {
+                    setLoading(false);
+                }
+            });
+        });
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                $('#submitBtn').attr('disabled', true);
+                $('#btnText').addClass('d-none');
+                $('#btnLoader').removeClass('d-none');
+            } else {
+                $('#submitBtn').attr('disabled', false);
+                $('#btnText').removeClass('d-none');
+                $('#btnLoader').addClass('d-none');
+            }
+        }
+
+        async function checkRoleAndUI() {
+            var res = await supabaseClient.auth.getUser();
+            if (!res.data || !res.data.user) return;
+            var pRes = await supabaseClient.from('profiles').select('role').eq('id', res.data.user.id).single();
+            if (pRes.data && pRes.data.role === 'cajero') {
+                $('#sidebarDashLabel').text('Panel Sucursal');
+            }
+        }
+    </script>
+</body>
+
+</html>
