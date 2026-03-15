@@ -131,8 +131,8 @@
 
             } catch (error) {
                 console.error('Error de login:', error.message);
-                var errMsg = error.message;
-                if (errMsg === 'Invalid login credentials') {
+                var errMsg = error.message || "";
+                if (errMsg.toLowerCase().includes('invalid login credentials')) {
                     errMsg = 'Correo o contraseña incorrectos.';
                 }
                 $('#loginError').removeClass('d-none').html('<strong>Error:</strong> ' + errMsg);

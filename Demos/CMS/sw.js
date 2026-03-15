@@ -1,5 +1,5 @@
-// CMS Cobranzas — Service Worker v2
-var CACHE_NAME = 'cms-cobranzas-v2';
+// CMS Cobranzas — Service Worker v3
+var CACHE_NAME = 'cms-cobranzas-v3';
 var URLS_TO_CACHE = [
     './',
     './login.html',
@@ -66,7 +66,25 @@ self.addEventListener('fetch', function (event) {
         return;
     }
 
-    // Cache-first for local static assets
+    // Network-first for HTML pages
+    if (url.includes('.html') || event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request).then(function (networkResponse) {
+                if (networkResponse && networkResponse.status === 200) {
+                    var responseClone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(function (cache) {
+                        cache.put(event.request, responseClone);
+                    });
+                }
+                return networkResponse;
+            }).catch(function () {
+                return caches.match(event.request);
+            })
+        );
+        return;
+    }
+
+    // Cache-first for local static assets (CSS, JS, Fonts, Images)
     event.respondWith(
         caches.match(event.request).then(function (cachedResponse) {
             if (cachedResponse) {
