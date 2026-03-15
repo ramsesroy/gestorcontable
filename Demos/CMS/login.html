@@ -131,7 +131,11 @@
 
             } catch (error) {
                 console.error('Error de login:', error.message);
-                $('#loginError').removeClass('d-none').html('<strong>Error:</strong> ' + error.message);
+                var errMsg = error.message;
+                if (errMsg === 'Invalid login credentials') {
+                    errMsg = 'Correo o contraseña incorrectos.';
+                }
+                $('#loginError').removeClass('d-none').html('<strong>Error:</strong> ' + errMsg);
                 btn.prop('disabled', false).text('Ingresar');
             }
         });

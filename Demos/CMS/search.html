@@ -505,7 +505,8 @@
         //  MAIN SEARCH LOGIC
         // ═══════════════════════════════════════
         async function doSearch(query) {
-            if (!query || !query.trim()) return;
+            query = String(query || "");
+            if (!query.trim()) return;
             query = query.trim();
             resetUI();
             $('#loader').removeClass('d-none');

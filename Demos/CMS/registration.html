@@ -229,7 +229,7 @@
             // Cargar Sucursales
             const { data: branches, error: bError } = await supabaseClient.from('branches').select('*');
             if (branches) {
-                $('#branch').empty();
+                $('#branch').html('<option value="" disabled selected>Selecciona una sucursal</option>');
                 branches.forEach(branch => {
                     $('#branch').append(`<option value="${branch.id}">${branch.name}</option>`);
                 });

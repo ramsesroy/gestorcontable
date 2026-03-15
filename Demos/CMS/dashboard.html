@@ -330,7 +330,7 @@
                             <div class="card card-body cajero-stat m-0">
                                 <div class="avatar avatar-sm mx-auto mb-8pt">
                                     <span class="avatar-title rounded bg-soft-primary text-primary"><i
-                                            class="material-icons">receipt_long</i></span>
+                                            class="material-icons">receipt</i></span>
                                 </div>
                                 <h2 class="text-primary" id="cajeroTodayCount">0</h2>
                                 <p class="text-50 mb-0">Sucursal: Pagos Hoy</p>
@@ -340,7 +340,7 @@
                             <div class="card card-body cajero-stat m-0">
                                 <div class="avatar avatar-sm mx-auto mb-8pt">
                                     <span class="avatar-title rounded bg-soft-warning text-warning"><i
-                                            class="material-icons">calendar_month</i></span>
+                                            class="material-icons">date_range</i></span>
                                 </div>
                                 <h2 class="text-warning" id="cajeroMonthTotal">$0</h2>
                                 <p class="text-50 mb-0">Sucursal: Total Mes</p>
@@ -513,6 +513,7 @@
             var { data: branches } = await supabaseClient.from('branches').select('*');
             if (branches) {
                 var select = $('#massUpdateBranch');
+                select.html('<option value="all">Todas las Sucursales</option>');
                 branches.forEach(b => {
                     select.append('<option value="' + b.id + '">' + b.name + '</option>');
                 });
@@ -586,7 +587,7 @@
                         var date = new Date(entry.created_at).toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
                         var student = entry.details ? (entry.details.student_name || 'N/A') : 'N/A';
                         var amount = entry.details ? (entry.details.amount || 0) : 0;
-                        var user = entry.profiles ? entry.profiles.first_name : 'Sistema';
+                        var user = (entry.profiles && entry.profiles.first_name) ? entry.profiles.first_name : 'Cajero';
 
                         var actionLabel = entry.action === 'pago' ? ('Cuota ' + (entry.details.installment_number || '')) : entry.action.replace('_', ' ');
 
