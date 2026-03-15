@@ -1,13 +1,10 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    { "source": "/", "destination": "/Demos/CMS/login.html" },
-    { "source": "/login", "destination": "/Demos/CMS/login.html" },
-    { "source": "/registration", "destination": "/Demos/CMS/registration.html" },
-    { "source": "/search", "destination": "/Demos/CMS/search.html" },
-    { "source": "/dashboard", "destination": "/Demos/CMS/dashboard.html" },
-    { "source": "/report", "destination": "/Demos/CMS/report.html" },
-    { "source": "/ticket", "destination": "/Demos/CMS/ticket.html" }
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/Demos/CMS/login.html",
+      "permanent": false
+    }
   ]
 }
