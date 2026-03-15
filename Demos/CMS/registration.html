@@ -289,7 +289,11 @@
                     $('#enrollmentForm')[0].reset();
                 } catch (err) {
                     console.error(err);
-                    $('#errorAlert').removeClass('d-none').text('Error: ' + err.message);
+                    var errMsg = err.message || "";
+                    if (errMsg.toLowerCase().includes('students_dni_key') || errMsg.toLowerCase().includes('duplicate key value')) {
+                        errMsg = 'Ya existe un alumno registrado con ese DNI.';
+                    }
+                    $('#errorAlert').removeClass('d-none').text('Error: ' + errMsg);
                 } finally {
                     setLoading(false);
                 }
