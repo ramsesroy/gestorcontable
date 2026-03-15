@@ -174,7 +174,12 @@
                 document.getElementById('branchName').textContent = 'Sucursal: ' + (branch ? branch.name : 'Desconocida');
 
                 // 2. Format Period Text
-                document.getElementById('reportPeriod').textContent = `Periodo: ${from} al ${to} (${type.toUpperCase()})`;
+                let periodType = type.toUpperCase();
+                if (periodType === 'TODAY') periodType = 'HOY';
+                if (periodType === 'WEEK') periodType = 'SEMANA';
+                if (periodType === 'MONTH') periodType = 'MES';
+
+                document.getElementById('reportPeriod').textContent = `Periodo: ${from} al ${to} (${periodType})`;
                 document.getElementById('printDate').textContent = new Date().toLocaleString('es-AR');
 
                 // 3. Get User Profile (Who is printing)
@@ -215,7 +220,7 @@
                             <td>${d.student_name || 'N/A'}</td>
                             <td>${d.dni || '-'}</td>
                             <td>Cuota ${d.installment_number || '-'}</td>
-                            <td>${log.profiles ? log.profiles.first_name : 'Sist.'}</td>
+                            <td>${(log.profiles && log.profiles.first_name) ? log.profiles.first_name : 'Cajero'}</td>
                             <td style="text-align: right;">${fmt.format(amount)}</td>
                         `;
                         tbody.appendChild(tr);

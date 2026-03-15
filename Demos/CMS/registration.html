@@ -229,14 +229,27 @@
             // Cargar Sucursales
             const { data: branches, error: bError } = await supabaseClient.from('branches').select('*');
             if (branches) {
+                // Ensure branches are unique by name to avoid duplicates if DB has redundant data
+                const uniqueBranches = [];
+                const branchMap = new Map();
+                for (const b of branches) {
+                    if (!branchMap.has(b.name)) {
+                        branchMap.set(b.name, true);
+                        uniqueBranches.push(b);
+                    }
+                }
                 $('#branch').html('<option value="" disabled selected>Selecciona una sucursal</option>');
-                branches.forEach(branch => {
+                uniqueBranches.forEach(branch => {
                     $('#branch').append(`<option value="${branch.id}">${branch.name}</option>`);
                 });
             }
 
             // Cargar datos al inicio
             checkRoleAndUI();
+
+            $('#enrollmentForm input, #enrollmentForm select').on('input change', function() {
+                $('#errorAlert').addClass('d-none');
+            });
 
             $('#enrollmentForm').on('submit', async function (e) {
                 e.preventDefault();

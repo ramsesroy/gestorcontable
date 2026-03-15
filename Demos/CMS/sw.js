@@ -1,5 +1,5 @@
-// CMS Cobranzas — Service Worker v1
-var CACHE_NAME = 'cms-cobranzas-v1';
+// CMS Cobranzas — Service Worker v2
+var CACHE_NAME = 'cms-cobranzas-v2';
 var URLS_TO_CACHE = [
     './',
     './login.html',

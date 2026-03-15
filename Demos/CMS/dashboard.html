@@ -512,9 +512,17 @@
         async function loadMassiveUpdateBranches() {
             var { data: branches } = await supabaseClient.from('branches').select('*');
             if (branches) {
+                const uniqueBranches = [];
+                const branchMap = new Map();
+                for (const b of branches) {
+                    if (!branchMap.has(b.name)) {
+                        branchMap.set(b.name, true);
+                        uniqueBranches.push(b);
+                    }
+                }
                 var select = $('#massUpdateBranch');
                 select.html('<option value="all">Todas las Sucursales</option>');
-                branches.forEach(b => {
+                uniqueBranches.forEach(b => {
                     select.append('<option value="' + b.id + '">' + b.name + '</option>');
                 });
             }
