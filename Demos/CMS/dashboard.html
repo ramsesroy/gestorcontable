@@ -283,6 +283,30 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Course Management Section (Admin only) -->
+                    <div class="row mt-24pt">
+                        <div class="col-12">
+                            <div class="page-separator">
+                                <div class="page-separator__text">Gestión de Cursos</div>
+                            </div>
+                            <div class="card">
+                                <div class="table-responsive">
+                                    <table class="table mb-0 thead-border-top-0 table-nowrap">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre del Curso</th>
+                                                <th class="text-right">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="courseTableBody">
+                                            <tr><td colspan="2" class="text-center text-50">Cargando cursos...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -431,7 +455,7 @@
         const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+        const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
         var branchChartInstance = null;
         var currentUserRole = null;
         var recentPaymentsOffset = 0;
@@ -506,6 +530,41 @@
                 setQuickFilter('month');
                 loadAuditLog();
                 loadMassiveUpdateBranches();
+                loadCoursesAdmin();
+            }
+        }
+
+        async function loadCoursesAdmin() {
+            const { data: courses, error } = await supabaseClient.from('courses').select('*').order('name');
+            var tbody = $('#courseTableBody');
+            tbody.empty();
+            if (error || !courses || courses.length === 0) {
+                tbody.html('<tr><td colspan="2" class="text-center text-50">No hay cursos creados.</td></tr>');
+                return;
+            }
+            courses.forEach(c => {
+                tbody.append(`
+                    <tr>
+                        <td><strong>${c.name}</strong></td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
+                                <i class="material-icons icon--left">delete</i> Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        async function deleteCourse(id, name) {
+            if(!confirm(`¿Seguro que deseas eliminar el curso "${name}"?\nNota: Si tiene alumnos vinculados, la operación podría fallar.`)) return;
+            try {
+                const { error } = await supabaseClient.from('courses').delete().eq('id', id);
+                if (error) throw error;
+                alert('Curso eliminado exitosamente.');
+                loadCoursesAdmin();
+            } catch (err) {
+                alert('No se puede eliminar el curso. Revisa que no haya alumnos vinculados a él.');
             }
         }
 

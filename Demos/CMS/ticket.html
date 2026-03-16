@@ -120,6 +120,54 @@
                 print-color-adjust: exact !important;
             }
         }
+
+        /* Formato Ticketera Termica 80mm */
+        body.termica-mode {
+            background: #e0e0e0;
+        }
+        body.termica-mode .ticket {
+            width: 80mm;
+            max-width: 80mm;
+            margin: 20px auto;
+            padding: 5mm;
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border-radius: 0;
+            border: none;
+        }
+        body.termica-mode .header h2 { font-size: 18px; }
+        body.termica-mode .header p { font-size: 12px; }
+        body.termica-mode .row { 
+            flex-direction: column; 
+            border-bottom: 1px dashed #ddd; 
+            padding: 6px 0; 
+        }
+        body.termica-mode .row strong { 
+            min-width: unset; 
+            font-size: 12px; 
+            text-align: left; 
+        }
+        body.termica-mode .row span { 
+            text-align: right; 
+            font-size: 14px; 
+            font-weight: bold; 
+        }
+        body.termica-mode .total-row {
+            background: transparent;
+            border-top: 2px dashed #000;
+            border-bottom: 2px dashed #000;
+            border-radius: 0;
+            padding: 10px 0;
+            margin-top: 15px;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+        body.termica-mode hr { border-top: 1px dashed #000; margin: 15px 0; }
+        
+        @media print {
+            body.termica-mode { background: #fff; padding: 0; }
+            body.termica-mode .ticket { width: 80mm !important; margin: 0; padding: 0; box-shadow: none; border: none; }
+        }
     </style>
 </head>
 
@@ -141,12 +189,31 @@
             <p id="printDate"></p>
         </div>
         <div class="no-print" style="text-align: center; margin-top: 32px;">
-            <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: bold;">Imprimir Ticket</button>
-            <button onclick="window.history.back()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Volver Atrás</button>
+            <div style="margin-bottom: 20px; padding: 10px; background: #fff; border-radius: 6px; display: inline-block;">
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">Seleccione el formato de impresión:</p>
+                <button onclick="setFormat('a4')" id="btnA4" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: bold;">Formato A4</button>
+                <button onclick="setFormat('termica')" id="btnTermica" style="padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Ticketera (80mm)</button>
+            </div>
+            <br>
+            <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: bold; font-size: 16px;">Imprimir Comprobante</button>
+            <button onclick="window.history.back()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px;">Volver Atrás</button>
         </div>
     </div>
 
     <script>
+        function setFormat(type) {
+            if(type === 'termica') {
+                document.body.classList.add('termica-mode');
+                document.getElementById('btnTermica').style.boxShadow = '0 0 0 3px rgba(23,162,184,0.5)';
+                document.getElementById('btnA4').style.boxShadow = 'none';
+                localStorage.setItem('preferredTicketFormat', 'termica');
+            } else {
+                document.body.classList.remove('termica-mode');
+                document.getElementById('btnA4').style.boxShadow = '0 0 0 3px rgba(40,167,69,0.5)';
+                document.getElementById('btnTermica').style.boxShadow = 'none';
+                localStorage.setItem('preferredTicketFormat', 'a4');
+            }
+        }
         document.addEventListener('DOMContentLoaded', function () {
             const params = new URLSearchParams(window.location.search);
             const id = params.get('id') || '-';
@@ -154,15 +221,24 @@
             const name = params.get('name') || 'N/A';
             const dni = params.get('dni') || '-';
             const date = params.get('date') || '-';
-            const amount = params.get('amount') || '0';
+            const amountPaid = params.get('amount') || '0';
             const total = params.get('total') || '';
+            const totalAmount = params.get('totalAmount') || amountPaid;
+            const remaining = params.get('remaining') || '0';
 
-            const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
-            const amountStr = fmt.format(amount);
+            const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
 
             document.getElementById('printDate').textContent = new Date().toLocaleString('es-AR');
 
             const cuotaText = total ? `Cuota ${num} de ${total}` : `Cuota ${num}`;
+
+            let extraRows = '';
+            if(parseFloat(remaining) > 0 || parseFloat(totalAmount) > parseFloat(amountPaid)) {
+                extraRows = `
+                    <div class="row" style="color: #666; margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;"><strong>Valor Total Cuota:</strong><span>${fmt.format(totalAmount)}</span></div>
+                    <div class="row" style="color: #666;"><strong>Saldo Pendiente:</strong><span style="color: #dc3545;">${fmt.format(remaining)}</span></div>
+                `;
+            }
 
             const html = `
                 <div class="row"><strong>Operación ID:</strong><span>${id}</span></div>
@@ -170,12 +246,15 @@
                 <div class="row"><strong>DNI:</strong><span>${dni}</span></div>
                 <div class="row"><strong>Concepto:</strong><span>${cuotaText}</span></div>
                 <div class="row"><strong>Vencimiento Original:</strong><span>${date}</span></div>
-                <div class="row total-row"><strong>Total Abonado:</strong><span>${amountStr}</span></div>
+                ${extraRows}
+                <div class="row total-row"><strong>Pagado Hoy:</strong><span>${fmt.format(amountPaid)}</span></div>
             `;
 
             document.getElementById('ticketData').innerHTML = html;
 
             // Auto-print after a brief delay to ensure styles are loaded
+            const pFormat = localStorage.getItem('preferredTicketFormat') || 'a4';
+            setFormat(pFormat);
             setTimeout(() => {
                 window.print();
             }, 500);

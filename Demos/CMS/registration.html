@@ -101,6 +101,18 @@
                                 </select>
                             </div>
 
+                            <div class="form-group mb-24pt">
+                                <label class="form-label" for="course">Curso Asignado (Opcional):</label>
+                                <div class="d-flex">
+                                    <select id="course" class="form-control custom-select" style="flex:1;">
+                                        <option value="" selected>Sin curso asignado</option>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-primary ml-2" id="btnAddCourse" title="Crear Nuevo Curso">
+                                        <i class="material-icons">add</i>
+                                    </button>
+                                </div>
+                            </div>
+
                             <div class="page-separator">
                                 <div class="page-separator__text">Plan de Cuotas</div>
                             </div>
@@ -246,6 +258,33 @@
 
             // Cargar datos al inicio
             checkRoleAndUI();
+            loadCourses();
+
+            // Evento para botón Crear Curso
+            $('#btnAddCourse').on('click', async function() {
+                var courseName = prompt("Ingrese el nombre del nuevo curso:");
+                if (courseName && courseName.trim() !== '') {
+                    try {
+                        const { data, error } = await supabaseClient.from('courses').insert([{ name: courseName.trim() }]).select();
+                        if (error) throw error;
+                        await loadCourses(data[0].id);
+                    } catch(err) {
+                        alert("Error al crear curso: " + err.message);
+                    }
+                }
+            });
+
+            async function loadCourses(selectedId = null) {
+                const { data: courses, error } = await supabaseClient.from('courses').select('*').order('name');
+                if (courses) {
+                    var select = $('#course');
+                    select.html('<option value="" selected>Sin curso asignado</option>');
+                    courses.forEach(c => {
+                        select.append(`<option value="${c.id}">${c.name}</option>`);
+                    });
+                    if (selectedId) select.val(selectedId);
+                }
+            }
 
             $('#enrollmentForm input, #enrollmentForm select').on('input change', function() {
                 $('#errorAlert').addClass('d-none');
@@ -256,12 +295,14 @@
                 setLoading(true);
                 $('#successAlert, #errorAlert').addClass('d-none');
 
+                const courseId = $('#course').val();
                 const studentData = {
                     dni: $('#dni').val(),
                     full_name: $('#fullName').val(),
                     email: $('#email').val(),
                     phone: $('#phone').val(),
-                    branch_id: $('#branch').val()
+                    branch_id: $('#branch').val(),
+                    course_id: courseId || null
                 };
 
                 const amount = parseFloat($('#amount').val());

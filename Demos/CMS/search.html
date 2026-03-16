@@ -277,6 +277,44 @@
         </div>
     </div>
 
+    <!-- MODAL: Registrar Cobro (Parcial o Total) -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrar Cobro</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p>Monto restante: <strong id="paymentModalTotalStr" class="text-danger">$0</strong></p>
+                    <div class="form-group mb-0">
+                        <label class="form-label" for="paymentModalAmount">¿Cuánto está pagando el alumno ahora?</label>
+                        <div class="input-group input-group-merge">
+                            <input type="number" id="paymentModalAmount" class="form-control form-control-prepended" min="1" step="1">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">$</div>
+                            </div>
+                        </div>
+                        <small class="text-muted">Si el monto es menor al restante, la cuota quedará como "Parcial".</small>
+                    </div>
+                    <input type="hidden" id="paymentModalId">
+                    <input type="hidden" id="paymentModalNum">
+                    <input type="hidden" id="paymentModalName">
+                    <input type="hidden" id="paymentModalDni">
+                    <input type="hidden" id="paymentModalDate">
+                    <input type="hidden" id="paymentModalTotalInstalments">
+                    <input type="hidden" id="paymentModalTotalAmount">
+                    <input type="hidden" id="paymentModalPaidAmount">
+                    <input type="hidden" id="paymentModalRemainingAmount">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmPayment()">Confirmar Cobro</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: Editar Alumno -->
     <div class="modal fade" id="editStudentModal" tabindex="-1">
         <div class="modal-dialog">
@@ -350,7 +388,7 @@
         const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+        const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
 
         // Current student context
         var currentStudent = null;
@@ -580,14 +618,23 @@
             installments.forEach(function (item) {
                 var isPaid = item.status === 'pagado';
                 var isAnulado = item.status === 'anulado';
-                if (!isPaid && !isAnulado) totalDebt += parseFloat(item.amount);
+                var isParcial = item.status === 'parcial';
+                
+                var amountDue = parseFloat(item.amount);
+                var paidAmount = parseFloat(item.paid_amount || 0);
+                var remaining = amountDue - paidAmount;
+
+                if (!isPaid && !isAnulado) totalDebt += remaining;
 
                 var statusBadge;
                 if (isPaid) statusBadge = '<span class="badge badge-success">PAGADO</span>';
                 else if (isAnulado) statusBadge = '<span class="badge badge-dark">ANULADO</span>';
+                else if (isParcial) statusBadge = '<span class="badge badge-info">PARCIAL</span>';
                 else statusBadge = '<span class="badge badge-warning">PENDIENTE</span>';
 
                 var formattedAmount = fmt.format(item.amount);
+                var formattedRemaining = isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '';
+
                 var actionBtn = '';
 
                 if (isPaid) {
@@ -603,6 +650,7 @@
                     actionBtn = '<button class="btn btn-sm btn-primary btn-cobrar"' +
                         ' data-id="' + item.id + '"' +
                         ' data-amount="' + item.amount + '"' +
+                        ' data-paid="' + paidAmount + '"' +
                         ' data-num="' + item.installment_number + '"' +
                         ' data-total="' + totalCount + '"' +
                         ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
@@ -614,7 +662,7 @@
                     '<tr>' +
                     '<td><strong class="js-lists-values-num">' + item.installment_number + ' de ' + totalCount + '</strong></td>' +
                     '<td>' + item.due_date + '</td>' +
-                    '<td>' + formattedAmount + '</td>' +
+                    '<td>' + formattedAmount + formattedRemaining + '</td>' +
                     '<td>' + statusBadge + '</td>' +
                     '<td class="text-right">' + actionBtn + '</td>' +
                     '</tr>'
@@ -626,7 +674,7 @@
                 e.preventDefault();
                 var btn = $(this);
                 payInstallment(
-                    btn.data('id'), btn.data('amount'), btn.data('num'),
+                    btn.data('id'), btn.data('amount'), btn.data('paid'), btn.data('num'),
                     btn.data('name'), btn.data('dni'), btn.data('date'), btn.data('total')
                 );
             });
@@ -636,42 +684,97 @@
                 e.preventDefault();
                 e.stopPropagation();
                 var btn = $(this);
-                printTicket(btn.data('id'), btn.data('num'), btn.data('name'),
-                    btn.data('dni'), btn.data('date'), btn.data('amount'), btn.data('total'));
+                printTicket(
+                    btn.data('id'), btn.data('num'), btn.data('name'),
+                    btn.data('dni'), btn.data('date'), 
+                    btn.data('amount'), btn.data('total'), btn.data('amount'), 0
+                );
             });
 
             $('#totalDebt').text(fmt.format(totalDebt));
         }
 
         // ═══════════════════════════════════════
-        //  PAY INSTALLMENT (with toast + auto-ticket)
+        //  PAY INSTALLMENT (Modal wrapper)
         // ═══════════════════════════════════════
-        async function payInstallment(id, amount, num, name, dni, date, total) {
-            if (!confirm('¿Confirmar cobro de ' + fmt.format(amount) + '?')) return;
+        function payInstallment(id, totalAmount, paidAmount, num, name, dni, date, totalInstallments) {
+            paidAmount = parseFloat(paidAmount || 0);
+            totalAmount = parseFloat(totalAmount || 0);
+            var remaining = totalAmount - paidAmount;
+            
+            $('#paymentModalId').val(id);
+            $('#paymentModalTotalAmount').val(totalAmount);
+            $('#paymentModalPaidAmount').val(paidAmount);
+            $('#paymentModalRemainingAmount').val(remaining);
+            $('#paymentModalNum').val(num);
+            $('#paymentModalName').val(name);
+            $('#paymentModalDni').val(dni);
+            $('#paymentModalDate').val(date);
+            $('#paymentModalTotalInstalments').val(totalInstallments);
+
+            $('#paymentModalTotalStr').text(fmt.format(remaining));
+            $('#paymentModalAmount').val(remaining);
+            $('#paymentModal').modal('show');
+        }
+
+        async function confirmPayment() {
+            var payingStr = $('#paymentModalAmount').val();
+            if(!payingStr) { showToast('Ingresa un monto válido', 'error'); return; }
+            var payingNow = parseFloat(payingStr);
+            var remaining = parseFloat($('#paymentModalRemainingAmount').val());
+            var currentPaid = parseFloat($('#paymentModalPaidAmount').val());
+            
+            if(payingNow <= 0 || payingNow > remaining) {
+                showToast("El monto debe ser numérico y no superar el saldo pendiente de " + fmt.format(remaining), 'error');
+                return;
+            }
+
+            var id = $('#paymentModalId').val();
+            var newTotalPaid = currentPaid + payingNow;
+            var totalAmount = parseFloat($('#paymentModalTotalAmount').val());
+            var newStatus = (newTotalPaid >= totalAmount) ? 'pagado' : 'parcial';
+
+            var btnConfirm = $('#paymentModal').find('.btn-primary');
+            btnConfirm.prop('disabled', true).text('Procesando...');
 
             try {
                 var res = await supabaseClient.from('installments')
-                    .update({ status: 'pagado', paid_at: new Date() }).eq('id', id);
+                    .update({ status: newStatus, paid_at: new Date(), paid_amount: newTotalPaid }).eq('id', id);
                 if (res.error) throw res.error;
 
-                // Audit log
                 await supabaseClient.from('audit_log').insert({
                     user_id: currentUserId,
                     action: 'pago',
                     entity_type: 'installment',
                     entity_id: id,
-                    details: { student_name: name, dni: dni, installment_number: num, amount: parseFloat(amount) }
+                    details: { 
+                        student_name: $('#paymentModalName').val(), 
+                        dni: $('#paymentModalDni').val(), 
+                        installment_number: $('#paymentModalNum').val(), 
+                        amount: payingNow,
+                        status: newStatus 
+                    }
                 });
 
-                showToast('¡Pago de ' + fmt.format(amount) + ' registrado exitosamente!', 'success');
+                showToast('¡Pago de ' + fmt.format(payingNow) + ' registrado exitosamente!', 'success');
 
-                // Auto-print ticket
-                printTicket(id, num, name, dni, date, amount, total);
+                printTicket(
+                    id, 
+                    $('#paymentModalNum').val(), 
+                    $('#paymentModalName').val(), 
+                    $('#paymentModalDni').val(), 
+                    $('#paymentModalDate').val(), 
+                    payingNow,
+                    $('#paymentModalTotalInstalments').val()
+                );
 
-                // Reload data
+                $('#paymentModal').modal('hide');
                 doSearch($('#searchInput').val());
             } catch (err) {
                 showToast('Error al registrar el pago.', 'error');
+                console.error(err);
+            } finally {
+                btnConfirm.prop('disabled', false).text('Confirmar Cobro');
             }
         }
 
@@ -786,15 +889,17 @@
             $('#loader').addClass('d-none');
         }
 
-        function printTicket(id, num, name, dni, date, amount, total) {
+        function printTicket(id, num, name, dni, date, amountPaid, totalCount, totalInstallmentAmount, remainingAmount) {
             var params = new URLSearchParams({
                 id: id,
                 num: num,
                 name: name,
                 dni: dni,
                 date: date,
-                amount: amount,
-                total: total || ''
+                amount: amountPaid,
+                total: totalCount || '',
+                totalAmount: totalInstallmentAmount || amountPaid,
+                remaining: remainingAmount || 0
             });
             window.open('ticket.html?' + params.toString(), 'Comprobante', 'width=600,height=700');
         }

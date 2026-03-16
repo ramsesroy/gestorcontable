@@ -205,7 +205,7 @@
 
                 const tbody = document.getElementById('reportItems');
                 let grandTotal = 0;
-                const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+                const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
 
                 if (logs && logs.length > 0) {
                     logs.forEach(log => {
