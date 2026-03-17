@@ -28,7 +28,6 @@ var URLS_TO_CACHE = [
 self.addEventListener('install', function (event) {
     event.waitUntil(
         caches.open(CACHE_NAME).then(function (cache) {
-            console.log('[SW] Caching app shell');
             return cache.addAll(URLS_TO_CACHE);
         })
     );
