@@ -617,7 +617,18 @@
                 tbody.html('<tr><td colspan="2" class="text-center text-50">Error al cargar sucursales.</td></tr>');
                 return;
             }
+
+            // Deduplicate by name just in case there are duplicate records in DB
+            const uniqueBranches = [];
+            const branchMap = new Map();
             branches.forEach(b => {
+                if (!branchMap.has(b.name)) {
+                    branchMap.set(b.name, true);
+                    uniqueBranches.push(b);
+                }
+            });
+
+            uniqueBranches.forEach(b => {
                 tbody.append(`
                     <tr>
                         <td><strong>${b.name}</strong></td>
