@@ -87,8 +87,7 @@
 
             <!-- Navbar -->
             <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
-                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button"
-                    data-toggle="sidebar">
+                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button" data-toggle="sidebar">
                     <span class="material-icons">short_text</span>
                 </button>
                 <a href="index.html" class="navbar-brand mr-16pt">
@@ -110,7 +109,7 @@
                         <div class="d-flex flex-column flex-md-row align-items-center">
                             <div class="flex">
                                 <h2 class="mb-0">Dashboard Administrativo</h2>
-                                <p class="lead text-50">Control global de ingresos y alumnos en las 4 sucursales.</p>
+                                <p class="lead text-50">Control global de ingresos y alumnos en las sucursales.</p>
                             </div>
                         </div>
                     </div>
@@ -156,7 +155,7 @@
                         <div class="col-lg-4 col-md-6 mb-24pt">
                             <div class="card card-body flex-row align-items-center m-0">
                                 <div class="flex">
-                                    <h4 class="mb-0" id="totalIncome">$0.00</h4>
+                                    <h4 class="mb-0" id="totalIncome">Gs. 0</h4>
                                     <p class="text-50 mb-0">Ingresos del Período</p>
                                 </div>
                                 <div class="avatar avatar-sm ml-12pt">
@@ -300,10 +299,13 @@
                                                 <th>Concepto</th>
                                                 <th class="text-right">Monto</th>
                                                 <th class="text-right">Fecha</th>
+                                                <th class="text-right">Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody id="billingBreakdownBody">
-                                            <tr><td colspan="5" class="text-center text-50">Cargando desglose...</td></tr>
+                                            <tr>
+                                                <td colspan="6" class="text-center text-50">Cargando desglose...</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -351,7 +353,7 @@
                                     <span class="avatar-title rounded bg-soft-success text-success"><i
                                             class="material-icons">attach_money</i></span>
                                 </div>
-                                <h2 class="text-success" id="cajeroTodayTotal">$0</h2>
+                                <h2 class="text-success" id="cajeroTodayTotal">Gs. 0</h2>
                                 <p class="text-50 mb-0">Sucursal: Cobros Hoy</p>
                             </div>
                         </div>
@@ -371,7 +373,7 @@
                                     <span class="avatar-title rounded bg-soft-warning text-warning"><i
                                             class="material-icons">date_range</i></span>
                                 </div>
-                                <h2 class="text-warning" id="cajeroMonthTotal">$0</h2>
+                                <h2 class="text-warning" id="cajeroMonthTotal">Gs. 0</h2>
                                 <p class="text-50 mb-0">Sucursal: Total Mes</p>
                             </div>
                         </div>
@@ -433,7 +435,8 @@
                         </li>
                         <li class="sidebar-menu-item">
                             <a class="sidebar-menu-button" href="courses.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
+                                <span
+                                    class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
                                 <span class="sidebar-menu-text">Cursos</span>
                             </a>
                         </li>
@@ -445,13 +448,15 @@
                         </li>
                         <li class="sidebar-menu-item">
                             <a class="sidebar-menu-button" href="report.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
+                                <span
+                                    class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
                                 <span class="sidebar-menu-text">Reportes</span>
                             </a>
                         </li>
                         <li class="sidebar-menu-item mt-4">
                             <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
+                                <span
+                                    class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
                                 <span class="sidebar-menu-text">Cerrar Sesión</span>
                             </a>
                         </li>
@@ -734,8 +739,9 @@
             tbody.html('<tr><td colspan="5" class="text-center text-50">Cargando...</td></tr>');
 
             try {
+                // Expanded query to get all data needed for the ticket
                 var { data, error } = await supabaseClient.from('installments')
-                    .select('amount, paid_at, installment_number, students!inner(full_name, branches(name))')
+                    .select('id, amount, paid_at, installment_number, remaining_amount, students!inner(full_name, dni, installments_count, branches(name), courses(name))')
                     .eq('status', 'pagado')
                     .gte('paid_at', isoFrom)
                     .lte('paid_at', isoTo)
@@ -750,11 +756,13 @@
                 }
 
                 data.forEach(p => {
-                    var branch = (p.students && p.students.branches) ? p.students.branches.name : 'N/A';
-                    var student = p.students ? p.students.full_name : 'N/A';
-                    var concepto = 'Cuota ' + p.installment_number;
-                    var monto = fmt.format(p.amount);
-                    var fecha = p.paid_at ? new Date(p.paid_at).toLocaleDateString('es-AR') : 'N/A';
+                    const s = p.students || {};
+                    const branch = (s.branches) ? s.branches.name : 'N/A';
+                    const student = s.full_name || 'N/A';
+                    const course = (s.courses) ? s.courses.name : '-';
+                    const concepto = 'Cuota ' + p.installment_number;
+                    const monto = fmt.format(p.amount);
+                    const fecha = p.paid_at ? new Date(p.paid_at).toLocaleDateString('es-AR') : 'N/A';
 
                     tbody.append(`
                         <tr>
@@ -763,6 +771,12 @@
                             <td>${concepto}</td>
                             <td class="text-right text-success"><strong>${monto}</strong></td>
                             <td class="text-right text-50">${fecha}</td>
+                            <td class="text-right">
+                                <button class="btn btn-sm btn-outline-primary" 
+                                    onclick="printTicket('${p.id}', '${p.installment_number}', '${student.replace(/'/g, "\\'")}', '${s.dni || ''}', '${fecha}', '${p.amount}', '${s.installments_count || ''}', '${p.amount}', '${p.remaining_amount || 0}', '${course.replace(/'/g, "\\'")}')">
+                                    <i class="material-icons">receipt</i> Ver Ticket
+                                </button>
+                            </td>
                         </tr>
                     `);
                 });
@@ -805,7 +819,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Ingresos por Sucursal ($)',
+                        label: 'Ingresos por Sucursal (Gs.)',
                         data: branchData,
                         backgroundColor: ['#5567ff', '#00BCD4', '#66BB6A', '#FFA726']
                     }]
@@ -1107,6 +1121,22 @@
                 console.error(err);
                 alert('Error en la actualización: ' + err.message);
             }
+        }
+
+        function printTicket(id, num, name, dni, date, amountPaid, totalCount, totalInstallmentAmount, remainingAmount, course) {
+            var params = new URLSearchParams({
+                id: id,
+                num: num,
+                name: name,
+                dni: dni,
+                date: date,
+                amount: amountPaid,
+                total: totalCount || '',
+                totalAmount: totalInstallmentAmount || amountPaid,
+                remaining: remainingAmount || 0,
+                course: course || '-'
+            });
+            window.open('ticket.html?' + params.toString(), 'Comprobante', 'width=600,height=700');
         }
     </script>
 </body>

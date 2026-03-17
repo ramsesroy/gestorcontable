@@ -201,7 +201,65 @@
                     </div>
                 </div>
 
-                <!-- NEW: Paginated Student List -->
+                <!-- Student Info (Hidden initially) -->
+                <div id="studentCard" class="card mb-32pt d-none">
+                    <div class="card-body d-flex flex-column flex-md-row align-items-center">
+                        <div class="flex">
+                            <h4 id="studentName">—</h4>
+                            <p class="text-50 mb-8pt">
+                                DNI: <span id="studentDni"></span> |
+                                Sucursal: <span id="studentBranch"></span> |
+                                Estado: <span id="studentStatus" class="badge badge-success">activo</span>
+                            </p>
+                            <div id="studentAdditionalInfoContainer" class="alert alert-soft-secondary p-8pt mb-0 d-none">
+                                <small><strong>Datos Adicionales:</strong> <span id="studentAdditionalInfoText"></span></small>
+                            </div>
+                        </div>
+                        <div class="mt-16pt mt-md-0 d-flex align-items-center">
+                            <div class="text-right mr-16pt">
+                                <h3 class="mb-0" id="totalDebt">Gs. 0</h3>
+                                <p class="text-50 mb-0">Deuda Pendiente</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary mr-8pt" id="btnEditStudent">
+                                <i class="material-icons icon--left">edit</i> EDITAR
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" id="btnDeactivateStudent">
+                                <i class="material-icons icon--left">person_off</i> DAR DE BAJA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Installments Table -->
+                <div id="installmentsTable" class="card mb-32pt d-none">
+                    <div class="table-responsive" data-toggle="lists" data-lists-values='["js-lists-values-num"]'>
+                        <table class="table mb-0 thead-border-top-0 table-nowrap">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Vencimiento</th>
+                                    <th>Monto</th>
+                                    <th>Estado</th>
+                                    <th class="text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="list" id="installmentsBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Loader -->
+                <div id="loader" class="text-center mb-32pt d-none">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+
+                <!-- No Results -->
+                <div id="noResults" class="alert alert-soft-warning mb-32pt d-none">
+                    No se encontró ningún alumno con ese criterio.
+                </div>
+
+                <!-- NEW Layout: Paginated Student List at the Bottom -->
                 <div id="studentListSection" class="card mb-32pt">
                     <div class="card-header d-flex align-items-center bg-light">
                         <div class="flex">
@@ -233,61 +291,6 @@
                             <button class="btn btn-sm btn-outline-secondary" id="btnNextPage">Siguiente</button>
                         </div>
                     </div>
-                </div>
-
-                <!-- Student Info (Hidden initially) -->
-                <div id="studentCard" class="card mb-32pt d-none">
-                    <div class="card-body d-flex flex-column flex-md-row align-items-center">
-                        <div class="flex">
-                            <h4 id="studentName">—</h4>
-                            <p class="text-50 mb-0">
-                                DNI: <span id="studentDni"></span> |
-                                Sucursal: <span id="studentBranch"></span> |
-                                Estado: <span id="studentStatus" class="badge badge-success">activo</span>
-                            </p>
-                        </div>
-                        <div class="mt-16pt mt-md-0 d-flex align-items-center">
-                            <div class="text-right mr-16pt">
-                                <h3 class="mb-0" id="totalDebt">$0.00</h3>
-                                <p class="text-50 mb-0">Deuda Pendiente</p>
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary mr-8pt" id="btnEditStudent">
-                                <i class="material-icons icon--left">edit</i> EDITAR
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" id="btnDeactivateStudent">
-                                <i class="material-icons icon--left">person_off</i> DAR DE BAJA
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Installments Table -->
-                <div id="installmentsTable" class="card mb-0 d-none">
-                    <div class="table-responsive" data-toggle="lists" data-lists-values='["js-lists-values-num"]'>
-                        <table class="table mb-0 thead-border-top-0 table-nowrap">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Vencimiento</th>
-                                    <th>Monto</th>
-                                    <th>Estado</th>
-                                    <th class="text-right">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody class="list" id="installmentsBody">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Loader -->
-                <div id="loader" class="text-center d-none">
-                    <div class="spinner-border text-primary" role="status"></div>
-                </div>
-
-                <!-- No Results -->
-                <div id="noResults" class="alert alert-soft-warning d-none">
-                    No se encontró ningún alumno con ese criterio.
                 </div>
 
             </div>
@@ -418,6 +421,10 @@
                     <div class="form-group">
                         <label class="form-label">Monto de Cuota (afecta cuotas futuras pendientes)</label>
                         <input type="number" class="form-control" id="editAmount" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Datos Adicionales</label>
+                        <textarea id="editAdditionalInfo" class="form-control" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -764,6 +771,14 @@
                 $('#studentBranch').text(currentStudent.branchName + ' | ' + courseText);
                 var statusClass = student.status === 'activo' ? 'badge-success' : 'badge-danger';
                 $('#studentStatus').text(student.status.toUpperCase()).removeClass('badge-success badge-danger').addClass(statusClass);
+
+                if (student.additional_info) {
+                    $('#studentAdditionalInfoText').text(student.additional_info);
+                    $('#studentAdditionalInfoContainer').removeClass('d-none');
+                } else {
+                    $('#studentAdditionalInfoContainer').addClass('d-none');
+                }
+
                 $('#studentCard').removeClass('d-none');
 
                 // Toggle deactivate button visibility
@@ -990,6 +1005,7 @@
             $('#editEmail').val(currentStudent.email || '');
             $('#editPhone').val(currentStudent.phone || '');
             $('#editAmount').val(currentStudent.monthly_amount || '');
+            $('#editAdditionalInfo').val(currentStudent.additional_info || '');
             $('#editStudentModal').modal('show');
         }
 
@@ -1004,7 +1020,12 @@
 
             try {
                 // Update student record
-                var updateData = { full_name: newName, email: newEmail, phone: newPhone };
+                var updateData = { 
+                    full_name: newName, 
+                    email: newEmail, 
+                    phone: newPhone,
+                    additional_info: $('#editAdditionalInfo').val()
+                };
                 var res = await supabaseClient.from('students').update(updateData).eq('id', sid);
                 if (res.error) throw res.error;
 
