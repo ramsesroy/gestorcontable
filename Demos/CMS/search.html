@@ -111,6 +111,22 @@
         .search-wrapper {
             position: relative;
         }
+
+        /* Status dots for student list */
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-up-to-date { background-color: #27ae60; }
+        .status-debtor { background-color: #e74c3c; }
+
+        .student-list-row:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -181,6 +197,40 @@
                             <select id="courseFilter" class="form-control">
                                 <option value="">Todos los cursos</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Paginated Student List -->
+                <div id="studentListSection" class="card mb-32pt">
+                    <div class="card-header d-flex align-items-center bg-light">
+                        <div class="flex">
+                            <h4 class="card-title">Listado de Alumnos</h4>
+                            <p class="card-subtitle text-50 small">Explorá la base de datos completa</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table mb-0 thead-border-top-0 table-nowrap">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>DNI</th>
+                                    <th>Sucursal / Curso</th>
+                                    <th class="text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentListBody">
+                                <tr>
+                                    <td colspan="4" class="text-center text-50 p-4">Cargando alumnos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer p-8pt d-flex align-items-center justify-content-between">
+                        <span class="text-50 small ml-8pt" id="pageIndicator">Página 1</span>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary" id="btnPrevPage" disabled>Anterior</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="btnNextPage">Siguiente</button>
                         </div>
                     </div>
                 </div>
@@ -420,6 +470,60 @@
 
         // Current student context
         var currentStudent = null;
+        var currentPage = 0;
+        var pageSize = 10;
+
+        async function loadStudentList() {
+            const tbody = $('#studentListBody');
+            const courseId = $('#courseFilter').val();
+            const from = currentPage * pageSize;
+            const to = from + pageSize - 1;
+
+            try {
+                let query = supabaseClient.from('students')
+                    .select('*, branches(name), courses(name)')
+                    .eq('status', 'activo')
+                    .order('full_name', { ascending: true })
+                    .range(from, to);
+
+                if (courseId) {
+                    query = query.eq('course_id', courseId);
+                }
+
+                const { data: students, error } = await query;
+                if (error) throw error;
+
+                tbody.empty();
+                if (!students || students.length === 0) {
+                    tbody.append('<tr><td colspan="4" class="text-center text-50 p-4">No se encontraron alumnos.</td></tr>');
+                    $('#btnNextPage').prop('disabled', true);
+                } else {
+                    students.forEach(s => {
+                        const branchName = s.branches ? s.branches.name : 'N/A';
+                        const courseName = s.courses ? s.courses.name : 'Sin curso';
+                        tbody.append(`
+                            <tr class="student-list-row" onclick="doSearch('${s.dni}')">
+                                <td><strong>${s.full_name}</strong></td>
+                                <td>${s.dni}</td>
+                                <td><span class="text-50 small">${branchName} / ${courseName}</span></td>
+                                <td class="text-right">
+                                    <button class="btn btn-sm btn-outline-primary">Ver</button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                    // Enable/disable navigation based on results length
+                    $('#btnNextPage').prop('disabled', students.length < pageSize);
+                }
+
+                $('#btnPrevPage').prop('disabled', currentPage === 0);
+                $('#pageIndicator').text(`Página ${currentPage + 1}`);
+
+            } catch (err) {
+                console.error(err);
+                tbody.html('<tr><td colspan="4" class="text-center text-danger p-4">Error al cargar la lista.</td></tr>');
+            }
+        }
 
         // Check authentication
         supabaseClient.auth.getSession().then(({ data: { session } }) => {
@@ -515,7 +619,27 @@
                 if(val) doSearch(val);
                 else if($(this).val()) fetchSuggestions(''); // Show students in this course
                 else $('#searchSuggestions').hide();
+                
+                // Also reload the list with filter
+                currentPage = 0;
+                loadStudentList();
             });
+
+            // Pagination buttons
+            $('#btnPrevPage').click(function() {
+                if(currentPage > 0) {
+                    currentPage--;
+                    loadStudentList();
+                }
+            });
+
+            $('#btnNextPage').click(function() {
+                currentPage++;
+                loadStudentList();
+            });
+
+            // Initial load
+            loadStudentList();
         });
 
         async function loadCourses() {

@@ -383,14 +383,20 @@
                 if (id) {
                     const { error } = await supabaseClient.from('courses').update({ name }).eq('id', id);
                     if (error) throw error;
+                    alert('Curso actualizado correctamente.');
                 } else {
                     const { error } = await supabaseClient.from('courses').insert([{ name }]);
                     if (error) throw error;
+                    alert('Curso creado correctamente.');
                 }
                 $('#courseModal').modal('hide');
                 await loadCourses();
             } catch (err) {
-                alert('Error al guardar: ' + err.message);
+                if (err.code === '23505') {
+                    alert('Error: Ya existe un curso con ese nombre.');
+                } else {
+                    alert('Error al guardar: ' + err.message);
+                }
             }
         };
 
