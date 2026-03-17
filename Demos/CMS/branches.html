@@ -251,8 +251,11 @@
             filtered.forEach(b => {
                 const date = new Date(b.created_at).toLocaleDateString();
                 const actionBtn = window.isAdmin ? `
-                    <button class="btn btn-sm btn-outline-primary" onclick="openBranchModal('${b.id}', '${b.name}')">
+                    <button class="btn btn-sm btn-outline-primary" onclick="openBranchModal('${b.id}', '${b.name.replace(/'/g, "\\'")}')">
                         <i class="material-icons">edit</i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger ml-4pt" onclick="deleteBranch('${b.id}', '${b.name.replace(/'/g, "\\'")}')">
+                        <i class="material-icons">delete</i>
                     </button>
                 ` : '<span class="text-muted small">Solo lectura</span>';
 
@@ -283,14 +286,34 @@
                 if (id) {
                     const { error } = await supabaseClient.from('branches').update({ name }).eq('id', id);
                     if (error) throw error;
+                    alert('Sucursal actualizada correctamente.');
                 } else {
                     const { error } = await supabaseClient.from('branches').insert([{ name }]);
                     if (error) throw error;
+                    alert('Sucursal creada correctamente.');
                 }
                 $('#branchModal').modal('hide');
                 await loadBranches();
             } catch (err) {
-                alert('Error al guardar: ' + err.message);
+                if (err.code === '23505') {
+                    alert('Error: Ya existe una sucursal con ese nombre.');
+                } else {
+                    alert('Error al guardar: ' + err.message);
+                }
+            }
+        };
+
+        window.deleteBranch = async function(id, name) {
+            if (!confirm(`¿Estás seguro de que deseas eliminar la sucursal "${name}"?\nEsta acción no se puede deshacer y fallará si hay alumnos o pagos vinculados.`)) return;
+
+            try {
+                const { error } = await supabaseClient.from('branches').delete().eq('id', id);
+                if (error) throw error;
+                alert('Sucursal eliminada correctamente.');
+                await loadBranches();
+            } catch (err) {
+                alert('No se pudo eliminar la sucursal. Verifique que no tenga alumnos o datos asociados.');
+                console.error(err);
             }
         };
 
