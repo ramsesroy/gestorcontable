@@ -87,6 +87,61 @@
             color: #999;
         }
 
+        .no-print-area {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid #eee;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-generate {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-generate:hover {
+            background: #218838;
+        }
+
+        .btn-back {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
         @media print {
             body {
                 padding: 0;
@@ -105,7 +160,41 @@
     </style>
 </head>
 
-<body>
+<body class="bg-light">
+    <!-- Selector UI (Hidden by default) -->
+    <div id="selectorUI" class="no-print-area no-print" style="display:none;">
+        <h2 style="margin-top:0; text-align:center;">Generar Reporte</h2>
+        <p style="text-align:center; color:#666; font-size:14px; margin-bottom:25px;">Seleccione los parámetros para el cierre de caja</p>
+        
+        <div class="form-group">
+            <label>Sucursal:</label>
+            <select id="selBranch" class="form-control">
+                <option value="">Cargando sucursales...</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Desde:</label>
+            <input type="date" id="selFrom" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label>Hasta:</label>
+            <input type="date" id="selTo" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de Reporte:</label>
+            <select id="selType" class="form-control">
+                <option value="diario">Cierre Diario</option>
+                <option value="semanal">Cierre Semanal</option>
+                <option value="mensual">Cierre Mensual</option>
+            </select>
+        </div>
+
+        <button class="btn-generate" onclick="generateReport()">GENERAR REPORTE</button>
+        <a href="dashboard.html" class="btn-back">Volver al Dashboard</a>
+    </div>
     <div id="loader" class="loader">Generando reporte, por favor espere...</div>
 
     <div id="content" style="display:none;">
@@ -164,10 +253,28 @@
             const type = params.get('type') || 'diario';
 
             if (!branchId || !from || !to) {
-                document.getElementById('loader').textContent = 'Error: Faltan parámetros de consulta.';
+                // Missing params: Show Selector UI
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('selectorUI').style.display = 'block';
+                
+                // Populate branches
+                const { data: branches } = await supabaseClient.from('branches').select('*').order('name');
+                const sel = document.getElementById('selBranch');
+                sel.innerHTML = '<option value="">Seleccione Sucursal</option>';
+                if (branches) {
+                    branches.forEach(b => {
+                        sel.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                    });
+                }
+
+                // Set default dates (today)
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('selFrom').value = today;
+                document.getElementById('selTo').value = today;
                 return;
             }
 
+            // ... rest of the existing logic ...
             try {
                 // 1. Get Branch Name
                 const { data: branch } = await supabaseClient.from('branches').select('name').eq('id', branchId).single();
@@ -175,9 +282,9 @@
 
                 // 2. Format Period Text
                 let periodType = type.toUpperCase();
-                if (periodType === 'TODAY') periodType = 'HOY';
-                if (periodType === 'WEEK') periodType = 'SEMANA';
-                if (periodType === 'MONTH') periodType = 'MES';
+                if (periodType === 'TODAY' || periodType === 'DIARIO') periodType = 'HOY';
+                if (periodType === 'WEEK' || periodType === 'SEMANAL') periodType = 'SEMANA';
+                if (periodType === 'MONTH' || periodType === 'MENSUAL') periodType = 'MES';
 
                 document.getElementById('reportPeriod').textContent = `Periodo: ${from} al ${to} (${periodType})`;
                 document.getElementById('printDate').textContent = new Date().toLocaleString('es-AR');
@@ -244,6 +351,27 @@
                 document.getElementById('loader').textContent = 'Error al generar el reporte: ' + err.message;
             }
         });
+
+        function generateReport() {
+            const branchId = document.getElementById('selBranch').value;
+            const from = document.getElementById('selFrom').value;
+            const to = document.getElementById('selTo').value;
+            const type = document.getElementById('selType').value;
+
+            if (!branchId || !from || !to) {
+                alert('Por favor complete todos los campos.');
+                return;
+            }
+
+            const params = new URLSearchParams({
+                branch_id: branchId,
+                from: from,
+                to: to,
+                type: type
+            });
+
+            window.location.href = 'report.html?' + params.toString();
+        }
     </script>
 </body>
 
