@@ -741,7 +741,7 @@
             try {
                 // Expanded query to get all data needed for the ticket
                 var { data, error } = await supabaseClient.from('installments')
-                    .select('id, amount, paid_at, installment_number, remaining_amount, students!inner(full_name, dni, branches(name), courses(name))')
+                    .select('id, amount, paid_at, installment_number, students!inner(full_name, dni, branches(name), courses(name))')
                     .eq('status', 'pagado')
                     .gte('paid_at', isoFrom)
                     .lte('paid_at', isoTo)
@@ -773,7 +773,7 @@
                             <td class="text-right text-50">${fecha}</td>
                             <td class="text-right">
                                 <button class="btn btn-sm btn-outline-primary" 
-                                    onclick="printTicket('${p.id}', '${p.installment_number}', '${student.replace(/'/g, "\\'")}', '${s.dni || ''}', '${fecha}', '${p.amount}', '', '${p.amount}', '${p.remaining_amount || 0}', '${course.replace(/'/g, "\\'")}')">
+                                    onclick="printTicket('${p.id}', '${p.installment_number}', '${student.replace(/'/g, "\\'")}', '${s.dni || ''}', '${fecha}', '${p.amount}', '', '${p.amount}', '0', '${course.replace(/'/g, "\\'")}')">
                                     <i class="material-icons">receipt</i> Ver Ticket
                                 </button>
                             </td>
