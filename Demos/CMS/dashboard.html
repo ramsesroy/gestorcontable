@@ -87,7 +87,7 @@
 
             <!-- Navbar -->
             <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
-                <button class="navbar-toggler w-auto mr-16pt d-block d-lg-none rounded-0" type="button"
+                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button"
                     data-toggle="sidebar">
                     <span class="material-icons">short_text</span>
                 </button>
@@ -557,7 +557,7 @@
 
 
         async function loadMassiveUpdateBranches() {
-            var { data: branches } = await supabaseClient.from('branches').select('*');
+            var { data: branches } = await supabaseClient.from('branches').select('*').eq('active', true);
             if (branches) {
                 const uniqueBranches = [];
                 const branchMap = new Map();
@@ -570,7 +570,7 @@
                 var select = $('#massUpdateBranch');
                 select.html('<option value="all">Todas las Sucursales</option>');
                 uniqueBranches.forEach(b => {
-                    select.append('<option value="' + b.id + '">' + b.name + '</option>');
+                    select.append(`<option value="${b.id}">${b.name}</option>`);
                 });
             }
         }

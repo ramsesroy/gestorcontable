@@ -41,7 +41,7 @@
 
             <!-- Navbar -->
             <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
-                <button class="navbar-toggler w-auto mr-16pt d-block d-lg-none rounded-0" type="button"
+                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button"
                     data-toggle="sidebar">
                     <span class="material-icons">short_text</span>
                 </button>
@@ -293,7 +293,7 @@
 
         $(document).ready(async function () {
             // Cargar Sucursales
-            const { data: branches, error: bError } = await supabaseClient.from('branches').select('*');
+            const { data: branches, error: bError } = await supabaseClient.from('branches').select('*').eq('active', true);
             if (branches) {
                 // Ensure branches are unique by name to avoid duplicates if DB has redundant data
                 const uniqueBranches = [];

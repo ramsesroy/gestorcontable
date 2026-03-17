@@ -41,7 +41,7 @@
 
             <!-- Navbar -->
             <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
-                <button class="navbar-toggler w-auto mr-16pt d-block d-lg-none rounded-0" type="button"
+                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button"
                     data-toggle="sidebar">
                     <span class="material-icons">short_text</span>
                 </button>
@@ -241,7 +241,17 @@
             const tbody = $('#branchTableBody');
             tbody.empty();
 
-            const filtered = branchesData.filter(b => b.name.toLowerCase().includes(filter.toLowerCase()));
+            // Frontend deduplication as a safety measure
+            const uniqueMap = new Map();
+            branchesData.forEach(b => {
+                const stdName = b.name.trim().toLowerCase();
+                if (!uniqueMap.has(stdName)) {
+                    uniqueMap.set(stdName, b);
+                }
+            });
+
+            const uniqueBranches = Array.from(uniqueMap.values());
+            const filtered = uniqueBranches.filter(b => b.name.toLowerCase().includes(filter.toLowerCase()));
 
             if (filtered.length === 0) {
                 tbody.append('<tr><td colspan="3" class="text-center">No se encontraron sucursales.</td></tr>');
@@ -250,18 +260,34 @@
 
             filtered.forEach(b => {
                 const date = new Date(b.created_at).toLocaleDateString();
+                const isActive = b.active !== false; // Default to true if undefined
+                const statusBadge = isActive ? 
+                    '<span class="badge badge-soft-success">Activa</span>' : 
+                    '<span class="badge badge-soft-secondary">Archivada</span>';
+                
+                const toggleBtn = window.isAdmin ? `
+                    <button class="btn btn-sm ${isActive ? 'btn-outline-warning' : 'btn-outline-success'} ml-4pt" 
+                            onclick="toggleBranchStatus('${b.id}', ${isActive}, '${b.name.replace(/'/g, "\\'")}')"
+                            title="${isActive ? 'Archivar' : 'Activar'}">
+                        <i class="material-icons">${isActive ? 'archive' : 'unarchive'}</i>
+                    </button>
+                ` : '';
+
                 const actionBtn = window.isAdmin ? `
                     <button class="btn btn-sm btn-outline-primary" onclick="openBranchModal('${b.id}', '${b.name.replace(/'/g, "\\'")}')">
                         <i class="material-icons">edit</i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger ml-4pt" onclick="deleteBranch('${b.id}', '${b.name.replace(/'/g, "\\'")}')">
-                        <i class="material-icons">delete</i>
-                    </button>
+                    ${toggleBtn}
                 ` : '<span class="text-muted small">Solo lectura</span>';
 
                 tbody.append(`
-                    <tr>
-                        <td><strong>${b.name}</strong></td>
+                    <tr style="${isActive ? '' : 'opacity: 0.6;'}">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <strong>${b.name}</strong>
+                                <span class="ml-8pt">${statusBadge}</span>
+                            </div>
+                        </td>
                         <td><span class="text-50 small">${date}</span></td>
                         <td class="text-right">${actionBtn}</td>
                     </tr>
@@ -303,16 +329,17 @@
             }
         };
 
-        window.deleteBranch = async function(id, name) {
-            if (!confirm(`¿Estás seguro de que deseas eliminar la sucursal "${name}"?\nEsta acción no se puede deshacer y fallará si hay alumnos o pagos vinculados.`)) return;
+        window.toggleBranchStatus = async function(id, currentStatus, name) {
+            const action = currentStatus ? 'archivar' : 'activar';
+            if (!confirm(`¿Estás seguro de que deseas ${action} la sucursal "${name}"?`)) return;
 
             try {
-                const { error } = await supabaseClient.from('branches').delete().eq('id', id);
+                const { error } = await supabaseClient.from('branches').update({ active: !currentStatus }).eq('id', id);
                 if (error) throw error;
-                alert('Sucursal eliminada correctamente.');
+                alert(`Sucursal ${currentStatus ? 'archivada' : 'activada'} correctamente.`);
                 await loadBranches();
             } catch (err) {
-                alert('No se pudo eliminar la sucursal. Verifique que no tenga alumnos o datos asociados.');
+                alert(`Error al ${action} la sucursal: ` + err.message);
                 console.error(err);
             }
         };
