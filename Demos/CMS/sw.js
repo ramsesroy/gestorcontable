@@ -6,6 +6,8 @@ var URLS_TO_CACHE = [
     './registration.html',
     './search.html',
     './dashboard.html',
+    './courses.html',
+    './branches.html',
     '../../public/css/app.css',
     '../../public/css/material-icons.css',
     '../../public/css/fontawesome.css',

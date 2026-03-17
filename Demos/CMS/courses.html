@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Gestión Académica - CMS Cobranzas</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5567ff">
+
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CRoboto:400,500%7CExo+2:600&display=swap"
+        rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/spinkit.css" rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/perfect-scrollbar.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/material-icons.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-up-to-date { background-color: #27ae60; }
+        .status-debtor { background-color: #e74c3c; }
+        
+        .student-row:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body class="layout-app ">
+    <div class="preloader">
+        <div class="sk-chase">
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div>
+        </div>
+    </div>
+
+    <div class="mdk-drawer-layout js-mdk-drawer-layout" data-push data-responsive-width="992px">
+        <div class="mdk-drawer-layout__content page-content">
+
+            <!-- Navbar -->
+            <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
+                <button class="navbar-toggler w-auto mr-16pt d-block d-lg-none rounded-0" type="button"
+                    data-toggle="sidebar">
+                    <span class="material-icons">short_text</span>
+                </button>
+                <a href="index.html" class="navbar-brand mr-16pt">
+                    <span class="avatar avatar-sm navbar-brand-icon mr-0 mr-lg-8pt">
+                        <span class="avatar-title rounded bg-primary"><img
+                                src="../../public/images/illustration/student/128/white.svg" alt="logo"
+                                class="img-fluid" /></span>
+                    </span>
+                    <span class="d-none d-lg-block">CMS Cobranzas</span>
+                </a>
+            </div>
+
+            <div class="py-32pt bg-alt border-bottom-2">
+                <div class="container page__container">
+                    <div class="d-flex flex-column flex-md-row align-items-center">
+                        <div class="flex">
+                            <h2 class="mb-0">Gestión Académica</h2>
+                            <p class="lead text-50">Administración de cursos y seguimiento de alumnos.</p>
+                        </div>
+                        <div class="ml-auto" id="adminActions">
+                            <!-- Button for Admin only -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-section container page__container">
+                <div class="row">
+                    <!-- Courses Table -->
+                    <div class="col-lg-6 mb-24pt">
+                        <div class="card h-100">
+                            <div class="card-header d-flex align-items-center">
+                                <div class="flex">
+                                    <h4 class="card-title">Listado de Cursos</h4>
+                                </div>
+                            </div>
+                            <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                                <table class="table mb-0 thead-border-top-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Curso</th>
+                                            <th class="text-center">Alumnos</th>
+                                            <th class="text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="courseTableBody">
+                                        <tr>
+                                            <td colspan="3" class="text-center text-50">Cargando cursos...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Students in Course -->
+                    <div class="col-lg-6 mb-24pt">
+                        <div class="card h-100">
+                            <div class="card-header d-flex align-items-center bg-light">
+                                <div class="flex">
+                                    <h4 class="card-title" id="courseDetailTitle">Detalle del Curso</h4>
+                                    <p class="card-subtitle text-50 small" id="courseDetailSubtitle">Seleccione un curso para ver sus alumnos</p>
+                                </div>
+                            </div>
+                            <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                                <table class="table mb-0 thead-border-top-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Alumno</th>
+                                            <th class="text-center">Estado</th>
+                                            <th class="text-right">Perfil</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentTableBody">
+                                        <tr>
+                                            <td colspan="3" class="text-center text-50">Sin selección</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="mdk-drawer js-mdk-drawer" id="default-drawer">
+            <div class="mdk-drawer__content">
+                <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
+                    <a href="index.html" class="sidebar-brand">
+                        <span class="avatar avatar-xl sidebar-brand-icon h-auto">
+                            <span class="avatar-title rounded bg-primary"><img
+                                    src="../../public/images/illustration/student/128/white.svg" class="img-fluid"
+                                    alt="logo" /></span>
+                        </span>
+                        <span>CMS Cobranzas</span>
+                    </a>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="dashboard.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
+                                <span class="sidebar-menu-text">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="registration.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
+                                <span class="sidebar-menu-text">Inscripción</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="search.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span>
+                                <span class="sidebar-menu-text">Cobranzas</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item active">
+                            <a class="sidebar-menu-button" href="courses.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
+                                <span class="sidebar-menu-text">Cursos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="branches.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
+                                <span class="sidebar-menu-text">Sucursales</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="report.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
+                                <span class="sidebar-menu-text">Reportes</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item mt-4">
+                            <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
+                                <span class="sidebar-menu-text">Cerrar Sesión</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Crear/Editar Curso -->
+    <div class="modal fade" id="courseModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="courseModalTitle">Curso</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="courseId">
+                    <div class="form-group">
+                        <label class="form-label">Nombre del Curso</label>
+                        <input type="text" class="form-control" id="courseName" placeholder="Ej: Excel Avanzado">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveCourse()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../public/vendor/jquery.min.js"></script>
+    <script src="../../public/vendor/popper.min.js"></script>
+    <script src="../../public/vendor/bootstrap.min.js"></script>
+    <script src="../../public/vendor/perfect-scrollbar.min.js"></script>
+    <script src="../../public/vendor/dom-factory.js"></script>
+    <script src="../../public/vendor/material-design-kit.js"></script>
+    <script src="../../public/js/app.js"></script>
+    <script src="../../public/js/preloader.js"></script>
+
+    <script>
+        const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let coursesData = [];
+        let isAdmin = false;
+
+        $(document).ready(async function () {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) return window.location.replace('login.html');
+            
+            currentUser = session.user;
+            await checkRole();
+            await loadCourses();
+        });
+
+        async function checkRole() {
+            const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', currentUser.id).single();
+            if (profile && profile.role === 'admin') {
+                $('#adminActions').html(`
+                    <button class="btn btn-primary" onclick="openCourseModal()">
+                        <i class="material-icons mr-8pt">add</i> Nuevo Curso
+                    </button>
+                `);
+                isAdmin = true;
+            }
+        }
+
+        async function loadCourses() {
+            // Fetch courses and count students per course
+            const { data: courses, error: cErr } = await supabaseClient.from('courses').select('*, students(id)').order('name');
+            if (cErr) return console.error(cErr);
+            
+            coursesData = courses;
+            renderCourses();
+        }
+
+        function renderCourses() {
+            const tbody = $('#courseTableBody');
+            tbody.empty();
+
+            coursesData.forEach(c => {
+                const studentCount = c.students ? c.students.length : 0;
+                const editBtn = isAdmin ? `
+                    <button class="btn btn-sm btn-outline-primary mr-8pt" onclick="openCourseModal('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
+                        <i class="material-icons">edit</i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
+                        <i class="material-icons">delete</i>
+                    </button>
+                ` : '';
+
+                tbody.append(`
+                    <tr class="course-row" style="cursor:pointer" onclick="selectCourse('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
+                        <td><strong>${c.name}</strong></td>
+                        <td class="text-center"><span class="badge badge-soft-primary">${studentCount}</span></td>
+                        <td class="text-right" onclick="event.stopPropagation()">
+                            ${editBtn}
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        window.selectCourse = async function(id, name) {
+            $('.course-row').removeClass('bg-soft-primary');
+            $(`tr[onclick*="${id}"]`).addClass('bg-soft-primary');
+
+            $('#courseDetailTitle').text(name);
+            $('#courseDetailSubtitle').text('Cargando alumnos y estados...');
+            const tbody = $('#studentTableBody');
+            tbody.html('<tr><td colspan="3" class="text-center">Cargando...</td></tr>');
+
+            try {
+                // Fetch students for this course
+                const { data: students, error: sErr } = await supabaseClient.from('students').select('id, full_name, dni').eq('course_id', id).order('full_name');
+                if (sErr) throw sErr;
+
+                if (students.length === 0) {
+                    $('#courseDetailSubtitle').text('Sin alumnos inscriptos');
+                    tbody.html('<tr><td colspan="3" class="text-center text-50">No hay alumnos en este curso.</td></tr>');
+                    return;
+                }
+
+                // Fetch overdue installments for these students to determine debt status
+                const studentIds = students.map(s => s.id);
+                const { data: overdue, error: oErr } = await supabaseClient.from('installments').select('student_id').in('student_id', studentIds).eq('status', 'vencido');
+                if (oErr) throw oErr;
+
+                const debtors = new Set(overdue.map(o => o.student_id));
+
+                tbody.empty();
+                students.forEach(s => {
+                    const isDebtor = debtors.has(s.id);
+                    const statusHtml = isDebtor 
+                        ? '<span class="text-danger small"><span class="status-dot status-debtor"></span> DEUDOR</span>'
+                        : '<span class="text-success small"><span class="status-dot status-up-to-date"></span> AL DÍA</span>';
+                    
+                    tbody.append(`
+                        <tr class="student-row">
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="font-weight-bold">${s.full_name}</span>
+                                    <span class="text-50 small">DNI: ${s.dni}</span>
+                                </div>
+                            </td>
+                            <td class="text-center">${statusHtml}</td>
+                            <td class="text-right">
+                                <a href="search.html?dni=${s.dni}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="material-icons">visibility</i>
+                                </a>
+                            </td>
+                        </tr>
+                    `);
+                });
+                $('#courseDetailSubtitle').text(`${students.length} alumnos encontrados`);
+            } catch (err) {
+                console.error(err);
+                tbody.html('<tr><td colspan="3" class="text-center text-danger">Error al cargar datos.</td></tr>');
+            }
+        };
+
+        window.openCourseModal = function(id = '', name = '') {
+            $('#courseId').val(id);
+            $('#courseName').val(name);
+            $('#courseModalTitle').text(id ? 'Editar Curso' : 'Nuevo Curso');
+            $('#courseModal').modal('show');
+        };
+
+        window.saveCourse = async function() {
+            const id = $('#courseId').val();
+            const name = $('#courseName').val().trim();
+
+            if (!name) return alert('Ingrese un nombre para el curso.');
+
+            try {
+                if (id) {
+                    const { error } = await supabaseClient.from('courses').update({ name }).eq('id', id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseClient.from('courses').insert([{ name }]);
+                    if (error) throw error;
+                }
+                $('#courseModal').modal('hide');
+                await loadCourses();
+            } catch (err) {
+                alert('Error al guardar: ' + err.message);
+            }
+        };
+
+        window.deleteCourse = async function(id, name) {
+            if(!confirm(`¿Seguro que deseas eliminar el curso "${name}"?`)) return;
+            try {
+                const { error } = await supabaseClient.from('courses').delete().eq('id', id);
+                if (error) throw error;
+                alert('Curso eliminado.');
+                await loadCourses();
+                $('#studentTableBody').html('<tr><td colspan="3" class="text-center text-50">Sin selección</td></tr>');
+                $('#courseDetailTitle').text('Detalle del Curso');
+            } catch (err) {
+                alert('No se puede eliminar el curso. Verifica que no tenga alumnos vinculados.');
+            }
+        };
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.replace('login.html');
+        }
+    </script>
+</body>
+
+</html>
