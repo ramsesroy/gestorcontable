@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Búsqueda de Alumnos - CMS Cobranzas</title>
+    <title>Búsqueda de Alumnos - CMS Cobranzas (Fix v2)</title>
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
@@ -163,14 +163,25 @@
 
                 <!-- Search Box -->
                 <div class="card card-body mb-32pt">
-                    <div class="search-wrapper">
-                        <div class="search-form search-form--light input-group-lg">
-                            <input type="text" id="searchInput" class="form-control"
-                                placeholder="DNI o nombre del alumno ..." autocomplete="off">
-                            <button class="btn" type="button" id="searchBtn"><i
-                                    class="material-icons">search</i></button>
+                    <div class="row align-items-end">
+                        <div class="col-md-8 mb-3 mb-md-0">
+                            <label class="form-label">Búsqueda Directa</label>
+                            <div class="search-wrapper">
+                                <div class="search-form search-form--light input-group-lg">
+                                    <input type="text" id="searchInput" class="form-control"
+                                        placeholder="DNI o nombre del alumno ..." autocomplete="off">
+                                    <button class="btn" type="button" id="searchBtn"><i
+                                            class="material-icons">search</i></button>
+                                </div>
+                                <div class="search-suggestions" id="searchSuggestions"></div>
+                            </div>
                         </div>
-                        <div class="search-suggestions" id="searchSuggestions"></div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="courseFilter">Filtrar por Curso</label>
+                            <select id="courseFilter" class="form-control">
+                                <option value="">Todos los cursos</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -292,7 +303,7 @@
                         <div class="input-group input-group-merge">
                             <input type="number" id="paymentModalAmount" class="form-control form-control-prepended" min="1" step="1">
                             <div class="input-group-prepend">
-                                <div class="input-group-text">$</div>
+                                <div class="input-group-text">Gs.</div>
                             </div>
                         </div>
                         <small class="text-muted">Si el monto es menor al restante, la cuota quedará como "Parcial".</small>
@@ -447,6 +458,7 @@
         // ═══════════════════════════════════════
         $(document).ready(function () {
             checkRoleAndUI();
+            loadCourses();
 
             $('#searchBtn').click(function () { doSearch($('#searchInput').val()); });
             $('#searchInput').keypress(function (e) { if (e.which == 13) doSearch($('#searchInput').val()); });
@@ -479,7 +491,24 @@
             $('#btnEditStudent').click(openEditModal);
             $('#btnDeactivateStudent').click(openDeactivateModal);
             $('#btnConfirmDeactivate').click(confirmDeactivate);
+
+            // Course filter change trigger
+            $('#courseFilter').on('change', function() {
+                var val = $('#searchInput').val().trim();
+                if(val) doSearch(val);
+                else if($(this).val()) fetchSuggestions(''); // Show students in this course
+                else $('#searchSuggestions').hide();
+            });
         });
+
+        async function loadCourses() {
+            var { data, error } = await supabaseClient.from('courses').select('*').order('name');
+            if (data) {
+                data.forEach(function(c) {
+                    $('#courseFilter').append('<option value="' + c.id + '">' + c.name + '</option>');
+                });
+            }
+        }
 
         // ═══════════════════════════════════════
         //  SEARCH SUGGESTIONS
@@ -503,18 +532,30 @@
         }
 
         async function fetchSuggestions(query) {
+            query = (query || "").trim();
             var sug = $('#searchSuggestions');
+            var courseId = $('#courseFilter').val();
+            
+            if (!query && !courseId) { sug.hide(); return; }
+
             // Check: is it a number (DNI) or text (name)?
             var isNumeric = /^\d+$/.test(query);
             var results;
 
-            if (isNumeric) {
-                var res = await supabaseClient.from('students').select('id, dni, full_name, branches(name)')
-                    .ilike('dni', query + '%').eq('status', 'activo').limit(5);
-                results = res.data;
-            } else {
-                var res = await supabaseClient.from('students').select('id, dni, full_name, branches(name)')
-                    .ilike('full_name', '%' + query + '%').eq('status', 'activo').limit(5);
+            var baseQuery = supabaseClient.from('students').select('id, dni, full_name, branches(name), courses(name)');
+            if (courseId) baseQuery = baseQuery.eq('course_id', courseId);
+
+            if (query) {
+                if (isNumeric) {
+                    var res = await baseQuery.ilike('dni', query + '%').eq('status', 'activo').limit(10);
+                    results = res.data;
+                } else {
+                    var res = await baseQuery.ilike('full_name', '%' + query + '%').eq('status', 'activo').limit(10);
+                    results = res.data;
+                }
+            } else if (courseId) {
+                // Return all students in this course (first 10)
+                var res = await baseQuery.eq('status', 'activo').limit(10);
                 results = res.data;
             }
 
@@ -526,8 +567,9 @@
             var html = '<div class="suggestion-header">Resultados</div>';
             results.forEach(function (s) {
                 var branch = s.branches ? s.branches.name : '';
+                var course = s.courses ? s.courses.name : 'Sin curso';
                 html += '<div class="suggestion-item" data-dni="' + s.dni + '">' +
-                    '<span><strong>' + s.full_name + '</strong> <small class="text-50">' + branch + '</small></span>' +
+                    '<span><strong>' + s.full_name + '</strong> <small class="text-50">' + branch + ' | ' + course + '</small></span>' +
                     '<span class="text-50" style="font-size:0.85em">DNI: ' + s.dni + '</span></div>';
             });
             sug.html(html).show();
@@ -552,10 +594,13 @@
 
             try {
                 var student = null;
+                var courseId = $('#courseFilter').val();
 
                 // unified search (DNI strict or name partial)
-                var res = await supabaseClient.from('students').select('*, branches(name)')
-                    .or('dni.eq.' + query + ',full_name.ilike.%' + query + '%').limit(1).single();
+                var baseQuery = supabaseClient.from('students').select('*, branches(name), courses(name)');
+                if (courseId) baseQuery = baseQuery.eq('course_id', courseId);
+
+                var res = await baseQuery.or('dni.eq.' + query + ',full_name.ilike.%' + query + '%').limit(1).single();
 
                 if (!res.error && res.data) {
                     student = res.data;
@@ -574,7 +619,8 @@
                 // Display student info
                 $('#studentName').text(student.full_name);
                 $('#studentDni').text(student.dni);
-                $('#studentBranch').text(currentStudent.branchName);
+                var courseText = student.courses ? student.courses.name : 'Sin curso asignado';
+                $('#studentBranch').text(currentStudent.branchName + ' | ' + courseText);
                 var statusClass = student.status === 'activo' ? 'badge-success' : 'badge-danger';
                 $('#studentStatus').text(student.status.toUpperCase()).removeClass('badge-success badge-danger').addClass(statusClass);
                 $('#studentCard').removeClass('d-none');
@@ -614,6 +660,7 @@
 
             var studentName = $('#studentName').text();
             var studentDni = $('#studentDni').text();
+            var courseName = currentStudent.courses ? currentStudent.courses.name : 'Sin curso';
 
             installments.forEach(function (item) {
                 var isPaid = item.status === 'pagado';
@@ -635,19 +682,24 @@
                 var formattedAmount = fmt.format(item.amount);
                 var formattedRemaining = isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '';
 
-                var actionBtn = '';
-
-                if (isPaid) {
-                    actionBtn = '<button class="btn btn-sm btn-outline-secondary btn-ticket"' +
+                if (isPaid || isParcial) {
+                    actionBtn += '<button class="btn btn-sm btn-outline-secondary btn-ticket mr-8pt"' +
                         ' data-id="' + item.id + '"' +
                         ' data-num="' + item.installment_number + '"' +
                         ' data-total="' + totalCount + '"' +
                         ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
                         ' data-dni="' + studentDni + '"' +
+                        ' data-course="' + courseName.replace(/"/g, '&quot;') + '"' +
                         ' data-date="' + item.due_date + '"' +
-                        ' data-amount="' + item.amount + '">Ticket</button>';
-                } else if (!isAnulado) {
-                    actionBtn = '<button class="btn btn-sm btn-primary btn-cobrar"' +
+                        ' data-amount="' + paidAmount + '"' +
+                        ' data-total-amount="' + item.amount + '"' +
+                        ' data-remaining="' + remaining + '">Ticket</button>';
+                } 
+                
+                if (!isPaid && !isAnulado) {
+                    var btnClass = isParcial ? 'btn-outline-primary' : 'btn-primary';
+                    var btnText = isParcial ? 'Cobrar Resto' : 'Cobrar';
+                    actionBtn += '<button class="btn btn-sm ' + btnClass + ' btn-cobrar"' +
                         ' data-id="' + item.id + '"' +
                         ' data-amount="' + item.amount + '"' +
                         ' data-paid="' + paidAmount + '"' +
@@ -655,7 +707,8 @@
                         ' data-total="' + totalCount + '"' +
                         ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
                         ' data-dni="' + studentDni + '"' +
-                        ' data-date="' + item.due_date + '">Cobrar</button>';
+                        ' data-course="' + courseName.replace(/"/g, '&quot;') + '"' +
+                        ' data-date="' + item.due_date + '">' + btnText + '</button>';
                 }
 
                 body.append(
@@ -687,7 +740,10 @@
                 printTicket(
                     btn.data('id'), btn.data('num'), btn.data('name'),
                     btn.data('dni'), btn.data('date'), 
-                    btn.data('amount'), btn.data('total'), btn.data('amount'), 0
+                    btn.data('amount'), btn.data('total'), 
+                    btn.data('total-amount'), 
+                    btn.data('remaining'),
+                    btn.data('course')
                 );
             });
 
@@ -717,7 +773,7 @@
             $('#paymentModal').modal('show');
         }
 
-        async function confirmPayment() {
+        window.confirmPayment = async function() {
             var payingStr = $('#paymentModalAmount').val();
             if(!payingStr) { showToast('Ingresa un monto válido', 'error'); return; }
             var payingNow = parseFloat(payingStr);
@@ -765,7 +821,10 @@
                     $('#paymentModalDni').val(), 
                     $('#paymentModalDate').val(), 
                     payingNow,
-                    $('#paymentModalTotalInstalments').val()
+                    $('#paymentModalTotalInstalments').val(),
+                    totalAmount,
+                    totalAmount - newTotalPaid,
+                    currentStudent.courses ? currentStudent.courses.name : '-'
                 );
 
                 $('#paymentModal').modal('hide');
@@ -889,7 +948,7 @@
             $('#loader').addClass('d-none');
         }
 
-        function printTicket(id, num, name, dni, date, amountPaid, totalCount, totalInstallmentAmount, remainingAmount) {
+        function printTicket(id, num, name, dni, date, amountPaid, totalCount, totalInstallmentAmount, remainingAmount, course) {
             var params = new URLSearchParams({
                 id: id,
                 num: num,
@@ -899,7 +958,8 @@
                 amount: amountPaid,
                 total: totalCount || '',
                 totalAmount: totalInstallmentAmount || amountPaid,
-                remaining: remainingAmount || 0
+                remaining: remainingAmount || 0,
+                course: course || '-'
             });
             window.open('ticket.html?' + params.toString(), 'Comprobante', 'width=600,height=700');
         }

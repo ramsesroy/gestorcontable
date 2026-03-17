@@ -284,9 +284,36 @@
                         </div>
                     </div>
 
-                    <!-- Course Management Section (Admin only) -->
+                    <!-- Billing Breakdown Section (Admin only) -->
                     <div class="row mt-24pt">
                         <div class="col-12">
+                            <div class="page-separator">
+                                <div class="page-separator__text">Desglose Detallado de Facturación</div>
+                            </div>
+                            <div class="card">
+                                <div class="table-responsive">
+                                    <table class="table mb-0 thead-border-top-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Sucursal</th>
+                                                <th>Alumno</th>
+                                                <th>Concepto</th>
+                                                <th class="text-right">Monto</th>
+                                                <th class="text-right">Fecha</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="billingBreakdownBody">
+                                            <tr><td colspan="5" class="text-center text-50">Cargando desglose...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course Management Section (Admin only) -->
+                    <div class="row mt-24pt">
+                        <div class="col-lg-6">
                             <div class="page-separator">
                                 <div class="page-separator__text">Gestión de Cursos</div>
                             </div>
@@ -295,16 +322,63 @@
                                     <table class="table mb-0 thead-border-top-0 table-nowrap">
                                         <thead>
                                             <tr>
-                                                <th>Nombre del Curso</th>
+                                                <th>Curso</th>
                                                 <th class="text-right">Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody id="courseTableBody">
-                                            <tr><td colspan="2" class="text-center text-50">Cargando cursos...</td></tr>
+                                            <tr><td colspan="2" class="text-center text-50">Cargando...</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Branch Management Section -->
+                        <div class="col-lg-6">
+                            <div class="page-separator">
+                                <div class="page-separator__text">Gestión de Sucursales</div>
+                            </div>
+                            <div class="card">
+                                <div class="table-responsive">
+                                    <table class="table mb-0 thead-border-top-0 table-nowrap">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre Sucursal</th>
+                                                <th class="text-right">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="branchTableBody">
+                                            <tr><td colspan="2" class="text-center text-50">Cargando...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: Editar Sucursal -->
+            <div class="modal fade" id="branchEditModal" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Editar Nombre de Sucursal</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="editBranchId">
+                            <div class="form-group">
+                                <label class="form-label">Nuevo Nombre:</label>
+                                <input type="text" id="editBranchName" class="form-control" placeholder="Nombre de la sucursal">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary" onclick="saveBranchEdit()">Guardar Cambios</button>
                         </div>
                     </div>
                 </div>
@@ -531,6 +605,52 @@
                 loadAuditLog();
                 loadMassiveUpdateBranches();
                 loadCoursesAdmin();
+                loadBranchesAdmin();
+            }
+        }
+
+        async function loadBranchesAdmin() {
+            var { data: branches, error } = await supabaseClient.from('branches').select('*').order('name');
+            var tbody = $('#branchTableBody');
+            tbody.empty();
+            if (error || !branches) {
+                tbody.html('<tr><td colspan="2" class="text-center text-50">Error al cargar sucursales.</td></tr>');
+                return;
+            }
+            branches.forEach(b => {
+                tbody.append(`
+                    <tr>
+                        <td><strong>${b.name}</strong></td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editBranch('${b.id}', '${b.name.replace(/'/g, "\\'")}')">
+                                <i class="material-icons icon--left">edit</i> Editar
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        window.editBranch = function(id, name) {
+            $('#editBranchId').val(id);
+            $('#editBranchName').val(name);
+            $('#branchEditModal').modal('show');
+        }
+
+        window.saveBranchEdit = async function() {
+            var id = $('#editBranchId').val();
+            var name = $('#editBranchName').val();
+            if (!name || name.trim() === '') return alert('Por favor, ingrese un nombre.');
+
+            try {
+                const { error } = await supabaseClient.from('branches').update({ name: name.trim() }).eq('id', id);
+                if (error) throw error;
+                $('#branchEditModal').modal('hide');
+                alert('Sucursal actualizada correctamente.');
+                loadBranchesAdmin();
+                loadMassiveUpdateBranches(); // Update the filter dropdown too
+            } catch (err) {
+                alert('Error al actualizar sucursal: ' + err.message);
             }
         }
 
@@ -735,8 +855,52 @@
 
                 await renderBranchChart(isoFrom, isoTo);
                 await loadRecentPayments(isoFrom, isoTo);
+                await loadBillingBreakdown(isoFrom, isoTo);
             } catch (err) {
                 console.error('Error cargando dashboard:', err);
+            }
+        }
+
+        async function loadBillingBreakdown(isoFrom, isoTo) {
+            var tbody = $('#billingBreakdownBody');
+            tbody.html('<tr><td colspan="5" class="text-center text-50">Cargando...</td></tr>');
+
+            try {
+                var { data, error } = await supabaseClient.from('installments')
+                    .select('amount, paid_at, installment_number, students!inner(full_name, branches(name))')
+                    .eq('status', 'pagado')
+                    .gte('paid_at', isoFrom)
+                    .lte('paid_at', isoTo)
+                    .order('paid_at', { ascending: false });
+
+                if (error) throw error;
+
+                tbody.empty();
+                if (!data || data.length === 0) {
+                    tbody.html('<tr><td colspan="5" class="text-center text-50">No hay pagos registrados en este período.</td></tr>');
+                    return;
+                }
+
+                data.forEach(p => {
+                    var branch = (p.students && p.students.branches) ? p.students.branches.name : 'N/A';
+                    var student = p.students ? p.students.full_name : 'N/A';
+                    var concepto = 'Cuota ' + p.installment_number;
+                    var monto = fmt.format(p.amount);
+                    var fecha = p.paid_at ? new Date(p.paid_at).toLocaleDateString('es-AR') : 'N/A';
+
+                    tbody.append(`
+                        <tr>
+                            <td><span class="badge badge-soft-secondary">${branch}</span></td>
+                            <td><strong>${student}</strong></td>
+                            <td>${concepto}</td>
+                            <td class="text-right text-success"><strong>${monto}</strong></td>
+                            <td class="text-right text-50">${fecha}</td>
+                        </tr>
+                    `);
+                });
+            } catch (err) {
+                console.error('Error Breakdown:', err);
+                tbody.html('<tr><td colspan="5" class="text-center text-danger">Error: ' + err.message + '</td></tr>');
             }
         }
 

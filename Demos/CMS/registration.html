@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Inscripción de Alumnos - CMS Cobranzas</title>
+    <title>Inscripción de Alumnos - CMS Cobranzas (Fix v2)</title>
 
     <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CRoboto:400,500%7CExo+2:600&display=swap"
         rel="stylesheet">
@@ -113,27 +113,55 @@
                                 </div>
                             </div>
 
+                            <div class="form-group mb-24pt">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="specialPlanSwitch">
+                                    <label class="custom-control-label" for="specialPlanSwitch">¿Es un Plan Especial o Beca?</label>
+                                </div>
+                            </div>
+
                             <div class="page-separator">
                                 <div class="page-separator__text">Plan de Cuotas</div>
                             </div>
 
-                            <div class="form-group mb-24pt">
-                                <label class="form-label" for="amount">Monto de la cuota mensual:</label>
-                                <div class="input-group input-group-merge">
-                                    <input id="amount" type="number" class="form-control form-control-prepended"
-                                        placeholder="Ej: 5000" required>
-                                    <div class="input-group-prepend">
-                                        <div class="input-group-text">$</div>
+                            <div id="standardPlanFields">
+                                <div class="form-group mb-24pt">
+                                    <label class="form-label" for="amount">Monto de la cuota mensual:</label>
+                                    <div class="input-group input-group-merge">
+                                        <input id="amount" type="number" class="form-control form-control-prepended"
+                                            placeholder="Ej: 5000">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">$</div>
+                                        </div>
                                     </div>
+                                </div>
+
+                                <div class="form-group mb-24pt">
+                                    <label class="form-label" for="installmentsCount">Cantidad de cuotas a generar:</label>
+                                    <input id="installmentsCount" type="number" class="form-control" value="12" min="1"
+                                        max="60">
+                                    <small class="text-muted">Se generarán las cuotas mensuales consecutivas a partir del
+                                        mes actual.</small>
                                 </div>
                             </div>
 
-                            <div class="form-group mb-24pt">
-                                <label class="form-label" for="installmentsCount">Cantidad de cuotas a generar:</label>
-                                <input id="installmentsCount" type="number" class="form-control" value="12" min="1"
-                                    max="60" required>
-                                <small class="text-muted">Se generarán las cuotas mensuales consecutivas a partir del
-                                    mes actual.</small>
+                            <div id="specialPlanFields" class="d-none">
+                                <div class="form-group mb-24pt">
+                                    <label class="form-label" for="totalAmountSpecial">Monto Total del Paquete (Gs.):</label>
+                                    <div class="input-group input-group-merge">
+                                        <input id="totalAmountSpecial" type="number" class="form-control form-control-prepended"
+                                            placeholder="Ej: 600000">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">Gs.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-24pt">
+                                    <label class="form-label" for="paymentsCountSpecial">Cantidad de Pagos:</label>
+                                    <input id="paymentsCountSpecial" type="number" class="form-control" value="1" min="1" max="60">
+                                    <small class="text-muted" id="calcFootnote">El sistema dividirá el total en pagos iguales.</small>
+                                </div>
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
@@ -148,6 +176,31 @@
                             </div>
                             <div id="errorAlert" class="alert alert-soft-danger d-none mt-3"></div>
                         </form>
+                    </div>
+
+                    <!-- MODAL: Crear Nuevo Curso (Reemplaza prompt para BUG-01) -->
+                    <div class="modal fade" id="courseModal" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Nuevo Curso</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label>Nombre del Curso</label>
+                                        <input type="text" class="form-control" id="newCourseName" placeholder="Ej: Soldadura Pro">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                    <button type="button" class="btn btn-primary" onclick="saveNewCourse()">Guardar Curso</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -260,11 +313,17 @@
             checkRoleAndUI();
             loadCourses();
 
-            // Evento para botón Crear Curso
-            $('#btnAddCourse').on('click', async function() {
-                var courseName = prompt("Ingrese el nombre del nuevo curso:");
+            // Evento para botón Crear Curso (BUG-01: Modal en vez de prompt)
+            $('#btnAddCourse').on('click', function() {
+                $('#newCourseName').val('');
+                $('#courseModal').modal('show');
+            });
+
+            window.saveNewCourse = async function() {
+                var courseName = $('#newCourseName').val();
                 if (courseName && courseName.trim() !== '') {
                     try {
+                        $('#courseModal').modal('hide');
                         const { data, error } = await supabaseClient.from('courses').insert([{ name: courseName.trim() }]).select();
                         if (error) throw error;
                         await loadCourses(data[0].id);
@@ -272,7 +331,7 @@
                         alert("Error al crear curso: " + err.message);
                     }
                 }
-            });
+            };
 
             async function loadCourses(selectedId = null) {
                 const { data: courses, error } = await supabaseClient.from('courses').select('*').order('name');
@@ -285,6 +344,25 @@
                     if (selectedId) select.val(selectedId);
                 }
             }
+
+            // Toggle Planes Especiales
+            $('#specialPlanSwitch').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('#standardPlanFields').addClass('d-none');
+                    $('#specialPlanFields').removeClass('d-none');
+                    $('#amount').prop('required', false);
+                    $('#installmentsCount').prop('required', false);
+                    $('#totalAmountSpecial').prop('required', true);
+                    $('#paymentsCountSpecial').prop('required', true);
+                } else {
+                    $('#standardPlanFields').removeClass('d-none');
+                    $('#specialPlanFields').addClass('d-none');
+                    $('#amount').prop('required', true);
+                    $('#installmentsCount').prop('required', true);
+                    $('#totalAmountSpecial').prop('required', false);
+                    $('#paymentsCountSpecial').prop('required', false);
+                }
+            });
 
             $('#enrollmentForm input, #enrollmentForm select').on('input change', function() {
                 $('#errorAlert').addClass('d-none');
@@ -305,8 +383,18 @@
                     course_id: courseId || null
                 };
 
-                const amount = parseFloat($('#amount').val());
-                const installmentsCount = parseInt($('#installmentsCount').val()) || 12;
+                const isSpecial = $('#specialPlanSwitch').is(':checked');
+                let amount = 0;
+                let installmentsCount = 0;
+
+                if (isSpecial) {
+                    const totalSpecial = parseFloat($('#totalAmountSpecial').val()) || 0;
+                    installmentsCount = parseInt($('#paymentsCountSpecial').val()) || 1;
+                    amount = Math.round(totalSpecial / installmentsCount);
+                } else {
+                    amount = parseFloat($('#amount').val()) || 0;
+                    installmentsCount = parseInt($('#installmentsCount').val()) || 12;
+                }
 
                 try {
                     // 1. Insertar Alumno
@@ -336,7 +424,12 @@
                         action: 'inscripcion',
                         entity_type: 'student',
                         entity_id: student.id,
-                        details: { student_name: student.full_name, monthly_amount: amount }
+                        details: { 
+                            student_name: student.full_name, 
+                            monthly_amount: amount,
+                            is_special_plan: isSpecial,
+                            total_payments: installmentsCount
+                        }
                     });
 
                     $('#successAlert').removeClass('d-none');

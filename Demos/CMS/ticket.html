@@ -225,6 +225,7 @@
             const total = params.get('total') || '';
             const totalAmount = params.get('totalAmount') || amountPaid;
             const remaining = params.get('remaining') || '0';
+            const courseName = params.get('course') || '-';
 
             const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
 
@@ -233,10 +234,15 @@
             const cuotaText = total ? `Cuota ${num} de ${total}` : `Cuota ${num}`;
 
             let extraRows = '';
-            if(parseFloat(remaining) > 0 || parseFloat(totalAmount) > parseFloat(amountPaid)) {
+            if(parseFloat(remaining) > 0) {
                 extraRows = `
                     <div class="row" style="color: #666; margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;"><strong>Valor Total Cuota:</strong><span>${fmt.format(totalAmount)}</span></div>
-                    <div class="row" style="color: #666;"><strong>Saldo Pendiente:</strong><span style="color: #dc3545;">${fmt.format(remaining)}</span></div>
+                    <div class="row" style="color: #dc3545; font-weight: bold;"><strong>FALTA PAGAR (Saldo):</strong><span>${fmt.format(remaining)}</span></div>
+                `;
+            } else if (parseFloat(totalAmount) > parseFloat(amountPaid)) {
+                 // Caso donde es un ticket de una cuota ya saldada pero queremos mostrar el total
+                 extraRows = `
+                    <div class="row" style="color: #666; margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;"><strong>Valor Total Cuota:</strong><span>${fmt.format(totalAmount)}</span></div>
                 `;
             }
 
@@ -245,19 +251,17 @@
                 <div class="row"><strong>Alumno:</strong><span>${name}</span></div>
                 <div class="row"><strong>DNI:</strong><span>${dni}</span></div>
                 <div class="row"><strong>Concepto:</strong><span>${cuotaText}</span></div>
+                <div class="row"><strong>Curso:</strong><span>${courseName}</span></div>
                 <div class="row"><strong>Vencimiento Original:</strong><span>${date}</span></div>
+                <div class="row total-row" style="background: #e8f5e9; border: 1px solid #c8e6c9;"><strong>MONTO PAGADO HOY:</strong><span style="color: #2e7d32;">${fmt.format(amountPaid)}</span></div>
                 ${extraRows}
-                <div class="row total-row"><strong>Pagado Hoy:</strong><span>${fmt.format(amountPaid)}</span></div>
             `;
 
             document.getElementById('ticketData').innerHTML = html;
 
-            // Auto-print after a brief delay to ensure styles are loaded
+            // Auto-print disabled for QA verification and manual format selection (Bug-04)
             const pFormat = localStorage.getItem('preferredTicketFormat') || 'a4';
             setFormat(pFormat);
-            setTimeout(() => {
-                window.print();
-            }, 500);
         });
     </script>
 </body>
