@@ -682,6 +682,8 @@
                 var formattedAmount = fmt.format(item.amount);
                 var formattedRemaining = isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '';
 
+                var actionBtn = '';
+
                 if (isPaid || isParcial) {
                     actionBtn += '<button class="btn btn-sm btn-outline-secondary btn-ticket mr-8pt"' +
                         ' data-id="' + item.id + '"' +

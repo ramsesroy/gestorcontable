@@ -55,6 +55,12 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
     var url = event.request.url;
 
+    // Only cache GET requests
+    if (event.request.method !== 'GET') return;
+
+    // Skip non-http schemes (chrome-extension, etc)
+    if (!url.startsWith('http')) return;
+
     // Always go to network for Supabase API calls
     if (url.includes('supabase.co') || url.includes('cdn.jsdelivr') || url.includes('cdn.sheetjs') || url.includes('fonts.googleapis')) {
         event.respondWith(
