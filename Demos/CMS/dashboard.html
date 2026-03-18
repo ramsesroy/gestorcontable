@@ -98,6 +98,11 @@
                     </span>
                     <span class="d-none d-lg-block">CMS Cobranzas</span>
                 </a>
+                <div class="ml-auto d-flex align-items-center">
+                    <button class="btn btn-light btn-sm mr-8pt" title="Cambiar Contraseña" id="btnChangePassword" style="display:none;">
+                        <i class="material-icons" style="font-size:18px;vertical-align:middle;">lock</i>
+                    </button>
+                </div>
             </div>
 
             <!-- ═══════════════════════════════════════ -->
@@ -112,6 +117,17 @@
                                 <p class="lead text-50">Control global de ingresos y alumnos en las sucursales.</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Overdue Alert Banner -->
+                <div id="overdueAlertBanner" class="container page__container mt-16pt d-none">
+                    <div class="alert alert-danger d-flex align-items-center" role="alert">
+                        <i class="material-icons mr-8pt">warning</i>
+                        <div class="flex">
+                            <strong>Atención:</strong> Hay <strong id="overdueCount">0</strong> cuota(s) vencida(s) sin cobrar por un total de <strong id="overdueAmount">Gs. 0</strong>.
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger ml-16pt" onclick="window.location.href='search.html'">Ver en Cobranzas</button>
                     </div>
                 </div>
 
@@ -135,6 +151,11 @@
                             <div class="form-group mb-md-0">
                                 <button class="btn btn-success" onclick="exportToExcel()">
                                     <i class="material-icons mr-4pt">file_download</i> Descargar Excel
+                                </button>
+                            </div>
+                            <div class="form-group mb-md-0 ml-md-8pt">
+                                <button class="btn btn-outline-secondary" onclick="exportStudentList()">
+                                    <i class="material-icons mr-4pt">people</i> Exportar Alumnos
                                 </button>
                             </div>
                         </div>
@@ -554,9 +575,11 @@
                 loadCajeroDashboard(userId, profile.branch_id);
             } else {
                 $('#sidebarDashLabel').text('Admin Dashboard');
+                $('#btnChangePassword').show();
                 setQuickFilter('month');
                 loadAuditLog();
                 loadMassiveUpdateBranches();
+                loadOverdueAlert();
             }
         }
 
@@ -1138,7 +1161,138 @@
             });
             window.open('ticket.html?' + params.toString(), 'Comprobante', 'width=600,height=700');
         }
+
+        // ═══════════════════════════════════════
+        //  PASSWORD CHANGE
+        // ═══════════════════════════════════════
+        $('#btnChangePassword').on('click', function () { $('#changePwdModal').modal('show'); });
+
+        $('#btnSavePassword').on('click', async function () {
+            var newPwd = $('#newPassword').val();
+            var confirmPwd = $('#confirmPassword').val();
+            var feedback = $('#changePwdFeedback');
+            feedback.addClass('d-none');
+            if (!newPwd || newPwd.length < 6) {
+                return feedback.removeClass('d-none').text('Mínimo 6 caracteres.').removeClass('text-success').addClass('text-danger');
+            }
+            if (newPwd !== confirmPwd) {
+                return feedback.removeClass('d-none').text('Las contraseñas no coinciden.').removeClass('text-success').addClass('text-danger');
+            }
+            $(this).prop('disabled', true).text('Guardando...');
+            var { error } = await supabaseClient.auth.updateUser({ password: newPwd });
+            $(this).prop('disabled', false).text('Guardar');
+            if (error) {
+                feedback.removeClass('d-none').text('Error: ' + error.message).addClass('text-danger');
+            } else {
+                feedback.removeClass('d-none').text('¡Contraseña actualizada!').addClass('text-success').removeClass('text-danger');
+                $('#newPassword, #confirmPassword').val('');
+                setTimeout(function () { $('#changePwdModal').modal('hide'); feedback.addClass('d-none'); }, 2000);
+            }
+        });
+
+        // ═══════════════════════════════════════
+        //  AUTO-LOGOUT POR INACTIVIDAD (15 min)
+        // ═══════════════════════════════════════
+        var inactivityTimer, warningTimer;
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            clearTimeout(warningTimer);
+            $('#sessionWarningModal').modal('hide');
+            warningTimer = setTimeout(function () {
+                var secs = 60;
+                $('#sessionCountdown').text(secs);
+                $('#sessionWarningModal').modal('show');
+                var ci = setInterval(function () {
+                    secs--; $('#sessionCountdown').text(secs);
+                    if (secs <= 0) clearInterval(ci);
+                }, 1000);
+            }, 14 * 60 * 1000);
+            inactivityTimer = setTimeout(async function () {
+                await supabaseClient.auth.signOut();
+                window.location.replace('login.html');
+            }, 15 * 60 * 1000);
+        }
+        $(document).on('mousemove keydown click touchstart', resetInactivityTimer);
+        resetInactivityTimer();
+        $('#btnStayLoggedIn').on('click', function () { resetInactivityTimer(); });
+
+        // ═══════════════════════════════════════
+        //  OVERDUE ALERTS (Admin only)
+        // ═══════════════════════════════════════
+        async function loadOverdueAlert() {
+            var today = new Date().toISOString().split('T')[0];
+            var { data } = await supabaseClient.from('installments')
+                .select('id, amount')
+                .eq('status', 'pendiente')
+                .lt('due_date', today);
+            if (!data || data.length === 0) { $('#overdueAlertBanner').addClass('d-none'); return; }
+            var total = data.reduce(function (acc, i) { return acc + parseFloat(i.amount || 0); }, 0);
+            $('#overdueCount').text(data.length);
+            $('#overdueAmount').text(fmt.format(total));
+            $('#overdueAlertBanner').removeClass('d-none');
+        }
+
+        // ═══════════════════════════════════════
+        //  EXPORT STUDENT LIST
+        // ═══════════════════════════════════════
+        async function exportStudentList() {
+            var { data, error } = await supabaseClient.from('students')
+                .select('full_name, dni, status, branches(name), courses(name)')
+                .order('full_name');
+            if (error || !data) { alert('Error al exportar.'); return; }
+            var rows = data.map(function (s) {
+                return { 'Nombre': s.full_name, 'DNI': s.dni, 'Sucursal': s.branches ? s.branches.name : '-', 'Curso': s.courses ? s.courses.name : '-', 'Estado': s.status };
+            });
+            var ws = XLSX.utils.json_to_sheet(rows);
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Alumnos');
+            XLSX.writeFile(wb, 'listado_alumnos.xlsx');
+        }
     </script>
+    <!-- ═══ MODAL: CAMBIO DE CONTRASEÑA ═══ -->
+    <div class="modal fade" id="changePwdModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cambiar Contraseña</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="newPassword">Nueva Contraseña</label>
+                        <input type="password" id="newPassword" class="form-control" placeholder="Mínimo 6 caracteres...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">Confirmar Contraseña</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Repetí la contraseña...">
+                    </div>
+                    <p id="changePwdFeedback" class="small mt-8pt d-none"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnSavePassword">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: SESIÓN POR EXPIRAR ═══ -->
+    <div class="modal fade" id="sessionWarningModal" tabindex="-1" role="alertdialog" data-backdrop="static">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content border-warning">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title"><i class="material-icons mr-4pt" style="vertical-align:middle;font-size:18px;">timer</i> Sesión por expirar</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Tu sesión se cerrará en <strong><span id="sessionCountdown">60</span>s</strong> por inactividad.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary btn-block" id="btnStayLoggedIn">Continuar Sesión</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>

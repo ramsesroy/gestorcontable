@@ -196,6 +196,7 @@
             </div>
             <br>
             <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: bold; font-size: 16px;">Imprimir Comprobante</button>
+            <button id="btnWhatsApp" onclick="shareWhatsApp()" style="padding: 10px 20px; background: #25D366; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: bold; font-size: 16px;">&#128232; WhatsApp</button>
             <button onclick="window.history.back()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px;">Volver Atrás</button>
         </div>
     </div>
@@ -259,10 +260,27 @@
 
             document.getElementById('ticketData').innerHTML = html;
 
+            // WhatsApp share
+            const waText = encodeURIComponent(
+                '*Comprobante de Pago - CMS Cobranzas*\n' +
+                '\uD83D\uDC64 *Alumno:* ' + name + '\n' +
+                '\uD83D\uDCCB *Concepto:* ' + cuotaText + '\n' +
+                '\uD83D\uDCDA *Curso:* ' + courseName + '\n' +
+                '\uD83D\uDCB0 *Monto Pagado:* ' + new Intl.NumberFormat('es-PY', {style:'currency',currency:'PYG',maximumFractionDigits:0}).format(amountPaid) + '\n' +
+                '\uD83D\uDCC5 *Fecha:* ' + date + '\n' +
+                '\u2705 Pago registrado correctamente.'
+            );
+            document.getElementById('btnWhatsApp').setAttribute('data-wa', 'https://wa.me/?text=' + waText);
+
             // Auto-print disabled for QA verification and manual format selection (Bug-04)
             const pFormat = localStorage.getItem('preferredTicketFormat') || 'a4';
             setFormat(pFormat);
         });
+
+        function shareWhatsApp() {
+            var url = document.getElementById('btnWhatsApp').getAttribute('data-wa') || '';
+            if (url) window.open(url, '_blank');
+        }
     </script>
 </body>
 

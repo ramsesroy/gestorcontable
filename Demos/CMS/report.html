@@ -383,6 +383,19 @@
             const params = new URLSearchParams({ branch_id: branchId, from: from, to: to, type: type });
             window.location.href = 'report.html?' + params.toString();
         }
+        // ═══════════════════════════════════════
+        //  AUTO-LOGOUT POR INACTIVIDAD (15 min)
+        // ═══════════════════════════════════════
+        var inactivityTimer;
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(async function () {
+                await supabaseClient.auth.signOut();
+                window.location.replace('login.html');
+            }, 15 * 60 * 1000);
+        }
+        $(document).on('mousemove keydown click touchstart', resetInactivityTimer);
+        resetInactivityTimer();
     </script>
 </body>
 </html>

@@ -141,8 +141,40 @@
             }
         }
 
+        // ═══════════════════════
+        //  LOGIN LOCKOUT LOGIC
+        // ═══════════════════════
+        var failedAttempts = 0;
+        var lockoutTimer = null;
+        var LOCKOUT_DURATION = 30; // seconds
+        var MAX_ATTEMPTS = 3;
+
+        function startLockout() {
+            var remaining = LOCKOUT_DURATION;
+            var btn = $('#loginBtn');
+            btn.prop('disabled', true);
+            $('#loginBtnSpinner').addClass('d-none');
+            $('#loginError').removeClass('d-none')
+                .html('<strong>Demasiados intentos.</strong> Podés reintentar en <span id="lockoutCountdown">' + remaining + '</span>s.');
+
+            lockoutTimer = setInterval(function () {
+                remaining--;
+                $('#lockoutCountdown').text(remaining);
+                if (remaining <= 0) {
+                    clearInterval(lockoutTimer);
+                    lockoutTimer = null;
+                    failedAttempts = 0;
+                    btn.prop('disabled', false);
+                    $('#loginBtnText').text('Ingresar');
+                    $('#loginError').addClass('d-none');
+                }
+            }, 1000);
+        }
+
         $('#loginForm').on('submit', async function (e) {
             e.preventDefault();
+            if (lockoutTimer) return; // Still locked out
+
             const email = $('#email').val();
             const password = $('#password').val();
 
@@ -157,19 +189,28 @@
 
                 if (error) throw error;
 
-                // Route based on role
+                // Reset on success
+                failedAttempts = 0;
                 const userId = data.user.id;
                 const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', userId).single();
                 window.location.replace('dashboard.html');
 
             } catch (error) {
                 console.error('Error de login:', error.message);
+                failedAttempts++;
                 var errMsg = error.message || "";
                 if (errMsg.toLowerCase().includes('invalid login credentials')) {
                     errMsg = 'Correo o contraseña incorrectos.';
                 }
-                $('#loginError').removeClass('d-none').html('<strong>Error:</strong> ' + errMsg);
-                setLoading(false);
+
+                if (failedAttempts >= MAX_ATTEMPTS) {
+                    startLockout();
+                } else {
+                    var remaining = MAX_ATTEMPTS - failedAttempts;
+                    $('#loginError').removeClass('d-none')
+                        .html('<strong>Error:</strong> ' + errMsg + ' <small class="text-danger">(' + remaining + ' intento(s) restante(s))</small>');
+                    setLoading(false);
+                }
             }
         });
     </script>
