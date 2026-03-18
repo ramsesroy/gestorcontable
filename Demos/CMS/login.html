@@ -61,17 +61,27 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="password">Contraseña:</label>
-                            <input id="password" type="password" class="form-control" placeholder="Tu contraseña..."
-                                required autocomplete="new-password">
+                            <div class="input-group">
+                                <input id="password" type="password" class="form-control" placeholder="Tu contraseña..."
+                                    required autocomplete="new-password">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-light border" id="togglePassword" tabindex="-1" aria-label="Mostrar/Ocultar contraseña" style="line-height:1;">
+                                        <i class="material-icons" id="togglePasswordIcon" style="font-size:18px;vertical-align:middle;">visibility</i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Error Alert -->
-                        <div id="loginError" class="alert alert-soft-danger d-none">
+                        <div id="loginError" class="alert alert-soft-danger d-none" role="alert">
                             <strong>Error:</strong> Credenciales incorrectas.
                         </div>
 
                         <div class="text-center">
-                            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Ingresar</button>
+                            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+                                <span id="loginBtnText">Ingresar</span>
+                                <span id="loginBtnSpinner" class="spinner-border spinner-border-sm ml-8pt d-none" role="status" aria-hidden="true"></span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -103,13 +113,40 @@
             }
         });
 
+        // Password Toggle
+        $('#togglePassword').on('click', function () {
+            var input = $('#password');
+            var icon = $('#togglePasswordIcon');
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.text('visibility_off');
+            } else {
+                input.attr('type', 'password');
+                icon.text('visibility');
+            }
+        });
+
+        function setLoading(isLoading) {
+            var btn = $('#loginBtn');
+            var txt = $('#loginBtnText');
+            var spinner = $('#loginBtnSpinner');
+            if (isLoading) {
+                btn.prop('disabled', true);
+                txt.text('Ingresando...');
+                spinner.removeClass('d-none');
+            } else {
+                btn.prop('disabled', false);
+                txt.text('Ingresar');
+                spinner.addClass('d-none');
+            }
+        }
+
         $('#loginForm').on('submit', async function (e) {
             e.preventDefault();
             const email = $('#email').val();
             const password = $('#password').val();
-            const btn = $('#loginBtn');
 
-            btn.prop('disabled', true).text('Verificando...');
+            setLoading(true);
             $('#loginError').addClass('d-none');
 
             try {
@@ -123,11 +160,7 @@
                 // Route based on role
                 const userId = data.user.id;
                 const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', userId).single();
-                if (profile && profile.role === 'admin') {
-                    window.location.replace('dashboard.html');
-                } else {
-                    window.location.replace('dashboard.html');
-                }
+                window.location.replace('dashboard.html');
 
             } catch (error) {
                 console.error('Error de login:', error.message);
@@ -136,7 +169,7 @@
                     errMsg = 'Correo o contraseña incorrectos.';
                 }
                 $('#loginError').removeClass('d-none').html('<strong>Error:</strong> ' + errMsg);
-                btn.prop('disabled', false).text('Ingresar');
+                setLoading(false);
             }
         });
     </script>
