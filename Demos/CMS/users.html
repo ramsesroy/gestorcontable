@@ -538,7 +538,14 @@
                 }, 2000);
 
             } catch (err) {
-                msgDiv.removeClass('d-none alert-soft-success').addClass('alert-soft-danger').text('Error: ' + err.message);
+                console.error(err);
+                let userMsg = err.message || 'Error desconocido';
+                
+                if (err.message === 'User already registered') {
+                    userMsg = 'Este correo ya está registrado en el sistema. \nSi el usuario NO aparece en la lista de abajo, debés ejecutar el SCRIPT DE REPARACIÓN (v3) en Supabase para sincronizarlo, o eliminarlo definitivamente desde el Dashboard oficial de Supabase Auth.';
+                }
+                
+                msgDiv.removeClass('d-none alert-soft-success').addClass('alert-soft-danger').text(userMsg);
             } finally {
                 btn.prop('disabled', false).text('Crear Usuario');
             }
