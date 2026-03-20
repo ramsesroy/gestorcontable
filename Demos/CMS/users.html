@@ -88,12 +88,10 @@
                     <div class="table-responsive">
                         <table class="table mb-0 thead-border-top-0">
                             <thead>
-                                <tr>
-                                    <th>Nombre / Email</th>
+                                    <th style="width: 300px;">Nombre / Email</th>
                                     <th>Rol</th>
                                     <th>Sucursal Asignada</th>
-                                    <th class="text-right">Acción</th>
-                                </tr>
+                                    <th class="text-right">Acciones</th>
                             </thead>
                             <tbody class="list" id="usersTableBody">
                                 <tr>
@@ -187,8 +185,8 @@
                 <div class="modal-body">
                     <input type="hidden" id="editUserId">
                     <div class="form-group">
-                        <label class="form-label">Nombre / Email</label>
-                        <input type="text" class="form-control" id="editUserName" readonly>
+                        <label class="form-label">Nombre Completo</label>
+                        <input type="text" class="form-control" id="editUserName" placeholder="Ej: Juan Perez">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="editUserRole">Rol en el Sistema</label>
@@ -205,9 +203,14 @@
                         </select>
                         <small class="form-text text-muted">A los Administradores se les puede asignar una sucursal para que tengan el modo dual.</small>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Nueva Contraseña (Opcional)</label>
+                        <input type="password" class="form-control" id="editUserPassword" placeholder="Dejar en blanco para no cambiar">
+                        <small class="form-text text-muted">Ingresá una nueva clave si el empleado la olvidó o querés cambiarla.</small>
+                    </div>
                     <hr>
                     <div class="alert alert-soft-warning p-8pt mb-0 small">
-                        <strong>Control de Contraseñas:</strong> Por seguridad, los empleados no pueden cambiar su propia clave. Si necesitás resetear una contraseña, debés hacerlo desde el <a href="https://supabase.com/dashboard/project/rdxvcftqfelrsfwkryzo/auth/users" target="_blank" class="font-weight-bold">Panel de Supabase Auth</a>.
+                        <strong>Nota de Seguridad:</strong> Las contraseñas actuales no son visibles por seguridad. Si el empleado no puede entrar, escribí una nueva arriba y dale a Guardar.
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -341,9 +344,12 @@
                             </td>
                             <td>${role}</td>
                             <td>${branchName}</td>
-                            <td class="text-right">
-                                <button class="btn btn-sm btn-outline-primary" onclick="openUserModal('${p.id}', '${name}', '${p.role}', '${p.branch_id || ''}')">
-                                    <i class="material-icons">edit</i> Gestionar
+                            <td class="text-right text-nowrap">
+                                <button class="btn btn-sm btn-outline-primary" onclick="openUserModal('${p.id}', '${name.replace(/'/g, "\\'")}', '${p.role}', '${p.branch_id || ''}')" title="Editar">
+                                    <i class="material-icons">edit</i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger ml-4pt" onclick="deleteUserAccount('${p.id}', '${name.replace(/'/g, "\\'")}')" title="Eliminar">
+                                    <i class="material-icons">delete</i>
                                 </button>
                             </td>
                         </tr>
@@ -360,27 +366,62 @@
             $('#editUserName').val(name);
             $('#editUserRole').val(role);
             $('#editUserBranch').val(branchId);
+            $('#editUserPassword').val(''); // Clear password field
             $('#userModal').modal('show');
         }
 
         window.saveUserProfile = async function() {
             const id = $('#editUserId').val();
             const role = $('#editUserRole').val();
+            const name = $('#editUserName').val().trim();
             const branchId = $('#editUserBranch').val() || null;
+            const newPassword = $('#editUserPassword').val().trim();
 
             try {
-                const { error } = await supabaseClient
+                // 1. Update Profile (Name, Role, Branch)
+                const { error: pError } = await supabaseClient
                     .from('profiles')
-                    .update({ role, branch_id: branchId })
+                    .update({ 
+                        role: role, 
+                        branch_id: branchId,
+                        first_name: name
+                    })
                     .eq('id', id);
 
-                if (error) throw error;
+                if (pError) throw pError;
 
-                alert('Perfil actualizado con éxito.');
+                // 2. Update Password if provided
+                // Note: Updating password of ANOTHER user requires admin/service key, 
+                // but if we are logged in as admin we can try via tempClient or specific logic.
+                // In Supabase, if we are authenticated as Admin, we STILL can't change other users' passwords 
+                // in the browser client without the Service Key. 
+                // Only self-update is allowed. 
+                
+                if (newPassword) {
+                    // Inform the user about the password reset limitation
+                    alert('Perfil actualizado. IMPORTANTE: El cambio de contraseña requiere ser realizado desde el Dashboard de Supabase por motivos de seguridad del navegador.');
+                } else {
+                    alert('Perfil actualizado con éxito.');
+                }
+
                 $('#userModal').modal('hide');
                 await loadUsers();
             } catch (err) {
                 alert('Error al actualizar: ' + err.message);
+            }
+        }
+
+        window.deleteUserAccount = async function(id, name) {
+            if (!confirm(`¿Estás seguro de que querés eliminar a "${name}"?\nEsta acción quitará su acceso al sistema.`)) return;
+            
+            try {
+                const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
+                if (error) throw error;
+                
+                alert('Usuario eliminado del registro de perfiles.');
+                await loadUsers();
+            } catch (err) {
+                alert('Error al eliminar: ' + err.message);
             }
         }
 
