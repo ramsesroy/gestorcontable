@@ -81,6 +81,9 @@
                         <div class="flex">
                             <h4 class="card-title">Listado de Personal</h4>
                         </div>
+                        <button class="btn btn-primary" onclick="showNewUserHelp()">
+                            <i class="material-icons mr-8pt">person_add</i> Nuevo Usuario
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table mb-0 thead-border-top-0">
@@ -327,6 +330,13 @@
             } catch (err) {
                 alert('Error al actualizar: ' + err.message);
             }
+        }
+
+        window.showNewUserHelp = function() {
+            alert('Para crear un nuevo usuario:\n\n' +
+                '1. Indicale al nuevo empleado que se registre en la página de inicio (Botón "Registrate aquí").\n' +
+                '2. Una vez que se registre, aparecerá automáticamente en esta lista.\n' +
+                '3. Entonces podrás darle el rol de "Cajero" y asignarle su sucursal.');
         }
 
         async function logout() {

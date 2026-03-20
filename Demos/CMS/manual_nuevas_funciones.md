@@ -94,6 +94,7 @@
 ### 14. Gestión Maestra de Usuarios
 - **Dónde:** Nueva sección **Usuarios** en el menú lateral.
 - **Cómo funciona:** Esta pantalla permite al Administrador centralizar quién trabaja en cada sede.
-  - Podrás ver la lista de todos los correos registrados.
-  - Podrás cambiar el **Rol** (Admin o Cajero) de cualquier persona.
-  - Podrás **Vincular o Cambiar** la sucursal de un empleado. Si un cajero se traslada a otra sede, simplemente cambiale la sucursal asignada aquí y sus permisos se actualizarán al instante.
+  - **Cómo crear un usuario**: El nuevo empleado debe entrar a la pantalla de Login y hacer clic en **"Registrate aquí"** para crear su cuenta con su nombre, email y contraseña.
+  - Una vez registrado, aparecerá automáticamente en la lista del Administrador.
+  - El Administrador podrá entonces cambiar el **Rol** (Admin o Cajero) y **Vincular** la sucursal correspondiente.
+  - Si un cajero se traslada a otra sede, simplemente cambiale la sucursal asignada aquí y sus permisos se actualizarán al instante.
