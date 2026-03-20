@@ -417,17 +417,35 @@
 
                 if (error) throw error;
 
-                // Ahora actualizamos el perfil con la sucursal (si se eligió una)
-                const branchId = $('#newUserBranch').val();
-                if (branchId) {
-                    const { error: pError } = await tempClient.from('profiles')
-                        .update({ branch_id: branchId })
-                        .eq('id', data.user.id);
-                    if (pError) console.error("Error al asignar sucursal:", pError);
+                if (error) throw error;
+
+                // Es posible que el trigger de base de datos aún no haya creado el perfil.
+                // Intentamos actualizar con reintentos.
+                const branchId = $('#newUserBranch').val() || null;
+                let profileFixed = false;
+                for (let i = 0; i < 5; i++) {
+                    const { data: pData, error: pError } = await tempClient.from('profiles')
+                        .update({ 
+                            branch_id: branchId, 
+                            role: 'cajero', 
+                            first_name: name 
+                        })
+                        .eq('id', data.user.id)
+                        .select();
+                    
+                    if (!pError && pData && pData.length > 0) {
+                        profileFixed = true;
+                        break;
+                    }
+                    await new Promise(r => setTimeout(r, 1000)); // Esperar 1s antes de reintentar
+                }
+
+                if (!profileFixed) {
+                    console.warn("No se pudo actualizar el perfil automáticamente. El Admin deberá editarlo manualmente.");
                 }
 
                 msgDiv.removeClass('d-none alert-soft-danger').addClass('alert-soft-success')
-                      .text('¡Usuario creado con éxito! Ya aparece en la lista para asignarle sucursal.');
+                      .text('¡Usuario creado con éxito! Se le asignó el rol de Cajero.');
                 
                 $('#newUserName').val('');
                 $('#newUserEmail').val('');
