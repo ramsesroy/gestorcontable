@@ -82,7 +82,14 @@
 
 ### 12. Rendimiento del Cajero del Día
 - **Dónde:** Panel de Sucursal (Cajeros) en `dashboard.html`.
-- **Cómo funciona:** Al entrar como Cajero, la vista mini-dashboard ahora calcula de forma segregada y automática el **Monto exacto cobrado solo en el día de hoy** junto a la cantidad total de pagos que procesó dicha sucursal, independiente de lo recaudado en el mes global, agilizando el control de caja chica.
+- **Cómo funciona:**  - Al entrar como Cajero, la vista mini-dashboard ahora calcula de forma segregada y automática el **Monto exacto cobrado solo en el día de hoy** junto a la cantidad total de pagos que procesó dicha sucursal, independiente de lo recaudado en el mes global, agilizando el control de caja chica.
+
+### 12.5 Alerta de Cumpleaños del Día
+- **Dónde:** Dashboard Principal (`dashboard.html`).
+- **Cómo funciona:** Tanto el Admin como el Cajero verán un banner azul con una torta (`¡Cumpleaños de hoy! 🎂`) solo si existen alumnos que cumplan años en la fecha actual. 
+  - El **Admin** ve los cumpleaños de todas las sucursales.
+  - El **Cajero** solo ve a los alumnos de su propia sucursal asignada. 
+  - Esto permite enviar saludos personalizados y mejorar el trato con el alumno.
 
 ---
 

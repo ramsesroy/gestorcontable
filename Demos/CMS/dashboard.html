@@ -130,6 +130,17 @@
                     </div>
                 </div>
 
+                <!-- Birthday Alert Banner -->
+                <div id="birthdayAlertBanner" class="container page__container mt-16pt d-none">
+                    <div class="alert alert-soft-primary d-flex align-items-center" role="alert" style="border: 2px dashed #5567ff;">
+                        <i class="material-icons mr-16pt" style="font-size: 32px; color: #5567ff;">cake</i>
+                        <div class="flex">
+                            <h4 class="mb-0">¡Cumpleaños de hoy! 🎂</h4>
+                            <p class="mb-0" id="birthdayList">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Overdue Alert Banner -->
                 <div id="overdueAlertBanner" class="container page__container mt-16pt d-none">
                     <div class="alert alert-danger d-flex align-items-center" role="alert">
@@ -359,6 +370,20 @@
                                 <h3 class="mb-8pt">¡Bienvenido/a! 👋</h3>
                                 <p class="mb-0" id="cajeroGreeting">Tu resumen del día</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shared: Birthday Alert Banner for Cajeros -->
+                <div id="birthdayAlertBannerCajero" class="container page__container mt-16pt d-none">
+                    <div class="alert alert-soft-primary d-flex align-items-center" role="alert" style="border: 2px dashed #5567ff;">
+                        <i class="material-icons mr-16pt" style="font-size: 32px; color: #5567ff;">cake</i>
+                        <div class="flex">
+                            <h4 class="mb-0">¡Cumpleaños de hoy en sucursal! 🎂</h4>
+                            <p class="mb-0" id="birthdayListCajero">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
                             <div class="mt-16pt mt-md-0 d-flex flex-wrap">
                                 <button class="btn btn-outline-secondary mr-8pt mb-8pt"
                                     onclick="generateReport('today')">
@@ -594,6 +619,7 @@
                     var greeting = profile.first_name ? ('Hola, ' + profile.first_name + '!') : '¡Bienvenido/a!';
                     $('#cajeroGreeting').text(greeting + ' — Resumen de sucursal: ' + bName);
                 }
+                loadBirthdays(profile);
             } else if (profile && profile.role === 'cajero') {
                 currentUserRole = 'cajero';
                 $('#adminView').hide();
@@ -609,6 +635,44 @@
                 var greeting = profile.first_name ? ('Hola, ' + profile.first_name + '!') : '¡Bienvenido/a!';
                 $('#cajeroGreeting').text(greeting + ' — Resumen de sucursal: ' + bName);
                 loadCajeroDashboard(userId, profile.branch_id);
+                loadBirthdays(profile);
+            }
+        }
+
+        async function loadBirthdays(profile) {
+            const today = new Date();
+            const currentMonth = today.getMonth() + 1;
+            const currentDay = today.getDate();
+
+            try {
+                let query = supabaseClient.from('students').select('full_name, birth_date, branch_id').eq('status', 'activo').not('birth_date', 'is', null);
+                
+                // If Cajun, filter by their branch
+                if (profile.role === 'cajero' && profile.branch_id) {
+                    query = query.eq('branch_id', profile.branch_id);
+                }
+
+                const { data: students, error } = await query;
+                if (error) throw error;
+
+                const birthdayStudents = students.filter(s => {
+                    if (!s.birth_date) return false;
+                    const dob = new Date(s.birth_date + 'T00:00:00'); // Ensure local time
+                    return (dob.getMonth() + 1) === currentMonth && dob.getDate() === currentDay;
+                });
+
+                if (birthdayStudents.length > 0) {
+                    const listStr = birthdayStudents.map(s => `<strong>${s.full_name}</strong>`).join(', ');
+                    if (profile.role === 'admin') {
+                        $('#birthdayList').html(`Hoy cumplen años: ${listStr}. ¡No olvides saludarlos!`);
+                        $('#birthdayAlertBanner').removeClass('d-none');
+                    } else {
+                        $('#birthdayListCajero').html(`Hoy cumplen años en tu sede: ${listStr}. ¡No olvides saludarlos!`);
+                        $('#birthdayAlertBannerCajero').removeClass('d-none');
+                    }
+                }
+            } catch (err) {
+                console.error("Error al cargar cumpleaños:", err);
             }
         }
 
