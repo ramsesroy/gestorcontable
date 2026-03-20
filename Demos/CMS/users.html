@@ -240,7 +240,13 @@
                     <div class="form-group">
                         <label class="form-label" for="newUserPassword">Contraseña Temporal</label>
                         <input type="password" class="form-control" id="newUserPassword" placeholder="Mínimo 6 caracteres">
-                        <small class="text-muted">El empleado podrá cambiar su contraseña después desde su panel.</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newUserBranch">Asignar Sucursal</label>
+                        <select id="newUserBranch" class="form-control">
+                            <option value="">Ninguna / Acceso Global</option>
+                            <!-- Branches loaded here -->
+                        </select>
                     </div>
                     <div id="newUserMsg" class="alert d-none small"></div>
                 </div>
@@ -287,11 +293,19 @@
             const { data } = await supabaseClient.from('branches').select('id, name').order('name');
             branches = data || [];
             
-            const select = $('#editUserBranch');
-            select.empty();
-            select.append('<option value="">Ninguna / Acceso Global</option>');
+            const editSelect = $('#editUserBranch');
+            const newSelect = $('#newUserBranch');
+            editSelect.empty();
+            newSelect.empty();
+            
+            const defaultOpt = '<option value="">Ninguna / Acceso Global</option>';
+            editSelect.append(defaultOpt);
+            newSelect.append(defaultOpt);
+            
             branches.forEach(b => {
-                select.append(`<option value="${b.id}">${b.name}</option>`);
+                const opt = `<option value="${b.id}">${b.name}</option>`;
+                editSelect.append(opt);
+                newSelect.append(opt);
             });
         }
 
@@ -402,6 +416,15 @@
                 });
 
                 if (error) throw error;
+
+                // Ahora actualizamos el perfil con la sucursal (si se eligió una)
+                const branchId = $('#newUserBranch').val();
+                if (branchId) {
+                    const { error: pError } = await tempClient.from('profiles')
+                        .update({ branch_id: branchId })
+                        .eq('id', data.user.id);
+                    if (pError) console.error("Error al asignar sucursal:", pError);
+                }
 
                 msgDiv.removeClass('d-none alert-soft-danger').addClass('alert-soft-success')
                       .text('¡Usuario creado con éxito! Ya aparece en la lista para asignarle sucursal.');

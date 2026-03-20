@@ -101,12 +101,12 @@
   - Al elegir **Global**, verás los KPIs generales de toda la cadena.
   - Al elegir **Sucursal**, el dashboard se transformará en la vista de Cajero de tu sede, permitiéndote ver los cobros del día de la Central sin cambiar de usuario.
 
-### 14. Gestión Maestra de Usuarios
-- **Dónde:** Nueva sección **Usuarios** en el menú lateral.
-- **Cómo funciona:** Esta pantalla permite al Administrador centralizar quién trabaja en cada sede.
-  - **Cómo crear un usuario**: El Administrador puede hacer clic en el botón **"Nuevo Usuario"**.
-  - Se abrirá un formulario para ingresar el **Nombre**, **Email** y una **Contraseña temporal**.
-  - Al crearlo, el Administrador sigue logueado y el nuevo usuario aparecerá en la lista.
-  - El Administrador podrá entonces cambiar el **Rol** (Admin o Cajero) y **Vincular** la sucursal correspondiente.
-  - El empleado ya podrá entrar con sus credenciales y cambiar su contraseña si lo desea.
-  - Si un cajero se traslada a otra sede, simplemente cambiale la sucursal asignada aquí y sus permisos se actualizarán al instante.
+### 14. Gestión Maestra de Usuarios (Nuevas Funciones)
+- **Asignación en Creación:** Al crear un "Nuevo Usuario", ahora podés elegir su sucursal inmediatamente desde el formulario. No hace falta crearlo y luego editarlo.
+- **Control de Acceso:** Recordá que un Admin tiene acceso global, pero podés asignarle una sucursal para que vea el "Modo Sucursal" en su Dashboard.
+
+### 15. Panel de Sucursales y Analíticas Locales
+- **Listado Dinámico:** El listado de sucursales ahora muestra cuántos cajeros están asignados a cada sede.
+- **Botón "Ver Detalles" (Icono Ojo):** Al clickearlo, se abre un panel con:
+  - **Estadísticas Propias:** Ingresos acumulados de esa sede, alumnos activos y deuda pendiente. Esto permite liberar el Dashboard principal y ver el rendimiento de cada punto por separado.
+  - **Gestión de Personal:** Podés ver quién trabaja en esa sede, desvincularlos o agregar nuevos usuarios (Cajeros o Admins) directamente desde allí.

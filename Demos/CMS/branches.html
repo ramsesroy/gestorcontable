@@ -86,6 +86,7 @@
                                 <tr>
                                     <th>Nombre de la Sucursal</th>
                                     <th>Creada el</th>
+                                    <th>Cajeros</th>
                                     <th class="text-right">Acciones</th>
                                 </tr>
                             </thead>
@@ -168,26 +169,68 @@
         </div>
     </div>
 
-    <!-- MODAL: Crear/Editar Sucursal -->
-    <div class="modal fade" id="branchModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+    </div>
+
+    <!-- MODAL: Detalles de Sucursal (Estadísticas y Usuarios) -->
+    <div class="modal fade" id="branchDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="branchModalTitle">Sucursal</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <h5 class="modal-title" id="detailModalTitle">Detalles de Sucursal</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="branchId">
-                    <div class="form-group">
-                        <label class="form-label">Nombre de la Sucursal</label>
-                        <input type="text" class="form-control" id="branchName" placeholder="Ej: Sucursal Oeste">
+                    <!-- Stats Cards Row -->
+                    <div class="row mb-16pt" id="branchStatsRow">
+                        <div class="col-md-4">
+                            <div class="card card-body text-center p-16pt m-0">
+                                <h4 class="mb-0 text-success" id="detailTotalIncome">Gs. 0</h4>
+                                <small class="text-50">Ingresos Totales</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card card-body text-center p-16pt m-0">
+                                <h4 class="mb-0 text-primary" id="detailTotalStudents">0</h4>
+                                <small class="text-50">Alumnos Activos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card card-body text-center p-16pt m-0">
+                                <h4 class="mb-0 text-warning" id="detailTotalDebt">Gs. 0</h4>
+                                <small class="text-50">Deuda Pendiente</small>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="saveBranch()">Guardar</button>
+
+                    <div class="page-separator mt-24pt">
+                        <div class="page-separator__text">Personal de la Sucursal</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Rol</th>
+                                    <th class="text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="branchUsersBody">
+                                <!-- Users list here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="form-group mt-16pt">
+                        <label class="form-label">Vincular nuevo usuario a esta sede:</label>
+                        <div class="input-group">
+                            <select id="availableUsersSelect" class="form-control">
+                                <option value="">Seleccionar usuario...</option>
+                            </select>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-primary" type="button" onclick="assignUserToBranch()">Vincular</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -238,9 +281,25 @@
         }
 
         async function loadBranches() {
-            const { data, error } = await supabaseClient.from('branches').select('*').order('name');
+            // Get branches with user counts
+            const { data: branches, error } = await supabaseClient.from('branches').select('*').order('name');
+            const { data: profiles } = await supabaseClient.from('profiles').select('id, branch_id');
+
             if (error) return console.error(error);
-            branchesData = data;
+            
+            // Map user counts
+            const userCounts = {};
+            (profiles || []).forEach(p => {
+                if (p.branch_id) {
+                    userCounts[p.branch_id] = (userCounts[p.branch_id] || 0) + 1;
+                }
+            });
+
+            branchesData = branches.map(b => ({
+                ...b,
+                userCount: userCounts[b.id] || 0
+            }));
+
             renderBranches();
         }
 
@@ -261,13 +320,13 @@
             const filtered = uniqueBranches.filter(b => b.name.toLowerCase().includes(filter.toLowerCase()));
 
             if (filtered.length === 0) {
-                tbody.append('<tr><td colspan="3" class="text-center">No se encontraron sucursales.</td></tr>');
+                tbody.append('<tr><td colspan="4" class="text-center">No se encontraron sucursales.</td></tr>');
                 return;
             }
 
             filtered.forEach(b => {
                 const date = new Date(b.created_at).toLocaleDateString();
-                const isActive = b.active !== false; // Default to true if undefined
+                const isActive = b.active !== false;
                 const statusBadge = isActive ? 
                     '<span class="badge badge-soft-success">Activa</span>' : 
                     '<span class="badge badge-soft-secondary">Archivada</span>';
@@ -280,12 +339,19 @@
                     </button>
                 ` : '';
 
+                const detailBtn = `
+                    <button class="btn btn-sm btn-outline-info ml-4pt" onclick="openBranchDetailModal('${b.id}', '${b.name.replace(/'/g, "\\'")}')" title="Ver Detalles">
+                        <i class="material-icons">visibility</i>
+                    </button>
+                `;
+
                 const actionBtn = window.isAdmin ? `
-                    <button class="btn btn-sm btn-outline-primary" onclick="openBranchModal('${b.id}', '${b.name.replace(/'/g, "\\'")}')">
+                    <button class="btn btn-sm btn-outline-primary" onclick="openBranchModal('${b.id}', '${b.name.replace(/'/g, "\\'")}')" title="Editar">
                         <i class="material-icons">edit</i>
                     </button>
+                    ${detailBtn}
                     ${toggleBtn}
-                ` : '<span class="text-muted small">Solo lectura</span>';
+                ` : detailBtn;
 
                 tbody.append(`
                     <tr style="${isActive ? '' : 'opacity: 0.6;'}">
@@ -296,6 +362,7 @@
                             </div>
                         </td>
                         <td><span class="text-50 small">${date}</span></td>
+                        <td><span class="badge badge-soft-dark">${b.userCount} usuarios</span></td>
                         <td class="text-right">${actionBtn}</td>
                     </tr>
                 `);
@@ -368,6 +435,144 @@
         }
         $(document).on('mousemove keydown click touchstart', resetInactivityTimer);
         resetInactivityTimer();
+
+        // ═══════════════════════════════════════
+        //  BRANCH DETAILS & USER MANAGEMENT
+        // ═══════════════════════════════════════
+        let currentEditingBranchId = null;
+        const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
+
+        window.openBranchDetailModal = async function(id, name) {
+            currentEditingBranchId = id;
+            $('#detailModalTitle').text('Detalles: ' + name);
+            
+            // Reset UI
+            $('#detailTotalIncome').text('Cargando...');
+            $('#detailTotalStudents').text('...');
+            $('#detailTotalDebt').text('...');
+            $('#branchUsersBody').html('<tr><td colspan="3" class="text-center small">Cargando personal...</td></tr>');
+            
+            $('#branchDetailModal').modal('show');
+
+            try {
+                // 1. Fetch Stats (Income from audit_log, students, debt from students/installments)
+                // income (pago actions in audit_log related to students of this branch)
+                const { data: studentsInBranch } = await supabaseClient.from('students').select('id').eq('branch_id', id);
+                const studentIds = (studentsInBranch || []).map(s => s.id);
+                
+                let totalIncome = 0;
+                if (studentIds.length > 0) {
+                    const { data: payments } = await supabaseClient.from('audit_log')
+                        .select('details')
+                        .eq('action', 'pago')
+                        .filter('details->>student_id', 'in', `(${studentIds.join(',')})`);
+                    
+                    (payments || []).forEach(p => {
+                        const amount = parseFloat(p.details.amount || 0);
+                        totalIncome += amount;
+                    });
+                }
+                $('#detailTotalIncome').text(fmt.format(totalIncome));
+
+                // Active Students count
+                const { count: studentCount } = await supabaseClient.from('students')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('branch_id', id)
+                    .eq('status', 'activo');
+                $('#detailTotalStudents').text(studentCount || 0);
+
+                // Debt (Pending installments for students in this branch)
+                let totalDebt = 0;
+                if (studentIds.length > 0) {
+                    const { data: pending } = await supabaseClient.from('installments')
+                        .select('amount, paid_amount')
+                        .in('student_id', studentIds)
+                        .in('status', ['pendiente', 'parcial']);
+                    
+                    (pending || []).forEach(inst => {
+                        const due = parseFloat(inst.amount || 0) - parseFloat(inst.paid_amount || 0);
+                        totalDebt += due;
+                    });
+                }
+                $('#detailTotalDebt').text(fmt.format(totalDebt));
+
+                // 2. Fetch Users assigned to this branch
+                loadBranchUsers(id);
+
+                // 3. Load available users (unassigned or from other branches)
+                loadAvailableUsers(id);
+
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        async function loadBranchUsers(branchId) {
+            const { data: users } = await supabaseClient.from('profiles').select('*').eq('branch_id', branchId);
+            const tbody = $('#branchUsersBody');
+            tbody.empty();
+
+            if (!users || users.length === 0) {
+                tbody.append('<tr><td colspan="3" class="text-center text-muted small">No hay personal asignado.</td></tr>');
+                return;
+            }
+
+            users.forEach(u => {
+                const role = u.role === 'admin' ? 'Admin' : 'Cajero';
+                tbody.append(`
+                    <tr>
+                        <td class="small font-weight-bold">${u.first_name || 'Sin nombre'}</td>
+                        <td class="small">${role}</td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-outline-danger" onclick="unassignUser('${u.id}')" title="Desvincular">
+                                <i class="material-icons" style="font-size:14px;">link_off</i>
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        async function loadAvailableUsers(excludeBranchId) {
+            const { data: allUsers } = await supabaseClient.from('profiles').select('id, first_name, role, branch_id').order('first_name');
+            const select = $('#availableUsersSelect');
+            select.html('<option value="">Seleccionar usuario...</option>');
+            
+            (allUsers || []).forEach(u => {
+                if (u.branch_id !== excludeBranchId) {
+                    const status = u.branch_id ? '(Ya asignado)' : '(Sin sede)';
+                    select.append(`<option value="${u.id}">${u.first_name || 'S/N'} [${u.role.toUpperCase()}] ${status}</option>`);
+                }
+            });
+        }
+
+        window.assignUserToBranch = async function() {
+            const userId = $('#availableUsersSelect').val();
+            if (!userId) return;
+
+            try {
+                const { error } = await supabaseClient.from('profiles').update({ branch_id: currentEditingBranchId }).eq('id', userId);
+                if (error) throw error;
+                loadBranchUsers(currentEditingBranchId);
+                loadAvailableUsers(currentEditingBranchId);
+                loadBranches(); // Refresh overview counts
+            } catch (err) {
+                alert('Error al asignar usuario.');
+            }
+        };
+
+        window.unassignUser = async function(userId) {
+            if (!confirm('¿Desvincular a este usuario de la sucursal?')) return;
+            try {
+                const { error } = await supabaseClient.from('profiles').update({ branch_id: null }).eq('id', userId);
+                if (error) throw error;
+                loadBranchUsers(currentEditingBranchId);
+                loadAvailableUsers(currentEditingBranchId);
+                loadBranches(); // Refresh overview counts
+            } catch (err) {
+                alert('Error al desvincular usuario.');
+            }
+        };
     </script>
 </body>
 
