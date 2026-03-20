@@ -268,12 +268,13 @@
 
         async function checkRole() {
             const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', currentUser.id).single();
+            // All roles can create courses
+            $('#adminActions').html(`
+                <button class="btn btn-primary" onclick="openCourseModal()">
+                    <i class="material-icons mr-8pt">add</i> Nuevo Curso
+                </button>
+            `);
             if (profile && profile.role === 'admin') {
-                $('#adminActions').html(`
-                    <button class="btn btn-primary" onclick="openCourseModal()">
-                        <i class="material-icons mr-8pt">add</i> Nuevo Curso
-                    </button>
-                `);
                 isAdmin = true;
                 $('#sidebarUsersItem').show();
             }
@@ -294,14 +295,14 @@
 
             coursesData.forEach(c => {
                 const studentCount = c.students ? c.students.length : 0;
-                const editBtn = isAdmin ? `
+                const editBtn = `
                     <button class="btn btn-sm btn-outline-primary mr-8pt" onclick="openCourseModal('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
                         <i class="material-icons">edit</i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
                         <i class="material-icons">delete</i>
                     </button>
-                ` : '';
+                `;
 
                 tbody.append(`
                     <tr class="course-row" style="cursor:pointer" onclick="selectCourse('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
