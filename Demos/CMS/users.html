@@ -409,39 +409,46 @@
                     auth: { persistSession: false }
                 });
 
+                const branchId = $('#newUserBranch').val() || null;
+
                 const { data, error } = await tempClient.auth.signUp({
                     email: email,
                     password: password,
-                    options: { data: { first_name: name } }
+                    options: { 
+                        data: { 
+                            first_name: name,
+                            role: 'cajero',
+                            branch_id: branchId 
+                        } 
+                    }
                 });
 
                 if (error) throw error;
 
-                if (error) throw error;
-
-                // Es posible que el trigger de base de datos aún no haya creado el perfil.
-                // Intentamos actualizar con reintentos.
-                const branchId = $('#newUserBranch').val() || null;
+                // Ahora usamos el supabaseClient del ADMIN para asegurar la persistencia, 
+                // ya que el admin tiene los permisos y el perfil ya debería existir o estar creándose por el trigger.
+                const newUserId = data.user.id;
+                
                 let profileFixed = false;
                 for (let i = 0; i < 5; i++) {
-                    const { data: pData, error: pError } = await tempClient.from('profiles')
+                    const { data: pData, error: pError } = await supabaseClient.from('profiles')
                         .update({ 
                             branch_id: branchId, 
                             role: 'cajero', 
                             first_name: name 
                         })
-                        .eq('id', data.user.id)
+                        .eq('id', newUserId)
                         .select();
                     
                     if (!pError && pData && pData.length > 0) {
                         profileFixed = true;
                         break;
                     }
-                    await new Promise(r => setTimeout(r, 1000)); // Esperar 1s antes de reintentar
+                    await new Promise(r => setTimeout(r, 1000));
                 }
 
                 if (!profileFixed) {
-                    console.warn("No se pudo actualizar el perfil automáticamente. El Admin deberá editarlo manualmente.");
+                    console.warn("El Administrador no pudo actualizar el perfil. Verifique políticas de RLS o triggers.");
                 }
 
                 msgDiv.removeClass('d-none alert-soft-danger').addClass('alert-soft-success')
