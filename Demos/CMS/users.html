@@ -432,23 +432,24 @@
                 let profileFixed = false;
                 for (let i = 0; i < 5; i++) {
                     const { data: pData, error: pError } = await supabaseClient.from('profiles')
-                        .update({ 
+                        .upsert({ 
+                            id: newUserId, // Requerido para upsert
                             branch_id: branchId, 
                             role: 'cajero', 
                             first_name: name 
                         })
-                        .eq('id', newUserId)
                         .select();
                     
                     if (!pError && pData && pData.length > 0) {
                         profileFixed = true;
                         break;
                     }
+                    if (pError) console.error("Intento " + (i+1) + " fallo:", pError);
                     await new Promise(r => setTimeout(r, 1000));
                 }
 
                 if (!profileFixed) {
-                    console.warn("El Administrador no pudo actualizar el perfil. Verifique políticas de RLS o triggers.");
+                    console.error("El Administrador no pudo persistir el perfil tras 5 reintentos.");
                 }
 
                 msgDiv.removeClass('d-none alert-soft-danger').addClass('alert-soft-success')
