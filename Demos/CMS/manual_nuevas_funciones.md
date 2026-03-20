@@ -10,13 +10,12 @@
 - **Dónde:** Pantalla principal de Acceso (`login.html`).
 - **Cómo funciona:** Si un usuario (tanto Administrador como Cajero) introduce una contraseña incorrecta **3 veces seguidas**, la pantalla de login se bloqueará por **30 segundos**. Verás un contador regresivo rojo y el botón de "Ingresar" se desactivará temporalmente para proteger el sistema contra ataques.
 
-### 2. Cambio de Contraseña de Usuario
+### 2. Cambio de Contraseña (Solo Administradores)
 - **Dónde:** Panel Principal (Dashboard).
-- **Cómo funciona (Administrador y Cajero):** 
-  En la esquina superior izquierda de la pantalla, junto al logo del CMS en la barra de navegación superior (navbar), verás un icono de candado (`Cambiar Contraseña`).
+- **Cómo funciona:** Solo los usuarios con rol de **Administrador** verán el icono de candado (`Cambiar Contraseña`) en la barra superior. Los Cajeros y empleados no pueden cambiar su propia contraseña por seguridad.
   1. Hacé clic en el icono.
-  2. Aparecerá una ventana donde debés ingresar tu nueva contraseña (mínimo 6 caracteres) y confirmarla.
-  3. Clickeá en **Guardar**. Se actualizará inmediatamente en la base de datos de Auth.
+  2. Ingresá tu nueva clave y confirmala.
+  3. Clickeá en **Guardar**.
 
 ---
 
