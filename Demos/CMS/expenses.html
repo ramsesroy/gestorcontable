@@ -21,6 +21,8 @@
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
@@ -28,6 +30,8 @@
         .expense-amount { font-weight: bold; }
         .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
         .help-icon:hover { color: #5567ff; }
+        .stat-card { transition: transform 0.2s; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .stat-card:hover { transform: translateY(-5px); }
     </style>
 </head>
 
@@ -59,48 +63,121 @@
                     <div class="page-separator__text">Gestión de Gastos Operativos</div>
                 </div>
 
+                <!-- Resumen Cards -->
                 <div class="row mb-32pt">
-                    <div class="col-lg-12 d-flex align-items-center flex-wrap">
-                        <div class="flex" style="min-width: 200px;">
-                            <h4 class="mb-0">Control de Gastos</h4>
-                            <p class="text-50 mb-0">Registrá y gestioná los costos de operación.</p>
+                    <div class="col-lg-4 col-md-6 mb-16pt mb-lg-0">
+                        <div class="card stat-card card-body bg-soft-primary">
+                            <div class="d-flex align-items-center mb-8pt">
+                                <div class="avatar avatar-sm mr-12pt">
+                                    <span class="avatar-title rounded bg-primary text-white"><i class="material-icons">payments</i></span>
+                                </div>
+                                <div class="flex">
+                                    <h4 class="mb-0" id="totalMonthAmount">Gs. 0</h4>
+                                    <p class="text-50 mb-0">Gastos del Mes</p>
+                                </div>
+                            </div>
                         </div>
-                        <div id="branchFilterContainer" class="mr-16pt mb-8pt d-none" style="min-width: 200px;">
-                            <label class="form-label mb-0">Sucursal:</label>
-                            <select id="branchFilter" class="form-control custom-select">
-                                <option value="all">Todas las sucursales</option>
-                            </select>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-16pt mb-lg-0">
+                        <div class="card stat-card card-body bg-soft-warning">
+                            <div class="d-flex align-items-center mb-8pt">
+                                <div class="avatar avatar-sm mr-12pt">
+                                    <span class="avatar-title rounded bg-warning text-white"><i class="material-icons">pie_chart</i></span>
+                                </div>
+                                <div class="flex">
+                                    <h4 class="mb-0" id="topCategoryName">-</h4>
+                                    <p class="text-50 mb-0">Mayor Gasto: Categoría</p>
+                                </div>
+                            </div>
                         </div>
-                        <button class="btn btn-primary" onclick="openExpenseModal()">
-                            <i class="material-icons mr-8pt">add</i> Nuevo Gasto
-                        </button>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card stat-card card-body bg-soft-success">
+                            <div class="d-flex align-items-center mb-8pt">
+                                <div class="avatar avatar-sm mr-12pt">
+                                    <span class="avatar-title rounded bg-success text-white"><i class="material-icons">event</i></span>
+                                </div>
+                                <div class="flex">
+                                    <h4 class="mb-0" id="currentPeriodDisplay">Mes Actual</h4>
+                                    <p class="text-50 mb-0">Período de Análisis</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card mb-32pt">
-                    <div class="table-responsive" data-toggle="lists">
-                        <table class="table mb-0 thead-border-top-0 table-nowrap">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Concepto / Descripción</th>
-                                    <th>Categoría</th>
-                                    <th id="branchColHeader" class="d-none">Sucursal</th>
-                                    <th class="text-right">Monto</th>
-                                    <th style="width: 24px;"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="expensesTableBody" class="list">
-                                <!-- Loaded via JS -->
-                            </tbody>
-                            <tfoot>
-                                <tr class="bg-light">
-                                    <td colspan="4" class="text-right"><strong>Total Gastos:</strong></td>
-                                    <td class="text-right"><strong id="totalExpensesAmount" class="text-danger">Gs. 0</strong></td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                <div class="row mb-32pt">
+                    <div class="col-lg-8">
+                        <div class="card mb-0">
+                            <div class="card-header d-flex align-items-center flex-wrap">
+                                <div class="flex">
+                                    <h4 class="card-title">Listado de Gastos</h4>
+                                </div>
+                                <div class="d-flex align-items-center flex-wrap">
+                                    <div class="mr-8pt mb-8pt mb-sm-0">
+                                        <select id="monthFilter" class="form-control form-control-sm custom-select">
+                                            <option value="01">Enero</option>
+                                            <option value="02">Febrero</option>
+                                            <option value="03">Marzo</option>
+                                            <option value="04">Abril</option>
+                                            <option value="05">Mayo</option>
+                                            <option value="06">Junio</option>
+                                            <option value="07">Julio</option>
+                                            <option value="08">Agosto</option>
+                                            <option value="09">Septiembre</option>
+                                            <option value="10">Octubre</option>
+                                            <option value="11">Noviembre</option>
+                                            <option value="12">Diciembre</option>
+                                        </select>
+                                    </div>
+                                    <div class="mr-8pt mb-8pt mb-sm-0">
+                                        <select id="yearFilter" class="form-control form-control-sm custom-select">
+                                            <!-- Filled via JS -->
+                                        </select>
+                                    </div>
+                                    <div id="branchFilterContainer" class="d-none mr-8pt mb-8pt mb-sm-0">
+                                        <select id="branchFilter" class="form-control form-control-sm custom-select">
+                                            <option value="all">Todas las Sedes</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn btn-sm btn-primary" onclick="openExpenseModal()">
+                                        <i class="material-icons mr-4pt">add</i> Nuevo
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-responsive" data-toggle="lists">
+                                <table class="table mb-0 thead-border-top-0 table-nowrap">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Descripción</th>
+                                            <th>Categoría</th>
+                                            <th id="branchColHeader" class="d-none">Sucursal</th>
+                                            <th class="text-right">Monto</th>
+                                            <th style="width: 24px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expensesTableBody" class="list">
+                                        <!-- Loaded via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title">Distribución por Categoría</h4>
+                            </div>
+                            <div class="card-body">
+                                <div style="max-height: 250px; position: relative;">
+                                    <canvas id="categoryChart"></canvas>
+                                </div>
+                                <div id="chartNoData" class="text-center text-50 mt-16pt d-none">
+                                    No hay datos para graficar en este período.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -149,7 +226,7 @@
                         </li>
                         <li class="sidebar-menu-item active">
                             <a class="sidebar-menu-button" href="expenses.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">receipt_long</span>
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">payments</span>
                                 <span class="sidebar-menu-text">Gastos</span>
                             </a>
                         </li>
@@ -248,12 +325,22 @@
         let currentUser = null;
         let isAdmin = false;
         let userBranchId = null;
+        let categoryChart = null;
 
         $(document).ready(async function () {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) return window.location.replace('login.html');
             
             currentUser = session.user;
+
+            // Setup Year Filter
+            const currentYear = new Date().getFullYear();
+            for (let i = currentYear; i >= 2024; i--) {
+                $('#yearFilter').append(`<option value="${i}">${i}</option>`);
+            }
+            const currentMonth = ((new Date().getMonth() + 1)).toString().padStart(2, '0');
+            $('#monthFilter').val(currentMonth);
+
             await checkRole();
             await loadExpenses();
             
@@ -261,8 +348,8 @@
             const today = new Date().toISOString().split('T')[0];
             $('#expenseDate').val(today);
             
-            // Branch Filter Event
-            $('#branchFilter').on('change', loadExpenses);
+            // Filters Events
+            $('#branchFilter, #monthFilter, #yearFilter').on('change', loadExpenses);
         });
 
         async function checkRole() {
@@ -291,10 +378,18 @@
         }
 
         async function loadExpenses() {
-            const tbody = $('#expensesTableBody');
-            tbody.html('<tr><td colspan="6" class="text-center">Cargando gastos...</td></tr>');
+            const month = $('#monthFilter').val();
+            const year = $('#yearFilter').val();
+            const start = `${year}-${month}-01`;
+            const end = `${year}-${month}-31`;
+
+            $('#currentPeriodDisplay').text(`${$('#monthFilter option:selected').text()} ${year}`);
             
-            let query = supabaseClient.from('expenses').select('*, branches(name)').order('date', { ascending: false });
+            let query = supabaseClient.from('expenses')
+                .select('*, branches(name)')
+                .gte('date', start)
+                .lte('date', end)
+                .order('date', { ascending: false });
             
             const filterValue = $('#branchFilter').val();
             if (isAdmin && filterValue !== 'all') {
@@ -306,20 +401,23 @@
             const { data: expenses, error } = await query;
             if (error) {
                 console.error(error);
-                return tbody.html('<tr><td colspan="6" class="text-center text-danger">Error al cargar datos.</td></tr>');
+                return;
             }
 
+            renderExpenses(expenses);
+            updateSummaryAndChart(expenses);
+        }
+
+        function renderExpenses(expenses) {
+            const tbody = $('#expensesTableBody');
             tbody.empty();
-            let total = 0;
 
             if (expenses.length === 0) {
-                tbody.html('<tr><td colspan="6" class="text-center text-50">No hay gastos registrados en este período.</td></tr>');
-                $('#totalExpensesAmount').text('Gs. 0');
+                tbody.html('<tr><td colspan="6" class="text-center text-50 p-24pt">No hay gastos registrados en este período.</td></tr>');
                 return;
             }
 
             expenses.forEach(e => {
-                total += parseFloat(e.amount);
                 const branchHtml = isAdmin ? `<td>${e.branches ? e.branches.name : 'N/A'}</td>` : '';
                 tbody.append(`
                     <tr>
@@ -336,8 +434,73 @@
                     </tr>
                 `);
             });
+        }
 
-            $('#totalExpensesAmount').text('Gs. ' + formatMoney(total));
+        function updateSummaryAndChart(expenses) {
+            let total = 0;
+            const categoryMap = {};
+
+            expenses.forEach(e => {
+                const amount = parseFloat(e.amount);
+                total += amount;
+                categoryMap[e.category] = (categoryMap[e.category] || 0) + amount;
+            });
+
+            $('#totalMonthAmount').text('Gs. ' + formatMoney(total));
+
+            // Find Top Category
+            let topCat = '-';
+            let maxAmt = 0;
+            for (const cat in categoryMap) {
+                if (categoryMap[cat] > maxAmt) {
+                    maxAmt = categoryMap[cat];
+                    topCat = cat;
+                }
+            }
+            $('#topCategoryName').text(topCat);
+
+            // Chart
+            renderChart(categoryMap);
+        }
+
+        function renderChart(categoryMap) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const labels = Object.keys(categoryMap);
+            const data = Object.values(categoryMap);
+
+            if (labels.length === 0) {
+                if (categoryChart) categoryChart.destroy();
+                $('#categoryChart').addClass('d-none');
+                $('#chartNoData').removeClass('d-none');
+                return;
+            }
+
+            $('#categoryChart').removeClass('d-none');
+            $('#chartNoData').addClass('d-none');
+
+            if (categoryChart) categoryChart.destroy();
+
+            categoryChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#5567ff', '#f2c94c', '#27ae60', '#eb5757', '#9b51e0', '#2d9cdb', '#f2994a', '#4f4f4f'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15 } }
+                    },
+                    cutout: '70%'
+                }
+            });
         }
 
         window.openExpenseModal = function() {

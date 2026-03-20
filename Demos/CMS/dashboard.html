@@ -419,41 +419,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="page-section container page__container">
-                    <div class="row">
-                        <div class="col-md-4 mb-24pt">
-                            <div class="card card-body cajero-stat m-0">
-                                <div class="avatar avatar-sm mx-auto mb-8pt">
-                                    <span class="avatar-title rounded bg-soft-success text-success"><i
-                                            class="material-icons">attach_money</i></span>
-                                </div>
-                                <h2 class="text-success" id="cajeroTodayTotal">Gs. 0</h2>
-                                <p class="text-50 mb-0">Sucursal: Cobros Hoy</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-24pt">
-                            <div class="card card-body cajero-stat m-0">
-                                <div class="avatar avatar-sm mx-auto mb-8pt">
-                                    <span class="avatar-title rounded bg-soft-primary text-primary"><i
-                                            class="material-icons">receipt</i></span>
-                                </div>
-                                <h2 class="text-primary" id="cajeroTodayCount">0</h2>
-                                <p class="text-50 mb-0">Sucursal: Pagos Hoy</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-24pt">
-                            <div class="card card-body cajero-stat m-0">
-                                <div class="avatar avatar-sm mx-auto mb-8pt">
-                                    <span class="avatar-title rounded bg-soft-warning text-warning"><i
-                                            class="material-icons">date_range</i></span>
-                                </div>
-                                <h2 class="text-warning" id="cajeroMonthTotal">Gs. 0</h2>
-                                <p class="text-50 mb-0">Sucursal: Total Mes</p>
-                            </div>
-                        </div>
-                    </div>
 
                     <div class="page-separator">
                         <div class="page-separator__text">Últimos Movimientos de Sucursal</div>
@@ -523,7 +488,7 @@
                         </li>
                         <li class="sidebar-menu-item">
                             <a class="sidebar-menu-button" href="expenses.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">receipt_long</span>
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">payments</span>
                                 <span class="sidebar-menu-text">Gastos</span>
                             </a>
                         </li>
@@ -790,6 +755,21 @@
                 }
                 $('#cajeroMonthTotal').text(fmt.format(monthTotal));
 
+                // BRANCH Month expenses
+                var expenseRes = await supabaseClient.from('expenses')
+                    .select('amount')
+                    .eq('branch_id', branchId)
+                    .gte('date', range.from)
+                    .lte('date', range.to);
+
+                var monthExpenses = 0;
+                if (expenseRes.data) {
+                    expenseRes.data.forEach(function (e) {
+                        monthExpenses += parseFloat(e.amount);
+                    });
+                }
+                $('#cajeroMonthExpenses').text(fmt.format(monthExpenses));
+
                 // BRANCH Recent Movements table (last 10)
                 var lastRes = await supabaseClient.from('audit_log')
                     .select('*, profiles(first_name)')
@@ -882,6 +862,15 @@
                 var nsRes = await supabaseClient.from('students')
                     .select('*', { count: 'exact', head: true }).gte('created_at', isoFrom).lte('created_at', isoTo);
                 $('#todayCollections').text(nsRes.count || 0);
+
+                // ADMIN: Total Month Expenses
+                var range = getDefaultRange();
+                var exRes = await supabaseClient.from('expenses').select('amount')
+                    .gte('date', range.from).lte('date', range.to);
+                var totalEx = 0;
+                if (exRes.data) { totalEx = exRes.data.reduce(function (s, i) { return s + parseFloat(i.amount); }, 0); }
+                $('#cajeroMonthExpenses').text(fmt.format(totalEx));
+
 
                 await renderBranchChart(isoFrom, isoTo);
                 await loadRecentPayments(isoFrom, isoTo);
