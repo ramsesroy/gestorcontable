@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Gestión de Sucursales - CMS Cobranzas</title>
+    <title>Gestión de Usuarios - CMS Cobranzas</title>
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
@@ -59,39 +59,42 @@
                 <div class="container page__container">
                     <div class="d-flex flex-column flex-md-row align-items-center">
                         <div class="flex">
-                            <h2 class="mb-0">Gestión de Sucursales</h2>
-                            <p class="lead text-50">Administración de sedes y puntos de cobro.</p>
-                        </div>
-                        <div class="ml-auto" id="adminActions">
-                            <!-- Button for Admin only -->
+                            <h2 class="mb-0">Gestión de Usuarios</h2>
+                            <p class="lead text-50">Administración de accesos y asignación de sucursales.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="page-section container page__container">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
+                <div class="alert alert-soft-info mb-24pt">
+                    <div class="d-flex align-items-center">
+                        <i class="material-icons mr-12pt">info</i>
                         <div class="flex">
-                            <h4 class="card-title">Listado de Sedes</h4>
+                            <strong>Nota de Seguridad:</strong> Las contraseñas se gestionan directamente en el panel de Supabase Auth. Aquí podés vincular a los usuarios (emails) con sus respectivas sucursales.
                         </div>
-                        <div class="search-form search-form--light">
-                            <input type="text" class="form-control" id="searchBranch" placeholder="Buscar sucursal...">
-                            <button class="btn" type="button"><i class="material-icons">search</i></button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex align-items-center bg-light">
+                        <div class="flex">
+                            <h4 class="card-title">Listado de Personal</h4>
                         </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table mb-0 thead-border-top-0">
                             <thead>
                                 <tr>
-                                    <th>Nombre de la Sucursal</th>
-                                    <th>Creada el</th>
-                                    <th class="text-right">Acciones</th>
+                                    <th>Nombre / Email</th>
+                                    <th>Rol</th>
+                                    <th>Sucursal Asignada</th>
+                                    <th class="text-right">Acción</th>
                                 </tr>
                             </thead>
-                            <tbody class="list" id="branchTableBody">
+                            <tbody class="list" id="usersTableBody">
                                 <tr>
-                                    <td colspan="3" class="text-center">Cargando sucursales...</td>
+                                    <td colspan="4" class="text-center">Cargando usuarios...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -138,22 +141,22 @@
                                 <span class="sidebar-menu-text">Cursos</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item active">
+                        <li class="sidebar-menu-item">
                             <a class="sidebar-menu-button" href="branches.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
                                 <span class="sidebar-menu-text">Sucursales</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item active">
+                            <a class="sidebar-menu-button" href="users.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span>
+                                <span class="sidebar-menu-text">Usuarios</span>
                             </a>
                         </li>
                         <li class="sidebar-menu-item">
                             <a class="sidebar-menu-button" href="report.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
                                 <span class="sidebar-menu-text">Reportes</span>
-                            </a>
-                        </li>
-                        <li id="sidebarUsersItem" class="sidebar-menu-item" style="display:none;">
-                            <a class="sidebar-menu-button" href="users.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span>
-                                <span class="sidebar-menu-text">Usuarios</span>
                             </a>
                         </li>
                         <li class="sidebar-menu-item mt-4">
@@ -168,26 +171,41 @@
         </div>
     </div>
 
-    <!-- MODAL: Crear/Editar Sucursal -->
-    <div class="modal fade" id="branchModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- MODAL: Editar Perfil de Usuario -->
+    <div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="branchModalTitle">Sucursal</h5>
+                    <h5 class="modal-title">Editar Acceso de Usuario</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="branchId">
+                    <input type="hidden" id="editUserId">
                     <div class="form-group">
-                        <label class="form-label">Nombre de la Sucursal</label>
-                        <input type="text" class="form-control" id="branchName" placeholder="Ej: Sucursal Oeste">
+                        <label class="form-label">Nombre / Email</label>
+                        <input type="text" class="form-control" id="editUserName" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editUserRole">Rol en el Sistema</label>
+                        <select id="editUserRole" class="form-control">
+                            <option value="admin">Administrador</option>
+                            <option value="cajero">Cajero</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editUserBranch">Sucursal de Trabajo</label>
+                        <select id="editUserBranch" class="form-control">
+                            <option value="">Ninguna / Acceso Global</option>
+                            <!-- Branches loaded here -->
+                        </select>
+                        <small class="form-text text-muted">A los Administradores se les puede asignar una sucursal para que tengan el modo dual.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="saveBranch()">Guardar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUserProfile()">Guardar Cambios</button>
                 </div>
             </div>
         </div>
@@ -208,156 +226,115 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let currentUser = null;
-        let branchesData = [];
+        let branches = [];
 
         $(document).ready(async function () {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) return window.location.replace('login.html');
             
-            currentUser = session.user;
-            await checkRole();
-            await loadBranches();
+            // Redirigir si no es admin
+            const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).single();
+            if (!profile || profile.role !== 'admin') {
+                window.location.replace('dashboard.html');
+            }
 
-            $('#searchBranch').on('input', function() {
-                renderBranches($(this).val());
-            });
+            await loadBranches();
+            await loadUsers();
         });
 
-        async function checkRole() {
-            const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', currentUser.id).single();
-            if (profile && profile.role === 'admin') {
-                $('#adminActions').html(`
-                    <button class="btn btn-primary" onclick="openBranchModal()">
-                        <i class="material-icons mr-8pt">add</i> Nueva Sucursal
-                    </button>
-                `);
-                window.isAdmin = true;
-                $('#sidebarUsersItem').show();
-            }
-        }
-
         async function loadBranches() {
-            const { data, error } = await supabaseClient.from('branches').select('*').order('name');
-            if (error) return console.error(error);
-            branchesData = data;
-            renderBranches();
-        }
-
-        function renderBranches(filter = '') {
-            const tbody = $('#branchTableBody');
-            tbody.empty();
-
-            // Frontend deduplication as a safety measure
-            const uniqueMap = new Map();
-            branchesData.forEach(b => {
-                const stdName = b.name.trim().toLowerCase();
-                if (!uniqueMap.has(stdName)) {
-                    uniqueMap.set(stdName, b);
-                }
-            });
-
-            const uniqueBranches = Array.from(uniqueMap.values());
-            const filtered = uniqueBranches.filter(b => b.name.toLowerCase().includes(filter.toLowerCase()));
-
-            if (filtered.length === 0) {
-                tbody.append('<tr><td colspan="3" class="text-center">No se encontraron sucursales.</td></tr>');
-                return;
-            }
-
-            filtered.forEach(b => {
-                const date = new Date(b.created_at).toLocaleDateString();
-                const isActive = b.active !== false; // Default to true if undefined
-                const statusBadge = isActive ? 
-                    '<span class="badge badge-soft-success">Activa</span>' : 
-                    '<span class="badge badge-soft-secondary">Archivada</span>';
-                
-                const toggleBtn = window.isAdmin ? `
-                    <button class="btn btn-sm ${isActive ? 'btn-outline-warning' : 'btn-outline-success'} ml-4pt" 
-                            onclick="toggleBranchStatus('${b.id}', ${isActive}, '${b.name.replace(/'/g, "\\'")}')"
-                            title="${isActive ? 'Archivar' : 'Activar'}">
-                        <i class="material-icons">${isActive ? 'archive' : 'unarchive'}</i>
-                    </button>
-                ` : '';
-
-                const actionBtn = window.isAdmin ? `
-                    <button class="btn btn-sm btn-outline-primary" onclick="openBranchModal('${b.id}', '${b.name.replace(/'/g, "\\'")}')">
-                        <i class="material-icons">edit</i>
-                    </button>
-                    ${toggleBtn}
-                ` : '<span class="text-muted small">Solo lectura</span>';
-
-                tbody.append(`
-                    <tr style="${isActive ? '' : 'opacity: 0.6;'}">
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <strong>${b.name}</strong>
-                                <span class="ml-8pt">${statusBadge}</span>
-                            </div>
-                        </td>
-                        <td><span class="text-50 small">${date}</span></td>
-                        <td class="text-right">${actionBtn}</td>
-                    </tr>
-                `);
+            const { data } = await supabaseClient.from('branches').select('id, name').order('name');
+            branches = data || [];
+            
+            const select = $('#editUserBranch');
+            select.empty();
+            select.append('<option value="">Ninguna / Acceso Global</option>');
+            branches.forEach(b => {
+                select.append(`<option value="${b.id}">${b.name}</option>`);
             });
         }
 
-        window.openBranchModal = function(id = '', name = '') {
-            $('#branchId').val(id);
-            $('#branchName').val(name);
-            $('#branchModalTitle').text(id ? 'Editar Sucursal' : 'Nueva Sucursal');
-            $('#branchModal').modal('show');
-        };
-
-        window.saveBranch = async function() {
-            const id = $('#branchId').val();
-            const name = $('#branchName').val().trim();
-
-            if (!name) return alert('Ingrese un nombre para la sucursal.');
+        async function loadUsers() {
+            const tbody = $('#usersTableBody');
+            tbody.html('<tr><td colspan="4" class="text-center">Cargando...</td></tr>');
 
             try {
-                if (id) {
-                    const { error } = await supabaseClient.from('branches').update({ name }).eq('id', id);
-                    if (error) throw error;
-                    alert('Sucursal actualizada correctamente.');
-                } else {
-                    const { error } = await supabaseClient.from('branches').insert([{ name }]);
-                    if (error) throw error;
-                    alert('Sucursal creada correctamente.');
-                }
-                $('#branchModal').modal('hide');
-                await loadBranches();
-            } catch (err) {
-                if (err.code === '23505') {
-                    alert('Error: Ya existe una sucursal con ese nombre.');
-                } else {
-                    alert('Error al guardar: ' + err.message);
-                }
-            }
-        };
+                // Get profiles joining branch info
+                const { data: profiles, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*, branches(name)')
+                    .order('first_name');
 
-        window.toggleBranchStatus = async function(id, currentStatus, name) {
-            const action = currentStatus ? 'archivar' : 'activar';
-            if (!confirm(`¿Estás seguro de que deseas ${action} la sucursal "${name}"?`)) return;
-
-            try {
-                const { error } = await supabaseClient.from('branches').update({ active: !currentStatus }).eq('id', id);
                 if (error) throw error;
-                alert(`Sucursal ${currentStatus ? 'archivada' : 'activada'} correctamente.`);
-                await loadBranches();
+
+                tbody.empty();
+                if (!profiles || profiles.length === 0) {
+                    tbody.append('<tr><td colspan="4" class="text-center">No hay usuarios registrados.</td></tr>');
+                    return;
+                }
+
+                profiles.forEach(p => {
+                    const name = p.first_name || 'Sin nombre';
+                    const role = p.role === 'admin' ? '<span class="badge badge-primary">Admin</span>' : '<span class="badge badge-secondary">Cajero</span>';
+                    const branchName = p.branches ? p.branches.name : '<span class="text-muted">No asignada</span>';
+                    
+                    tbody.append(`
+                        <tr>
+                            <td>
+                                <strong>${name}</strong>
+                                <div class="text-muted small">ID: ${p.id.substring(0,8)}...</div>
+                            </td>
+                            <td>${role}</td>
+                            <td>${branchName}</td>
+                            <td class="text-right">
+                                <button class="btn btn-sm btn-outline-primary" onclick="openUserModal('${p.id}', '${name}', '${p.role}', '${p.branch_id || ''}')">
+                                    <i class="material-icons">edit</i> Gestionar
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
             } catch (err) {
-                alert(`Error al ${action} la sucursal: ` + err.message);
                 console.error(err);
+                tbody.html('<tr><td colspan="4" class="text-center text-danger">Error al cargar datos.</td></tr>');
             }
-        };
+        }
+
+        window.openUserModal = function(id, name, role, branchId) {
+            $('#editUserId').val(id);
+            $('#editUserName').val(name);
+            $('#editUserRole').val(role);
+            $('#editUserBranch').val(branchId);
+            $('#userModal').modal('show');
+        }
+
+        window.saveUserProfile = async function() {
+            const id = $('#editUserId').val();
+            const role = $('#editUserRole').val();
+            const branchId = $('#editUserBranch').val() || null;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('profiles')
+                    .update({ role, branch_id: branchId })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                alert('Perfil actualizado con éxito.');
+                $('#userModal').modal('hide');
+                await loadUsers();
+            } catch (err) {
+                alert('Error al actualizar: ' + err.message);
+            }
+        }
 
         async function logout() {
             await supabaseClient.auth.signOut();
             window.location.replace('login.html');
         }
-        // ═══════════════════════════════════════
-        //  AUTO-LOGOUT POR INACTIVIDAD (15 min)
-        // ═══════════════════════════════════════
+
+        // AUTO-LOGOUT (15 min)
         var inactivityTimer;
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
@@ -372,4 +349,3 @@
 </body>
 
 </html>
-
