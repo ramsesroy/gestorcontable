@@ -482,7 +482,27 @@
             data.forEach(e => {
                 const d = e.details || {};
                 const date = new Date(e.created_at).toLocaleString('es-AR');
-                html += `<div class="audit-entry pago p-2 mb-2 rounded"><strong>${e.action.replace('_',' ')}</strong>: ${JSON.stringify(d)} <br><small class="text-50">${date}</small></div>`;
+                let detailStr = '';
+                
+                if (e.action === 'pago') {
+                    detailStr = `Pago de <strong>${d.student_name || 'Alumno'}</strong> (DNI: ${d.dni || 'N/A'}) - ${fmt.format(d.amount || 0)} [Cuota ${d.installment_number || '-'}${d.status ? ` - ${d.status}` : ''}]`;
+                } else if (e.action === 'inscripcion') {
+                    detailStr = `Inscripción de <strong>${d.student_name || 'Alumno'}</strong> - ${fmt.format(d.monthly_amount || 0)}/mes (${d.total_payments || 0} cuotas)`;
+                } else if (e.action === 'baja') {
+                    detailStr = `Baja de alumno: <strong>${d.student_name || 'N/A'}</strong> (DNI: ${d.dni || 'N/A'})`;
+                } else {
+                    detailStr = JSON.stringify(d);
+                }
+
+                const entryClass = e.action === 'pago' ? 'pago' : (e.action === 'inscripcion' ? 'inscripcion' : (e.action === 'baja' ? 'baja' : 'edicion'));
+                
+                html += `<div class="audit-entry ${entryClass} p-2 mb-2 rounded">
+                            <div class="d-flex justify-content-between">
+                                <strong>${e.action.toUpperCase()}</strong>
+                                <small class="text-muted">${date}</small>
+                            </div>
+                            <div class="mt-1">${detailStr}</div>
+                         </div>`;
             });
             container.html(html);
         }
