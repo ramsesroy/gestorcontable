@@ -510,6 +510,9 @@
                 if (courseId) {
                     query = query.eq('course_id', courseId);
                 }
+                if (window.userRole === 'cajero' && window.userBranchId) {
+                    query = query.eq('branch_id', window.userBranchId);
+                }
 
                 const { data: students, error } = await query;
                 if (error) throw error;
@@ -598,8 +601,8 @@
         // ═══════════════════════════════════════
         //  DOCUMENT READY
         // ═══════════════════════════════════════
-        $(document).ready(function () {
-            checkRoleAndUI();
+        $(document).ready(async function () {
+            await checkRoleAndUI();
             loadCourses();
 
             $('#searchBtn').click(function () { doSearch($('#searchInput').val()); });
@@ -706,6 +709,9 @@
 
             var baseQuery = supabaseClient.from('students').select('id, dni, full_name, branches(name), courses(name)');
             if (courseId) baseQuery = baseQuery.eq('course_id', courseId);
+            if (window.userRole === 'cajero' && window.userBranchId) {
+                baseQuery = baseQuery.eq('branch_id', window.userBranchId);
+            }
 
             if (query) {
                 if (isNumeric) {
@@ -1149,11 +1155,14 @@
         async function checkRoleAndUI() {
             var res = await supabaseClient.auth.getUser();
             if (!res.data || !res.data.user) return;
-            var pRes = await supabaseClient.from('profiles').select('role').eq('id', res.data.user.id).single();
+            var pRes = await supabaseClient.from('profiles').select('role, branch_id').eq('id', res.data.user.id).single();
             if (pRes.data && pRes.data.role === 'cajero') {
                 $('#sidebarDashLabel').text('Panel Sucursal');
+                window.userRole = 'cajero';
+                window.userBranchId = pRes.data.branch_id;
             } else if (pRes.data && pRes.data.role === 'admin') {
                 $('#sidebarUsersItem').show();
+                window.userRole = 'admin';
             }
         }
     </script>

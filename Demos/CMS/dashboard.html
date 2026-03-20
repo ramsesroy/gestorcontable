@@ -141,14 +141,16 @@
                     </div>
                 </div>
 
-                <!-- Overdue Alert Banner -->
                 <div id="overdueAlertBanner" class="container page__container mt-16pt d-none">
                     <div class="alert alert-danger d-flex align-items-center" role="alert">
                         <i class="material-icons mr-8pt">warning</i>
                         <div class="flex">
                             <strong>Atención:</strong> Hay <strong id="overdueCount">0</strong> cuota(s) vencida(s) sin cobrar por un total de <strong id="overdueAmount">Gs. 0</strong>.
                         </div>
-                        <button class="btn btn-sm btn-outline-danger ml-16pt" onclick="window.location.href='search.html'">Ver en Cobranzas</button>
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-sm btn-white mr-8pt" onclick="showOverdueDetails()">Ver Detalle</button>
+                            <button class="btn btn-sm btn-danger" onclick="window.location.href='search.html'">Ir a Cobranzas</button>
+                        </div>
                     </div>
                 </div>
 
@@ -374,13 +376,26 @@
                     </div>
                 </div>
 
-                <!-- Shared: Birthday Alert Banner for Cajeros -->
                 <div id="birthdayAlertBannerCajero" class="container page__container mt-16pt d-none">
                     <div class="alert alert-soft-primary d-flex align-items-center" role="alert" style="border: 2px dashed #5567ff;">
                         <i class="material-icons mr-16pt" style="font-size: 32px; color: #5567ff;">cake</i>
                         <div class="flex">
                             <h4 class="mb-0">¡Cumpleaños de hoy en sucursal! 🎂</h4>
                             <p class="mb-0" id="birthdayListCajero">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overdue Alert Banner for Cajeros -->
+                <div id="overdueAlertBannerCajero" class="container page__container mt-16pt d-none">
+                    <div class="alert alert-danger d-flex align-items-center" role="alert">
+                        <i class="material-icons mr-8pt">warning</i>
+                        <div class="flex">
+                            <strong>Atención sucursal:</strong> Hay <strong id="overdueCountCajero">0</strong> cuota(s) vencida(s) sin cobrar por un total de <strong id="overdueAmountCajero">Gs. 0</strong>.
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-sm btn-white mr-8pt" onclick="showOverdueDetails()">Ver Detalle</button>
+                            <button class="btn btn-sm btn-danger" onclick="window.location.href='search.html'">Ir a Cobranzas</button>
                         </div>
                     </div>
                 </div>
@@ -605,7 +620,7 @@
                 setQuickFilter('month');
                 loadAuditLog();
                 loadMassiveUpdateBranches();
-                loadOverdueAlert();
+                loadOverdueAlert(); // Global para Admin
                 $('#sidebarUsersItem').show();
 
                 // If admin has a branch_id (Hybrid mode)
@@ -617,7 +632,8 @@
                     var bRes = await supabaseClient.from('branches').select('name').eq('id', profile.branch_id).single();
                     var bName = bRes.data ? bRes.data.name : 'N/A';
                     var greeting = profile.first_name ? ('Hola, ' + profile.first_name + '!') : '¡Bienvenido/a!';
-                    $('#cajeroGreeting').text(greeting + ' — Resumen de sucursal: ' + bName);
+                $('#cajeroGreeting').text(greeting + ' — Sucursal: ' + bName);
+                loadOverdueAlert(profile.branch_id); // Filtrado para Cajero
                 }
                 loadBirthdays(profile);
             } else if (profile && profile.role === 'cajero') {
@@ -635,6 +651,7 @@
                 var greeting = profile.first_name ? ('Hola, ' + profile.first_name + '!') : '¡Bienvenido/a!';
                 $('#cajeroGreeting').text(greeting + ' — Resumen de sucursal: ' + bName);
                 loadCajeroDashboard(userId, profile.branch_id);
+                loadOverdueAlert(profile.branch_id); // Alertas de deuda de la sucursal
                 loadBirthdays(profile);
             }
         }
@@ -1328,17 +1345,57 @@
         // ═══════════════════════════════════════
         //  OVERDUE ALERTS (Admin only)
         // ═══════════════════════════════════════
-        async function loadOverdueAlert() {
+        var overdueData = [];
+        async function loadOverdueAlert(branchId = null) {
             var today = new Date().toISOString().split('T')[0];
-            var { data } = await supabaseClient.from('installments')
-                .select('id, amount')
+            var query = supabaseClient.from('installments')
+                .select('id, amount, due_date, installment_number, students!inner(full_name, dni, branch_id, branches(name))')
                 .eq('status', 'pendiente')
                 .lt('due_date', today);
-            if (!data || data.length === 0) { $('#overdueAlertBanner').addClass('d-none'); return; }
+            
+            if (branchId) {
+                query = query.eq('students.branch_id', branchId);
+            }
+
+            var { data, error } = await query.order('due_date', { ascending: true });
+
+            const bannerId = branchId ? '#overdueAlertBannerCajero' : '#overdueAlertBanner';
+            const countId = branchId ? '#overdueCountCajero' : '#overdueCount';
+            const amountId = branchId ? '#overdueAmountCajero' : '#overdueAmount';
+
+            if (error) { console.error("Error cargando vencimientos:", error); return; }
+            if (!data || data.length === 0) { $(bannerId).addClass('d-none'); return; }
+            
+            overdueData = data;
             var total = data.reduce(function (acc, i) { return acc + parseFloat(i.amount || 0); }, 0);
-            $('#overdueCount').text(data.length);
-            $('#overdueAmount').text(fmt.format(total));
-            $('#overdueAlertBanner').removeClass('d-none');
+            $(countId).text(data.length);
+            $(amountId).text(fmt.format(total));
+            $(bannerId).removeClass('d-none');
+        }
+
+        window.showOverdueDetails = function() {
+            var tbody = $('#overdueDetailsBody');
+            tbody.empty();
+            
+            overdueData.forEach(function(i) {
+                var studentName = i.students ? i.students.full_name : 'Desconocido';
+                var branchName = (i.students && i.students.branches) ? i.students.branches.name : '-';
+                var dueDate = new Date(i.due_date).toLocaleDateString('es-AR');
+                
+                tbody.append(`
+                    <tr>
+                        <td>
+                            <strong>${studentName}</strong><br>
+                            <small class="text-muted">${branchName}</small>
+                        </td>
+                        <td>Cuota ${i.installment_number}</td>
+                        <td class="text-danger">Venció: ${dueDate}</td>
+                        <td class="text-right"><strong>${fmt.format(i.amount)}</strong></td>
+                    </tr>
+                `);
+            });
+            
+            $('#overdueDetailsModal').modal('show');
         }
 
         // ═══════════════════════════════════════
@@ -1397,6 +1454,72 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary btn-block" id="btnStayLoggedIn">Continuar Sesión</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: DETALLE DE DEUDAS VENCIDAS ═══ -->
+    <div class="modal fade" id="overdueDetailsModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="material-icons mr-8pt">warning</i> Detalle de Cuotas Vencidas</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0 px-16pt">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Alumno / Sucursal</th>
+                                    <th>N° Cuota</th>
+                                    <th>Fecha Vencimiento</th>
+                                    <th class="text-right">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overdueDetailsBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cerrar</button>
+                    <a href="search.html" class="btn btn-primary">Ir a cobrar todas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- ═══ MODAL: DETALLE DE DEUDAS VENCIDAS ═══ -->
+    <div class="modal fade" id="overdueDetailsModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="material-icons mr-8pt">warning</i> Detalle de Cuotas Vencidas</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0 px-16pt">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Alumno / Sucursal</th>
+                                    <th>N° Cuota</th>
+                                    <th>Fecha Vencimiento</th>
+                                    <th class="text-right">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overdueDetailsBody">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cerrar</button>
+                    <a href="search.html" class="btn btn-primary">Ir a cobrar todas</a>
                 </div>
             </div>
         </div>

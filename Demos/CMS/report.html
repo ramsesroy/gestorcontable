@@ -288,15 +288,39 @@
             const to = params.get('to');
             const type = params.get('type') || 'diario';
 
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return window.location.replace('login.html');
+            const { data: profile } = await supabaseClient.from('profiles').select('role, branch_id').eq('id', user.id).single();
+            const userRole = profile ? profile.role : 'cajero';
+            const userBranchId = profile ? profile.branch_id : null;
+
+            if (branchId && userRole === 'cajero' && branchId !== userBranchId) {
+                alert('Acceso denegado: solo puedes ver reportes de tu sucursal asignada.');
+                return window.location.replace('dashboard.html');
+            }
+
+
             if (!branchId || !from || !to) {
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('selectorUI').style.display = 'block';
-                // Populate branches (Only active ones for new reports)
-                const { data: branches } = await supabaseClient.from('branches').select('*').eq('active', true).order('name');
+                // Populate branches
+
+                let query = supabaseClient.from('branches').select('*').eq('active', true).order('name');
+                if (userRole === 'cajero' && userBranchId) {
+                    query = query.eq('id', userBranchId);
+                }
+                const { data: branches } = await query;
                 const sel = document.getElementById('selBranch');
-                sel.innerHTML = '<option value="">Seleccione Sucursal</option>';
+                sel.innerHTML = userRole === 'admin' ? '<option value="">Seleccione Sucursal</option>' : '';
                 if (branches) {
                     branches.forEach(b => { sel.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
+                }
+                if (userRole === 'cajero') {
+                    if (userBranchId) sel.value = userBranchId;
+                    sel.setAttribute('disabled', 'disabled');
+                }
+                if (userRole === 'admin') {
+                   document.getElementById('sidebarUsersItem').style.display = 'block';
                 }
 
                 const today = new Date().toISOString().split('T')[0];
