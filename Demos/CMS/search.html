@@ -208,6 +208,7 @@
                             <h4 id="studentName">—</h4>
                             <p class="text-50 mb-8pt">
                                 DNI: <span id="studentDni"></span> |
+                                Nacimiento: <span id="studentBirthDate"></span> |
                                 Sucursal: <span id="studentBranch"></span> |
                                 Estado: <span id="studentStatus" class="badge badge-success">activo</span>
                             </p>
@@ -426,6 +427,10 @@
                     <div class="form-group">
                         <label class="form-label">Teléfono</label>
                         <input type="text" class="form-control" id="editPhone">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha Nacimiento</label>
+                        <input type="date" class="form-control" id="editBirthDate">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Monto de Cuota (afecta cuotas futuras pendientes)</label>
@@ -776,6 +781,8 @@
                 // Display student info
                 $('#studentName').text(student.full_name);
                 $('#studentDni').text(student.dni);
+                var dobText = student.birth_date ? new Date(student.birth_date).toLocaleDateString() : 'No registrada';
+                $('#studentBirthDate').text(dobText);
                 var courseText = student.courses ? student.courses.name : 'Sin curso asignado';
                 $('#studentBranch').text(currentStudent.branchName + ' | ' + courseText);
                 var statusClass = student.status === 'activo' ? 'badge-success' : 'badge-danger';
@@ -1013,6 +1020,7 @@
             $('#editFullName').val(currentStudent.full_name);
             $('#editEmail').val(currentStudent.email || '');
             $('#editPhone').val(currentStudent.phone || '');
+            $('#editBirthDate').val(currentStudent.birth_date || '');
             $('#editAmount').val(currentStudent.monthly_amount || '');
             $('#editAdditionalInfo').val(currentStudent.additional_info || '');
             $('#editStudentModal').modal('show');
@@ -1033,6 +1041,7 @@
                     full_name: newName, 
                     email: newEmail, 
                     phone: newPhone,
+                    birth_date: $('#editBirthDate').val() || null,
                     additional_info: $('#editAdditionalInfo').val()
                 };
                 var res = await supabaseClient.from('students').update(updateData).eq('id', sid);

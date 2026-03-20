@@ -61,6 +61,10 @@
   2. De la lista desplegable, elegí a qué nueva filial irá el alumno.
   3. Confirmá. Este evento queda grabado en el registro de Auditoría.
 
+### 8.5 Fecha de Nacimiento
+- **Dónde:** Inscripción (`registration.html`) y Edición de Alumno (`search.html`).
+- **Cómo funciona:** Se ha añadido el campo de fecha de nacimiento para completar el legajo. Este dato es visible en el perfil del alumno y puede editarse si fue ingresado incorrectamente.
+
 ---
 
 ## Fase E — Reportes y Excel

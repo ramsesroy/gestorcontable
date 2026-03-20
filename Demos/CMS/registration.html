@@ -84,13 +84,17 @@
                                 </div>
                             </div>
                             <div class="form-row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <label class="form-label" for="email">Email:</label>
                                     <input id="email" type="email" class="form-control" placeholder="email@ejemplo.com">
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <label class="form-label" for="phone">Teléfono:</label>
                                     <input id="phone" type="text" class="form-control" placeholder="Ej: 011 1234-5678">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="birthDate">Fecha de Nacimiento:</label>
+                                    <input id="birthDate" type="date" class="form-control">
                                 </div>
                             </div>
                             <div class="form-group mb-24pt">
@@ -430,6 +434,7 @@
                     full_name: $('#fullName').val(),
                     email: $('#email').val(),
                     phone: $('#phone').val(),
+                    birth_date: $('#birthDate').val() || null,
                     branch_id: $('#branch').val(),
                     course_id: courseId || null,
                     additional_info: $('#additionalInfo').val()
