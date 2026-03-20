@@ -204,6 +204,10 @@
                         <small class="form-text text-muted">A los Administradores se les puede asignar una sucursal para que tengan el modo dual.</small>
                     </div>
                     <div class="form-group">
+                        <label class="form-label" for="editUserNotes">Datos Adicionales / Observaciones</label>
+                        <textarea id="editUserNotes" class="form-control" rows="3" placeholder="Ej: Contraseña de referencia: 1234, etc."></textarea>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Nueva Contraseña (Opcional)</label>
                         <input type="password" class="form-control" id="editUserPassword" placeholder="Dejar en blanco para no cambiar">
                         <small class="form-text text-muted">Ingresá una nueva clave si el empleado la olvidó o querés cambiarla.</small>
@@ -250,6 +254,10 @@
                             <option value="">Ninguna / Acceso Global</option>
                             <!-- Branches loaded here -->
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newUserNotes">Datos Adicionales / Observaciones</label>
+                        <textarea id="newUserNotes" class="form-control" rows="3" placeholder="Alguna nota sobre el empleado..."></textarea>
                     </div>
                     <div id="newUserMsg" class="alert d-none small"></div>
                 </div>
@@ -345,7 +353,7 @@
                             <td>${role}</td>
                             <td>${branchName}</td>
                             <td class="text-right text-nowrap">
-                                <button class="btn btn-sm btn-outline-primary" onclick="openUserModal('${p.id}', '${name.replace(/'/g, "\\'")}', '${p.role}', '${p.branch_id || ''}')" title="Editar">
+                                <button class="btn btn-sm btn-outline-primary" onclick="openUserModal('${p.id}', '${name.replace(/'/g, "\\'")}', '${p.role}', '${p.branch_id || ''}', '${(p.notes || '').replace(/'/g, "\\'").replace(/\n/g, "\\n")}')" title="Editar">
                                     <i class="material-icons">edit</i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger ml-4pt" onclick="deleteUserAccount('${p.id}', '${name.replace(/'/g, "\\'")}')" title="Eliminar">
@@ -361,11 +369,12 @@
             }
         }
 
-        window.openUserModal = function(id, name, role, branchId) {
+        window.openUserModal = function(id, name, role, branchId, notes) {
             $('#editUserId').val(id);
             $('#editUserName').val(name);
             $('#editUserRole').val(role);
             $('#editUserBranch').val(branchId);
+            $('#editUserNotes').val(notes || '');
             $('#editUserPassword').val(''); // Clear password field
             $('#userModal').modal('show');
         }
@@ -375,16 +384,18 @@
             const role = $('#editUserRole').val();
             const name = $('#editUserName').val().trim();
             const branchId = $('#editUserBranch').val() || null;
+            const notes = $('#editUserNotes').val().trim();
             const newPassword = $('#editUserPassword').val().trim();
 
             try {
-                // 1. Update Profile (Name, Role, Branch)
+                // 1. Update Profile (Name, Role, Branch, Notes)
                 const { error: pError } = await supabaseClient
                     .from('profiles')
                     .update({ 
                         role: role, 
                         branch_id: branchId,
-                        first_name: name
+                        first_name: name,
+                        notes: notes
                     })
                     .eq('id', id);
 
@@ -407,7 +418,12 @@
                 $('#userModal').modal('hide');
                 await loadUsers();
             } catch (err) {
-                alert('Error al actualizar: ' + err.message);
+                console.error("Error completo:", err);
+                let msg = err.message || 'Error desconocido';
+                if (err.code === '42703') {
+                    msg = 'Error de Base de Datos: Falta la columna "notes". Por favor, asegurate de correr el script SQL que te pasé.';
+                }
+                alert('Error al actualizar: ' + msg);
             }
         }
 
@@ -433,6 +449,8 @@
             const name = $('#newUserName').val().trim();
             const email = $('#newUserEmail').val().trim();
             const password = $('#newUserPassword').val().trim();
+            const notes = $('#newUserNotes').val().trim();
+            const branchId = $('#newUserBranch').val() || null;
             const msgDiv = $('#newUserMsg');
             const btn = $('#btnCreateUser');
 
@@ -477,7 +495,8 @@
                             id: newUserId, // Requerido para upsert
                             branch_id: branchId, 
                             role: 'cajero', 
-                            first_name: name 
+                            first_name: name,
+                            notes: notes
                         })
                         .select();
                     
@@ -485,12 +504,24 @@
                         profileFixed = true;
                         break;
                     }
-                    if (pError) console.error("Intento " + (i+1) + " fallo:", pError);
+                    if (pError) {
+                        console.error("Intento " + (i+1) + " fallo:", pError);
+                        if (pError.code === '42703') {
+                            profileFixed = false;
+                            const sqlErrorMsg = 'DATABASE ERROR: La columna "notes" no existe. Debés ejecutar el script SQL en el panel de Supabase.';
+                            msgDiv.removeClass('d-none alert-soft-success').addClass('alert-soft-danger').text(sqlErrorMsg);
+                            btn.prop('disabled', false).text('Crear Usuario');
+                            return; // Stop retries if column missing
+                        }
+                    }
                     await new Promise(r => setTimeout(r, 1000));
                 }
 
                 if (!profileFixed) {
                     console.error("El Administrador no pudo persistir el perfil tras 5 reintentos.");
+                    msgDiv.removeClass('d-none alert-soft-success').addClass('alert-soft-danger').text('Error: No se pudo crear el perfil. Verifique la consola o el script SQL.');
+                    btn.prop('disabled', false).text('Crear Usuario');
+                    return;
                 }
 
                 msgDiv.removeClass('d-none alert-soft-danger').addClass('alert-soft-success')
