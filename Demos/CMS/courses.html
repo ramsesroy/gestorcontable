@@ -267,7 +267,10 @@
         });
 
         async function checkRole() {
-            const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', currentUser.id).single();
+            const { data: profile } = await supabaseClient.from('profiles').select('role, branch_id').eq('id', currentUser.id).single();
+            window.userRole = profile ? profile.role : 'cajero';
+            window.userBranchId = profile ? profile.branch_id : null;
+
             // All roles can create courses
             $('#adminActions').html(`
                 <button class="btn btn-primary" onclick="openCourseModal()">
@@ -282,7 +285,8 @@
 
         async function loadCourses() {
             // Fetch courses and count students per course
-            const { data: courses, error: cErr } = await supabaseClient.from('courses').select('*, students(id)').order('name');
+            let query = supabaseClient.from('courses').select('*, students(id, branch_id)').order('name');
+            const { data: courses, error: cErr } = await query;
             if (cErr) return console.error(cErr);
             
             coursesData = courses;
@@ -294,14 +298,25 @@
             tbody.empty();
 
             coursesData.forEach(c => {
-                const studentCount = c.students ? c.students.length : 0;
+                let studentCount = 0;
+                if (window.userRole === 'admin') {
+                    studentCount = c.students ? c.students.length : 0;
+                } else {
+                    // Filter count for cashiers
+                    studentCount = (c.students || []).filter(s => s.branch_id === window.userBranchId).length;
+                }
+
+                const deleteBtn = isAdmin ? `
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
+                        <i class="material-icons">delete</i>
+                    </button>
+                ` : '';
+
                 const editBtn = `
                     <button class="btn btn-sm btn-outline-primary mr-8pt" onclick="openCourseModal('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
                         <i class="material-icons">edit</i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
-                        <i class="material-icons">delete</i>
-                    </button>
+                    ${deleteBtn}
                 `;
 
                 tbody.append(`
@@ -327,7 +342,11 @@
 
             try {
                 // Fetch students for this course
-                const { data: students, error: sErr } = await supabaseClient.from('students').select('id, full_name, dni').eq('course_id', id).order('full_name');
+                let sQuery = supabaseClient.from('students').select('id, full_name, dni').eq('course_id', id);
+                if (window.userRole === 'cajero' && window.userBranchId) {
+                    sQuery = sQuery.eq('branch_id', window.userBranchId);
+                }
+                const { data: students, error: sErr } = await sQuery.order('full_name');
                 if (sErr) throw sErr;
 
                 if (students.length === 0) {
