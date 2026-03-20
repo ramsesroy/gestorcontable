@@ -214,6 +214,40 @@
         </div>
     </div>
 
+    <!-- MODAL: Registrar Nuevo Usuario -->
+    <div class="modal fade" id="newUserModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrar Nuevo Empleado</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="newUserName">Nombre Completo</label>
+                        <input type="text" class="form-control" id="newUserName" placeholder="Ej: Maria Lopez">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newUserEmail">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="newUserEmail" placeholder="correo@ejemplo.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newUserPassword">Contraseña Temporal</label>
+                        <input type="password" class="form-control" id="newUserPassword" placeholder="Mínimo 6 caracteres">
+                        <small class="text-muted">El empleado podrá cambiar su contraseña después desde su panel.</small>
+                    </div>
+                    <div id="newUserMsg" class="alert d-none small"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnCreateUser" onclick="createNewUser()">Crear Usuario</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="../../public/vendor/jquery.min.js"></script>
     <script src="../../public/vendor/popper.min.js"></script>
@@ -333,10 +367,56 @@
         }
 
         window.showNewUserHelp = function() {
-            alert('Para crear un nuevo usuario:\n\n' +
-                '1. Indicale al nuevo empleado que se registre en la página de inicio (Botón "Registrate aquí").\n' +
-                '2. Una vez que se registre, aparecerá automáticamente en esta lista.\n' +
-                '3. Entonces podrás darle el rol de "Cajero" y asignarle su sucursal.');
+            $('#newUserModal').modal('show');
+        }
+
+        window.createNewUser = async function() {
+            const name = $('#newUserName').val().trim();
+            const email = $('#newUserEmail').val().trim();
+            const password = $('#newUserPassword').val().trim();
+            const msgDiv = $('#newUserMsg');
+            const btn = $('#btnCreateUser');
+
+            if(!name || !email || !password) {
+                msgDiv.removeClass('d-none alert-soft-success').addClass('alert-soft-danger').text('Completá todos los campos.');
+                return;
+            }
+
+            btn.prop('disabled', true).text('Creando...');
+            msgDiv.addClass('d-none');
+
+            try {
+                // Instancia secundaria para NO cerrar la sesión del admin
+                const tempClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                    auth: { persistSession: false }
+                });
+
+                const { data, error } = await tempClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: { data: { first_name: name } }
+                });
+
+                if (error) throw error;
+
+                msgDiv.removeClass('d-none alert-soft-danger').addClass('alert-soft-success')
+                      .text('¡Usuario creado con éxito! Ya aparece en la lista para asignarle sucursal.');
+                
+                $('#newUserName').val('');
+                $('#newUserEmail').val('');
+                $('#newUserPassword').val('');
+
+                setTimeout(() => {
+                    $('#newUserModal').modal('hide');
+                    msgDiv.addClass('d-none');
+                    loadUsers();
+                }, 2000);
+
+            } catch (err) {
+                msgDiv.removeClass('d-none alert-soft-success').addClass('alert-soft-danger').text('Error: ' + err.message);
+            } finally {
+                btn.prop('disabled', false).text('Crear Usuario');
+            }
         }
 
         async function logout() {
