@@ -16,6 +16,10 @@
     <link type="text/css" href="../../public/vendor/spinkit.css" rel="stylesheet">
     <link type="text/css" href="../../public/vendor/perfect-scrollbar.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/material-icons.css" rel="stylesheet">
+    <style>
+        .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
+        .help-icon:hover { color: #5567ff; }
+    </style>
     <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
@@ -258,6 +262,8 @@
         let isAdmin = false;
 
         $(document).ready(async function () {
+            // Initialize Tooltips
+            $('[data-toggle="tooltip"]').tooltip();
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) return window.location.replace('login.html');
             

@@ -16,6 +16,10 @@
     <link type="text/css" href="../../public/vendor/spinkit.css" rel="stylesheet">
     <link type="text/css" href="../../public/vendor/perfect-scrollbar.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/material-icons.css" rel="stylesheet">
+    <style>
+        .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
+        .help-icon:hover { color: #5567ff; }
+    </style>
     <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
@@ -392,6 +396,7 @@
                         <i class="material-icons mr-8pt">warning</i>
                         <div class="flex">
                             <strong>Atención sucursal:</strong> Hay <strong id="overdueCountCajero">0</strong> cuota(s) vencida(s) sin cobrar por un total de <strong id="overdueAmountCajero">Gs. 0</strong>.
+                            <i class="material-icons help-icon" data-toggle="tooltip" title="Estas son cuotas cuya fecha de vencimiento ya pasó y aún no han sido cobradas.">help_outline</i>
                         </div>
                         <div class="d-flex align-items-center">
                             <button class="btn btn-sm btn-white mr-8pt" onclick="showOverdueDetails()">Ver Detalle</button>

@@ -19,6 +19,10 @@
     <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
+    <style>
+        .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
+        .help-icon:hover { color: #5567ff; }
+    </style>
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -379,7 +383,7 @@
                 <div class="modal-body">
                     <p>Monto restante: <strong id="paymentModalTotalStr" class="text-danger">$0</strong></p>
                     <div class="form-group mb-0">
-                        <label class="form-label" for="paymentModalAmount">¿Cuánto está pagando el alumno ahora?</label>
+                        <label class="form-label" for="paymentModalAmount">¿Cuánto está pagando el alumno ahora? <i class="material-icons help-icon" data-toggle="tooltip" title="Si el alumno paga menos del total, la cuota quedará en estado 'Parcial' y se podrá cobrar el resto luego.">help_outline</i></label>
                         <div class="input-group input-group-merge">
                             <input type="number" id="paymentModalAmount" class="form-control form-control-prepended" min="1" step="1">
                             <div class="input-group-prepend">

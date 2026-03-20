@@ -15,6 +15,11 @@
     <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
+    <style>
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
+        .help-icon:hover { color: #5567ff; }
+    </style>
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
@@ -98,7 +103,7 @@
                                 </div>
                             </div>
                             <div class="form-group mb-24pt">
-                                <label class="form-label" for="branch">Sucursal de Origen:</label>
+                                <label class="form-label" for="branch">Sucursal de Origen: <i class="material-icons help-icon" data-toggle="tooltip" title="La sucursal donde el alumno cursará y realizará sus pagos habitualmente.">help_outline</i></label>
                                 <select id="branch" class="form-control custom-select" required>
                                     <option value="" disabled selected>Selecciona una sucursal</option>
                                     <!-- Options will be loaded from Supabase -->
@@ -123,7 +128,7 @@
                             <div class="form-group mb-24pt">
                                 <div class="custom-control custom-switch">
                                     <input type="checkbox" class="custom-control-input" id="specialPlanSwitch">
-                                    <label class="custom-control-label" for="specialPlanSwitch">¿Es un Plan Especial o Beca?</label>
+                                    <label class="custom-control-label" for="specialPlanSwitch">¿Es un Plan Especial o Beca? <i class="material-icons help-icon" data-toggle="tooltip" title="Usar para arreglos de pago únicos, descuentos totales o paquetes cerrados que no siguen la cuota mensual estándar.">help_outline</i></label>
                                 </div>
                             </div>
 
@@ -144,7 +149,7 @@
                                 </div>
 
                                 <div class="form-group mb-24pt">
-                                    <label class="form-label" for="installmentsCount">Cantidad de cuotas a generar:</label>
+                                    <label class="form-label" for="installmentsCount">Cantidad de cuotas a generar: <i class="material-icons help-icon" data-toggle="tooltip" title="Se crearán compromisos de pago mensuales consecutivos. Por defecto son 12 cuotas (un año).">help_outline</i></label>
                                     <input id="installmentsCount" type="number" class="form-control" value="12" min="1"
                                         max="60">
                                     <small class="text-muted">Se generarán las cuotas mensuales consecutivas a partir del
@@ -307,6 +312,9 @@
         });
 
         $(document).ready(async function () {
+            // Initialize Bootstrap Tooltips
+            $('[data-toggle="tooltip"]').tooltip();
+
             // Cargar Sucursales
             const { data: branches, error: bError } = await supabaseClient.from('branches').select('*').eq('active', true);
             if (branches) {
