@@ -15,6 +15,9 @@
     <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
+    
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -114,6 +117,20 @@
                         <select id="selBranch" class="form-control custom-select">
                             <option value="">Cargando sucursales...</option>
                         </select>
+                    </div>
+
+                    <div class="row align-items-center mb-24pt no-print">
+                        <div class="col">
+                            <h1 class="h2 mb-0">Reporte de Cobranzas</h1>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-outline-success mr-8pt" onclick="exportToExcel()">
+                                <i class="material-icons mr-4pt">description</i> Exportar a Excel
+                            </button>
+                            <button class="btn btn-primary" onclick="window.print()">
+                                <i class="material-icons mr-4pt">print</i> Imprimir
+                            </button>
+                        </div>
                     </div>
 
                     <div class="row">
@@ -436,6 +453,24 @@
         }
         $(document).on('mousemove keydown click touchstart', resetInactivityTimer);
         resetInactivityTimer();
+
+        // ═══════════════════════════════════════
+        //  EXCEL EXPORT LOGIC
+        // ═══════════════════════════════════════
+        window.exportToExcel = function() {
+            var table = document.getElementById("reportTable");
+            if (!table || table.rows.length <= 1) {
+                alert("No hay datos para exportar.");
+                return;
+            }
+
+            // Clonar la tabla para manipularla sin afectar la UI (quitar columnas innecesarias si hubiera)
+            var wb = XLSX.utils.table_to_book(table, { sheet: "Cobranzas" });
+            
+            // Nombre del archivo con fecha
+            var dateStr = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, "Reporte_Cobranzas_" + dateStr + ".xlsx");
+        };
     </script>
 </body>
 </html>

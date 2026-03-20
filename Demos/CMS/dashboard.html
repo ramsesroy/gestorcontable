@@ -393,33 +393,11 @@
                 <!-- Overdue Alert Banner for Cajeros -->
                 <div id="overdueAlertBannerCajero" class="container page__container mt-16pt d-none">
                     <div class="alert alert-danger d-flex align-items-center" role="alert">
+                <div id="overdueAlertBannerCajero" class="container page__container mt-16pt d-none">
+                    <div class="alert alert-danger d-flex align-items-center" role="alert">
                         <i class="material-icons mr-8pt">warning</i>
                         <div class="flex">
                             <strong>Atención sucursal:</strong> Hay <strong id="overdueCountCajero">0</strong> cuota(s) vencida(s) sin cobrar por un total de <strong id="overdueAmountCajero">Gs. 0</strong>.
-                            <i class="material-icons help-icon" data-toggle="tooltip" title="Estas son cuotas cuya fecha de vencimiento ya pasó y aún no han sido cobradas.">help_outline</i>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <button class="btn btn-sm btn-white mr-8pt" onclick="showOverdueDetails()">Ver Detalle</button>
-                            <button class="btn btn-sm btn-danger" onclick="window.location.href='search.html'">Ir a Cobranzas</button>
-                        </div>
-                    </div>
-                </div>
-                            <div class="mt-16pt mt-md-0 d-flex flex-wrap">
-                                <button class="btn btn-outline-secondary mr-8pt mb-8pt"
-                                    onclick="generateReport('today')">
-                                    <i class="material-icons mr-4pt">print</i> Cierre del Día
-                                </button>
-                                <button class="btn btn-outline-secondary mr-8pt mb-8pt"
-                                    onclick="generateReport('week')">
-                                    <i class="material-icons mr-4pt">history</i> Cierre Semanal
-                                </button>
-                                <button class="btn btn-outline-secondary mb-8pt" onclick="generateReport('month')">
-                                    <i class="material-icons mr-4pt">calendar_view_month</i> Cierre Mensual
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="page-separator">
                         <div class="page-separator__text">Últimos Movimientos de Sucursal</div>
                     </div>

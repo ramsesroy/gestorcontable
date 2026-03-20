@@ -686,6 +686,80 @@
         }
 
         // ═══════════════════════════════════════
+            await checkRoleAndUI();
+            loadCourses();
+
+            $('#searchBtn').click(function () { doSearch($('#searchInput').val()); });
+            $('#searchInput').keypress(function (e) { if (e.which == 13) doSearch($('#searchInput').val()); });
+
+            // Live search suggestions
+            var searchTimer;
+            $('#searchInput').on('input', function () {
+                clearTimeout(searchTimer);
+                var val = $(this).val().trim();
+                if (val.length < 2) { $('#searchSuggestions').hide(); showRecentSearches(); return; }
+                searchTimer = setTimeout(function () { fetchSuggestions(val); }, 300);
+            });
+
+            $('#searchInput').on('focus', function () {
+                var val = $(this).val().trim();
+                if (val.length < 2) showRecentSearches();
+            });
+
+            // Hide suggestions when clicking outside
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('.search-wrapper').length) {
+                    $('#searchSuggestions').hide();
+                }
+            });
+
+            // Edit modal save
+            $('#btnSaveEdit').click(saveStudentEdit);
+
+            // Edit / Deactivate buttons
+            $('#btnEditStudent').click(openEditModal);
+            $('#btnDeactivateStudent').click(openDeactivateModal);
+            $('#btnConfirmDeactivate').click(confirmDeactivate);
+
+            // Course filter change trigger
+            $('#courseFilter').on('change', function() {
+                var val = $('#searchInput').val().trim();
+                if(val) doSearch(val);
+                else if($(this).val()) fetchSuggestions(''); // Show students in this course
+                else $('#searchSuggestions').hide();
+                
+                // Also reload the list with filter
+                currentPage = 0;
+                loadStudentList();
+            });
+
+            // Pagination buttons
+            $('#btnPrevPage').click(function() {
+                if(currentPage > 0) {
+                    currentPage--;
+                    loadStudentList();
+                }
+            });
+
+            $('#btnNextPage').click(function() {
+                currentPage++;
+                loadStudentList();
+            });
+
+            // Initial load
+            loadStudentList();
+        });
+
+        async function loadCourses() {
+            var { data, error } = await supabaseClient.from('courses').select('*').order('name');
+            if (data) {
+                data.forEach(function(c) {
+                    $('#courseFilter').append('<option value="' + c.id + '">' + c.name + '</option>');
+                });
+            }
+        }
+
+        // ═══════════════════════════════════════
         //  SEARCH SUGGESTIONS
         // ═══════════════════════════════════════
         function showRecentSearches() {
@@ -713,7 +787,6 @@
             
             if (!query && !courseId) { sug.hide(); return; }
 
-            // Check: is it a number (DNI) or text (name)?
             var isNumeric = /^\d+$/.test(query);
             var results;
 
@@ -732,7 +805,6 @@
                     results = res.data;
                 }
             } else if (courseId) {
-                // Return all students in this course (first 10)
                 var res = await baseQuery.eq('status', 'activo').limit(10);
                 results = res.data;
             }
@@ -837,9 +909,6 @@
             }
         }
 
-        // ═══════════════════════════════════════
-        //  RENDER INSTALLMENTS TABLE
-        // ═══════════════════════════════════════
         function renderInstallments(installments) {
             var body = $('#installmentsBody');
             body.empty();
@@ -867,9 +936,6 @@
                 else if (isParcial) statusBadge = '<span class="badge badge-info">PARCIAL</span>';
                 else statusBadge = '<span class="badge badge-warning">PENDIENTE</span>';
 
-                var formattedAmount = fmt.format(item.amount);
-                var formattedRemaining = isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '';
-
                 var actionBtn = '';
 
                 if (isPaid || isParcial) {
@@ -884,6 +950,13 @@
                         ' data-amount="' + paidAmount + '"' +
                         ' data-total-amount="' + item.amount + '"' +
                         ' data-remaining="' + remaining + '">Ticket</button>';
+
+                    actionBtn += '<button class="btn btn-sm btn-outline-danger btn-anular mr-8pt"' +
+                        ' data-id="' + item.id + '"' +
+                        ' data-num="' + item.installment_number + '"' +
+                        ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
+                        ' title="Anular último cobro">' +
+                        '<i class="material-icons" style="font-size:16px;">history</i></button>';
                 } 
                 
                 if (!isPaid && !isAnulado) {
@@ -905,14 +978,13 @@
                     '<tr>' +
                     '<td><strong class="js-lists-values-num">' + item.installment_number + ' de ' + totalCount + '</strong></td>' +
                     '<td>' + item.due_date + '</td>' +
-                    '<td>' + formattedAmount + formattedRemaining + '</td>' +
+                    '<td>' + fmt.format(item.amount) + (isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '') + '</td>' +
                     '<td>' + statusBadge + '</td>' +
                     '<td class="text-right">' + actionBtn + '</td>' +
                     '</tr>'
                 );
             });
 
-            // Bind Cobrar buttons
             $('.btn-cobrar').off('click').on('click', function (e) {
                 e.preventDefault();
                 var btn = $(this);
@@ -922,7 +994,6 @@
                 );
             });
 
-            // Bind Ticket buttons
             $('.btn-ticket').off('click').on('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -937,12 +1008,15 @@
                 );
             });
 
+            $('.btn-anular').off('click').on('click', function (e) {
+                e.preventDefault();
+                var btn = $(this);
+                annulPayment(btn.data('id'), btn.data('num'), btn.data('name'));
+            });
+
             $('#totalDebt').text(fmt.format(totalDebt));
         }
 
-        // ═══════════════════════════════════════
-        //  PAY INSTALLMENT (Modal wrapper)
-        // ═══════════════════════════════════════
         function payInstallment(id, totalAmount, paidAmount, num, name, dni, date, totalInstallments) {
             paidAmount = parseFloat(paidAmount || 0);
             totalAmount = parseFloat(totalAmount || 0);
@@ -1002,34 +1076,40 @@
                     }
                 });
 
-                showToast('¡Pago de ' + fmt.format(payingNow) + ' registrado exitosamente!', 'success');
-
-                printTicket(
-                    id, 
-                    $('#paymentModalNum').val(), 
-                    $('#paymentModalName').val(), 
-                    $('#paymentModalDni').val(), 
-                    $('#paymentModalDate').val(), 
-                    payingNow,
-                    $('#paymentModalTotalInstalments').val(),
-                    totalAmount,
-                    totalAmount - newTotalPaid,
-                    currentStudent.courses ? currentStudent.courses.name : '-'
-                );
-
+                showToast('¡Pago registrado!', 'success');
                 $('#paymentModal').modal('hide');
                 doSearch($('#searchInput').val());
             } catch (err) {
-                showToast('Error al registrar el pago.', 'error');
+                showToast('Error al registrar pago.', 'error');
                 console.error(err);
             } finally {
                 btnConfirm.prop('disabled', false).text('Confirmar Cobro');
             }
         }
 
-        // ═══════════════════════════════════════
-        //  EDIT STUDENT
-        // ═══════════════════════════════════════
+        async function annulPayment(id, num, name) {
+            if (!confirm('¿Seguro que deseas ANULAR el último pago de la cuota ' + num + ' para ' + name + '?')) return;
+            try {
+                var res = await supabaseClient.from('installments')
+                    .update({ status: 'pendiente', paid_at: null, paid_amount: 0 }).eq('id', id);
+                if (res.error) throw res.error;
+
+                await supabaseClient.from('audit_log').insert({
+                    user_id: currentUserId,
+                    action: 'anulacion_pago',
+                    entity_type: 'installment',
+                    entity_id: id,
+                    details: { student_name: name, installment_number: num }
+                });
+
+                showToast('¡Pago anulado!', 'success');
+                doSearch($('#searchInput').val());
+            } catch (err) {
+                showToast('Error al anular pago.', 'error');
+                console.error(err);
+            }
+        }
+
         function openEditModal() {
             if (!currentStudent) return;
             $('#editStudentId').val(currentStudent.id);
@@ -1045,53 +1125,25 @@
         async function saveStudentEdit() {
             var sid = $('#editStudentId').val();
             var newName = $('#editFullName').val().trim();
-            var newEmail = $('#editEmail').val().trim();
-            var newPhone = $('#editPhone').val().trim();
-            var newAmount = parseFloat($('#editAmount').val());
-
             if (!newName) { showToast('El nombre no puede estar vacío.', 'error'); return; }
-
             try {
-                // Update student record
                 var updateData = { 
                     full_name: newName, 
-                    email: newEmail, 
-                    phone: newPhone,
+                    email: $('#editEmail').val().trim(), 
+                    phone: $('#editPhone').val().trim(),
                     birth_date: $('#editBirthDate').val() || null,
                     additional_info: $('#editAdditionalInfo').val()
                 };
                 var res = await supabaseClient.from('students').update(updateData).eq('id', sid);
                 if (res.error) throw res.error;
-
-                // If amount changed, update all PENDING installments
-                if (newAmount > 0) {
-                    var iRes = await supabaseClient.from('installments')
-                        .update({ amount: newAmount }).eq('student_id', sid).eq('status', 'pendiente');
-                    if (iRes.error) throw iRes.error;
-                }
-
-                // Audit log
-                await supabaseClient.from('audit_log').insert({
-                    user_id: currentUserId,
-                    action: 'edicion_alumno',
-                    entity_type: 'student',
-                    entity_id: sid,
-                    details: { student_name: newName, changes: 'nombre/email/tel/monto' }
-                });
-
-                showToast('Datos del alumno actualizados correctamente.', 'success');
+                showToast('Datos actualizados.', 'success');
                 $('#editStudentModal').modal('hide');
-
-                // Reload
                 doSearch($('#searchInput').val());
             } catch (err) {
-                showToast('Error al guardar: ' + err.message, 'error');
+                showToast('Error al guardar.', 'error');
             }
         }
 
-        // ═══════════════════════════════════════
-        //  DEACTIVATE STUDENT
-        // ═══════════════════════════════════════
         function openDeactivateModal() {
             if (!currentStudent) return;
             $('#deactivateName').text(currentStudent.full_name);
@@ -1101,44 +1153,16 @@
         async function confirmDeactivate() {
             if (!currentStudent) return;
             try {
-                // Count pending installments before cancelling
-                var countRes = await supabaseClient.from('installments')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('student_id', currentStudent.id).eq('status', 'pendiente');
-                var cancelledCount = countRes.count || 0;
-
-                // 1. Mark all pending installments as 'anulado'
-                var iRes = await supabaseClient.from('installments')
-                    .update({ status: 'anulado' }).eq('student_id', currentStudent.id).eq('status', 'pendiente');
-                if (iRes.error) throw iRes.error;
-
-                // 2. Set student status to 'inactivo'
-                var sRes = await supabaseClient.from('students')
-                    .update({ status: 'inactivo' }).eq('id', currentStudent.id);
-                if (sRes.error) throw sRes.error;
-
-                // Audit log
-                await supabaseClient.from('audit_log').insert({
-                    user_id: currentUserId,
-                    action: 'baja_alumno',
-                    entity_type: 'student',
-                    entity_id: currentStudent.id,
-                    details: { student_name: currentStudent.full_name, installments_cancelled: cancelledCount }
-                });
-
-                showToast('Alumno dado de baja. ' + cancelledCount + ' cuotas anuladas.', 'success');
+                await supabaseClient.from('installments').update({ status: 'anulado' }).eq('student_id', currentStudent.id).eq('status', 'pendiente');
+                await supabaseClient.from('students').update({ status: 'inactivo' }).eq('id', currentStudent.id);
+                showToast('Alumno dado de baja.', 'success');
                 $('#deactivateModal').modal('hide');
-
-                // Reload
                 doSearch($('#searchInput').val());
             } catch (err) {
-                showToast('Error al dar de baja: ' + err.message, 'error');
+                showToast('Error al dar de baja.', 'error');
             }
         }
 
-        // ═══════════════════════════════════════
-        //  HELPER FUNCTIONS
-        // ═══════════════════════════════════════
         function resetUI() {
             $('#studentCard').addClass('d-none');
             $('#installmentsTable').addClass('d-none');
@@ -1147,18 +1171,7 @@
         }
 
         function printTicket(id, num, name, dni, date, amountPaid, totalCount, totalInstallmentAmount, remainingAmount, course) {
-            var params = new URLSearchParams({
-                id: id,
-                num: num,
-                name: name,
-                dni: dni,
-                date: date,
-                amount: amountPaid,
-                total: totalCount || '',
-                totalAmount: totalInstallmentAmount || amountPaid,
-                remaining: remainingAmount || 0,
-                course: course || '-'
-            });
+            var params = new URLSearchParams({ id:id, num:num, name:name, dni:dni, date:date, amount:amountPaid, total:totalCount, totalAmount:totalInstallmentAmount, remaining:remainingAmount, course:course });
             window.open('ticket.html?' + params.toString(), 'Comprobante', 'width=600,height=700');
         }
 
