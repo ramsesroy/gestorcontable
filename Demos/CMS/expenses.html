@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Gestión de Gastos - CMS Cobranzas</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CRoboto:400,500%7CExo+2:600&display=swap" rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/spinkit.css" rel="stylesheet">
+    <link type="text/css" href="../../public/vendor/perfect-scrollbar.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/material-icons.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/fontawesome.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
+    <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5567ff">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .category-badge { text-transform: capitalize; }
+        .expense-amount { font-weight: bold; }
+        .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
+        .help-icon:hover { color: #5567ff; }
+    </style>
+</head>
+
+<body class="layout-app ">
+    <div class="preloader">
+        <div class="sk-chase">
+            <div class="sk-chase-dot"></div><div class="sk-chase-dot"></div><div class="sk-chase-dot"></div>
+            <div class="sk-chase-dot"></div><div class="sk-chase-dot"></div><div class="sk-chase-dot"></div>
+        </div>
+    </div>
+
+    <div class="mdk-drawer-layout js-mdk-drawer-layout" data-push data-responsive-width="992px">
+        <div class="mdk-drawer-layout__content page-content">
+            <!-- Navbar -->
+            <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
+                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button" data-toggle="sidebar">
+                    <span class="material-icons">short_text</span>
+                </button>
+                <a href="index.html" class="navbar-brand mr-16pt">
+                    <span class="avatar avatar-sm navbar-brand-icon mr-0 mr-lg-8pt">
+                        <span class="avatar-title rounded bg-primary"><img src="../../public/images/illustration/student/128/white.svg" class="img-fluid" alt="logo" /></span>
+                    </span>
+                    <span class="d-none d-lg-block">CMS Cobranzas</span>
+                </a>
+            </div>
+
+            <div class="container page__container page-section">
+                <div class="page-separator">
+                    <div class="page-separator__text">Gestión de Gastos Operativos</div>
+                </div>
+
+                <div class="row mb-32pt">
+                    <div class="col-lg-12 d-flex align-items-center flex-wrap">
+                        <div class="flex" style="min-width: 200px;">
+                            <h4 class="mb-0">Control de Gastos</h4>
+                            <p class="text-50 mb-0">Registrá y gestioná los costos de operación.</p>
+                        </div>
+                        <div id="branchFilterContainer" class="mr-16pt mb-8pt d-none" style="min-width: 200px;">
+                            <label class="form-label mb-0">Sucursal:</label>
+                            <select id="branchFilter" class="form-control custom-select">
+                                <option value="all">Todas las sucursales</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="openExpenseModal()">
+                            <i class="material-icons mr-8pt">add</i> Nuevo Gasto
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card mb-32pt">
+                    <div class="table-responsive" data-toggle="lists">
+                        <table class="table mb-0 thead-border-top-0 table-nowrap">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Concepto / Descripción</th>
+                                    <th>Categoría</th>
+                                    <th id="branchColHeader" class="d-none">Sucursal</th>
+                                    <th class="text-right">Monto</th>
+                                    <th style="width: 24px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="expensesTableBody" class="list">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="bg-light">
+                                    <td colspan="4" class="text-right"><strong>Total Gastos:</strong></td>
+                                    <td class="text-right"><strong id="totalExpensesAmount" class="text-danger">Gs. 0</strong></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="mdk-drawer js-mdk-drawer" id="default-drawer">
+            <div class="mdk-drawer__content">
+                <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
+                    <a href="index.html" class="sidebar-brand">
+                        <span class="avatar avatar-xl sidebar-brand-icon h-auto">
+                            <span class="avatar-title rounded bg-primary"><img src="../../public/images/illustration/student/128/white.svg" class="img-fluid" alt="logo" /></span>
+                        </span>
+                        <span>CMS Cobranzas</span>
+                    </a>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="dashboard.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
+                                <span class="sidebar-menu-text">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="registration.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
+                                <span class="sidebar-menu-text">Inscripción</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="search.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span>
+                                <span class="sidebar-menu-text">Cobranzas</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="courses.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
+                                <span class="sidebar-menu-text">Cursos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="branches.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
+                                <span class="sidebar-menu-text">Sucursales</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item active">
+                            <a class="sidebar-menu-button" href="expenses.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">receipt_long</span>
+                                <span class="sidebar-menu-text">Gastos</span>
+                            </a>
+                        </li>
+                        <li id="sidebarUsersItem" class="sidebar-menu-item" style="display:none;">
+                            <a class="sidebar-menu-button" href="users.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span>
+                                <span class="sidebar-menu-text">Usuarios</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
+                            <a class="sidebar-menu-button" href="report.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
+                                <span class="sidebar-menu-text">Reportes</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item mt-4">
+                            <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
+                                <span class="sidebar-menu-text">Cerrar Sesión</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Nuevo Gasto -->
+    <div class="modal fade" id="expenseModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="expenseModalTitle">Registrar Gasto</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="expenseForm">
+                        <input type="hidden" id="expenseId">
+                        <div class="form-group">
+                            <label class="form-label" for="expenseCategory">Categoría:</label>
+                            <select id="expenseCategory" class="form-control custom-select" required>
+                                <option value="" disabled selected>Selecciona una categoría</option>
+                                <option value="Limpieza">Limpieza</option>
+                                <option value="Internet">Internet</option>
+                                <option value="Alquiler">Alquiler</option>
+                                <option value="Salarios">Salarios</option>
+                                <option value="Oficina">Oficina (Papelería/Varios)</option>
+                                <option value="Luz">Luz</option>
+                                <option value="Agua">Agua</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="expenseDescription">Descripción / Concepto:</label>
+                            <input id="expenseDescription" type="text" class="form-control" placeholder="Ej: Pago de internet Fibertel Marzo" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="expenseAmount">Monto (Gs.):</label>
+                            <input id="expenseAmount" type="number" class="form-control" placeholder="0" required>
+                        </div>
+                        <div id="expenseBranchContainer" class="form-group d-none">
+                            <label class="form-label" for="expenseBranchId">Sucursal:</label>
+                            <select id="expenseBranchId" class="form-control custom-select">
+                                <!-- Loaded for Admin -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="expenseDate">Fecha:</label>
+                            <input id="expenseDate" type="date" class="form-control" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveExpense()">Guardar Gasto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../public/vendor/jquery.min.js"></script>
+    <script src="../../public/vendor/popper.min.js"></script>
+    <script src="../../public/vendor/bootstrap.min.js"></script>
+    <script src="../../public/vendor/perfect-scrollbar.min.js"></script>
+    <script src="../../public/vendor/dom-factory.js"></script>
+    <script src="../../public/vendor/material-design-kit.js"></script>
+    <script src="../../public/js/app.js"></script>
+    <script src="../../public/js/preloader.js"></script>
+
+    <script>
+        const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let isAdmin = false;
+        let userBranchId = null;
+
+        $(document).ready(async function () {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) return window.location.replace('login.html');
+            
+            currentUser = session.user;
+            await checkRole();
+            await loadExpenses();
+            
+            // Set today as default date in modal
+            const today = new Date().toISOString().split('T')[0];
+            $('#expenseDate').val(today);
+            
+            // Branch Filter Event
+            $('#branchFilter').on('change', loadExpenses);
+        });
+
+        async function checkRole() {
+            const { data: profile } = await supabaseClient.from('profiles').select('role, branch_id').eq('id', currentUser.id).single();
+            if (profile) {
+                userBranchId = profile.branch_id;
+                if (profile.role === 'admin') {
+                    isAdmin = true;
+                    $('#sidebarUsersItem').show();
+                    $('#branchFilterContainer, #branchColHeader, #expenseBranchContainer').removeClass('d-none');
+                    await loadBranchOptions();
+                }
+            }
+        }
+
+        async function loadBranchOptions() {
+            const { data: branches } = await supabaseClient.from('branches').select('*').eq('active', true).order('name');
+            if (branches) {
+                const filter = $('#branchFilter');
+                const modalSelect = $('#expenseBranchId');
+                branches.forEach(b => {
+                    filter.append(`<option value="${b.id}">${b.name}</option>`);
+                    modalSelect.append(`<option value="${b.id}">${b.name}</option>`);
+                });
+            }
+        }
+
+        async function loadExpenses() {
+            const tbody = $('#expensesTableBody');
+            tbody.html('<tr><td colspan="6" class="text-center">Cargando gastos...</td></tr>');
+            
+            let query = supabaseClient.from('expenses').select('*, branches(name)').order('date', { ascending: false });
+            
+            const filterValue = $('#branchFilter').val();
+            if (isAdmin && filterValue !== 'all') {
+                query = query.eq('branch_id', filterValue);
+            } else if (!isAdmin) {
+                query = query.eq('branch_id', userBranchId);
+            }
+
+            const { data: expenses, error } = await query;
+            if (error) {
+                console.error(error);
+                return tbody.html('<tr><td colspan="6" class="text-center text-danger">Error al cargar datos.</td></tr>');
+            }
+
+            tbody.empty();
+            let total = 0;
+
+            if (expenses.length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center text-50">No hay gastos registrados en este período.</td></tr>');
+                $('#totalExpensesAmount').text('Gs. 0');
+                return;
+            }
+
+            expenses.forEach(e => {
+                total += parseFloat(e.amount);
+                const branchHtml = isAdmin ? `<td>${e.branches ? e.branches.name : 'N/A'}</td>` : '';
+                tbody.append(`
+                    <tr>
+                        <td>${new Date(e.date + 'T00:00:00').toLocaleDateString()}</td>
+                        <td>${e.description}</td>
+                        <td><span class="badge badge-soft-secondary category-badge">${e.category}</span></td>
+                        ${branchHtml}
+                        <td class="text-right expense-amount">Gs. ${formatMoney(e.amount)}</td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteExpense('${e.id}')">
+                                <i class="material-icons">delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+
+            $('#totalExpensesAmount').text('Gs. ' + formatMoney(total));
+        }
+
+        window.openExpenseModal = function() {
+            $('#expenseId').val('');
+            $('#expenseForm')[0].reset();
+            $('#expenseModalTitle').text('Registrar Gasto');
+            const today = new Date().toISOString().split('T')[0];
+            $('#expenseDate').val(today);
+            if (isAdmin) $('#expenseBranchId').val($('#branchFilter').val() === 'all' ? '' : $('#branchFilter').val());
+            $('#expenseModal').modal('show');
+        }
+
+        window.saveExpense = async function() {
+            const description = $('#expenseDescription').val().trim();
+            const category = $('#expenseCategory').val();
+            const amount = parseFloat($('#expenseAmount').val());
+            const date = $('#expenseDate').val();
+            let branchId = userBranchId;
+
+            if (isAdmin) {
+                branchId = $('#expenseBranchId').val();
+                if (!branchId) return alert('Seleccione una sucursal.');
+            }
+
+            if (!description || !category || isNaN(amount) || !date) {
+                return alert('Por favor complete todos los campos requeridos.');
+            }
+
+            try {
+                const { error } = await supabaseClient.from('expenses').insert([{
+                    description,
+                    category,
+                    amount,
+                    date,
+                    branch_id: branchId,
+                    user_id: currentUser.id
+                }]);
+
+                if (error) throw error;
+                
+                $('#expenseModal').modal('hide');
+                loadExpenses();
+            } catch (err) {
+                alert('Error al guardar el gasto: ' + err.message);
+            }
+        }
+
+        window.deleteExpense = async function(id) {
+            if (!confirm('¿Seguro que deseas eliminar este registro de gasto?')) return;
+            try {
+                const { error } = await supabaseClient.from('expenses').delete().eq('id', id);
+                if (error) throw error;
+                loadExpenses();
+            } catch (err) {
+                alert('Error al eliminar: ' + err.message);
+            }
+        }
+
+        function formatMoney(n) {
+            return parseFloat(n).toLocaleString('es-PY');
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.replace('login.html');
+        }
+    </script>
+</body>
+</html>
