@@ -840,22 +840,25 @@
 
             try {
                 var courseId = $('#courseFilter').val();
-                var baseQuery = supabaseClient.from('students').select('*, branches(name), courses(name)').eq('status', 'activo');
                 
-                if (courseId) baseQuery = baseQuery.eq('course_id', courseId);
-                if (window.userRole === 'cajero' && window.userBranchId) {
-                    baseQuery = baseQuery.eq('branch_id', window.userBranchId);
-                }
+                const getBaseQuery = () => {
+                    let q = supabaseClient.from('students').select('*, branches(name), courses(name)').eq('status', 'activo');
+                    if (courseId) q = q.eq('course_id', courseId);
+                    if (window.userRole === 'cajero' && window.userBranchId) {
+                        q = q.eq('branch_id', window.userBranchId);
+                    }
+                    return q;
+                };
 
                 // 1. Try exact DNI match
-                const { data: exactMatch } = await baseQuery.eq('dni', query).limit(1);
+                const { data: exactMatch } = await getBaseQuery().eq('dni', query).limit(1);
                 if (exactMatch && exactMatch.length === 1) {
                     loadStudentData(exactMatch[0]);
                     return;
                 }
 
                 // 2. Try partial search
-                const { data: multiMatch, error } = await baseQuery
+                const { data: multiMatch, error } = await getBaseQuery()
                     .or(`full_name.ilike.%${query}%,dni.ilike.${query}%`)
                     .limit(10);
 
