@@ -240,7 +240,7 @@
 
                 <!-- Installments Table -->
                 <div id="installmentsTable" class="card mb-32pt d-none">
-                    <div class="table-responsive" data-toggle="lists" data-lists-values='["js-lists-values-num"]'>
+                    '<td><strong class="js-lists-values-num">' + (item.concept === 'MATRÍCULA' ? 'Matrícula' : 'Cuota ' + item.installment_number + ' de ' + totalInstallments) + '</strong></td>' +
                         <table class="table mb-0 thead-border-top-0 table-nowrap">
                             <thead>
                                 <tr>
@@ -866,7 +866,7 @@
             var body = $('#installmentsBody');
             body.empty();
             var totalDebt = 0;
-            var totalCount = installments.length;
+            var totalInstallments = installments.filter(i => i.concept !== 'MATRÍCULA').length;
 
             var studentName = $('#studentName').text();
             var studentDni = $('#studentDni').text();
@@ -895,11 +895,12 @@
                     actionBtn += '<button class="btn btn-sm btn-outline-secondary btn-ticket mr-8pt"' +
                         ' data-id="' + item.id + '"' +
                         ' data-num="' + item.installment_number + '"' +
-                        ' data-total="' + totalCount + '"' +
+                        ' data-total="' + totalInstallments + '"' +
                         ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
                         ' data-dni="' + studentDni + '"' +
                         ' data-course="' + courseName.replace(/"/g, '&quot;') + '"' +
                         ' data-date="' + item.due_date + '"' +
+                        ' data-concept="' + (item.concept === 'MATRÍCULA' ? 'Matrícula' : '') + '"' +
                         ' data-amount="' + paidAmount + '"' +
                         ' data-total-amount="' + item.amount + '"' +
                         ' data-remaining="' + remaining + '">Ticket</button>';
@@ -1123,8 +1124,8 @@
             $('#loader').addClass('d-none');
         }
 
-        function printTicket(id, num, name, dni, date, amountPaid, totalCount, totalInstallmentAmount, remainingAmount, course) {
-            var params = new URLSearchParams({ id:id, num:num, name:name, dni:dni, date:date, amount:amountPaid, total:totalCount, totalAmount:totalInstallmentAmount, remaining:remainingAmount, course:course });
+        function printTicket(id, num, name, dni, date, amountPaid, totalCount, totalInstallmentAmount, remainingAmount, course, concept) {
+            var params = new URLSearchParams({ id:id, num:num, name:name, dni:dni, date:date, amount:amountPaid, total:totalCount, totalAmount:totalInstallmentAmount, remaining:remainingAmount, course:course, concept:concept });
             window.open('ticket.html?' + params.toString(), 'Comprobante', 'width=600,height=700');
         }
 

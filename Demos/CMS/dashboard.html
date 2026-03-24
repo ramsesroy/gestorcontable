@@ -566,18 +566,18 @@
         }
 
         async function loadRecentPayments(from, to) {
-            const { data } = await supabaseClient.from('installments').select('amount, paid_at, installment_number, students(full_name, branches(name))').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to).order('paid_at', { ascending: false }).limit(8);
+            const { data } = await supabaseClient.from('installments').select('amount, paid_at, installment_number, concept, students(full_name, branches(name))').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to).order('paid_at', { ascending: false }).limit(8);
             const list = $('#recentPayments').empty();
             (data || []).forEach(p => {
-                list.append(`<li class="list-group-item d-flex justify-content-between"><div><strong>${p.students.full_name}</strong><br><small>${p.students.branches.name}</small></div><div class="text-right"><strong>${fmt.format(p.amount)}</strong></div></li>`);
+                list.append(`<li class="list-group-item d-flex justify-content-between"><div><strong>${p.students.full_name + (p.concept === "MATRÍCULA" ? " (Matrícula)" : "")}</strong><br><small>${p.students.branches.name}</small></div><div class="text-right"><strong>${fmt.format(p.amount)}</strong></div></li>`);
             });
         }
 
         async function loadBillingBreakdown(from, to) {
-            const { data } = await supabaseClient.from('installments').select('id, amount, paid_at, installment_number, students(full_name, dni, branches(name), courses(name))').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to).order('paid_at', { ascending: false });
+            const { data } = await supabaseClient.from('installments').select('id, amount, paid_at, installment_number, concept, students(full_name, dni, branches(name), courses(name))').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to).order('paid_at', { ascending: false });
             const tbody = $('#billingBreakdownBody').empty();
             (data || []).forEach(p => {
-                tbody.append(`<tr><td>${p.students.branches.name}</td><td>${p.students.full_name}</td><td>Cuota ${p.installment_number}</td><td class="text-right">${fmt.format(p.amount)}</td><td class="text-right">${new Date(p.paid_at).toLocaleDateString()}</td><td class="text-right"><button class="btn btn-sm btn-outline-primary" onclick="printTicket('${p.id}', '${p.installment_number}', '${p.students.full_name}', '', '', '${p.amount}', '', '${p.amount}', '0', '${p.students.courses.name}')"><i class="material-icons">receipt</i></button></td></tr>`);
+                tbody.append(`<tr><td>${p.students.branches.name}</td><td>${p.students.full_name}</td><td>${p.concept === "MATRÍCULA" ? "Matrícula" : "Cuota " + p.installment_number}</td><td class="text-right">${fmt.format(p.amount)}</td><td class="text-right">${new Date(p.paid_at).toLocaleDateString()}</td><td class="text-right"><button class="btn btn-sm btn-outline-primary" onclick="printTicket('${p.id}', '${p.installment_number}', '${p.students.full_name}', '', '', '${p.amount}', '', '${p.amount}', '0', '${p.students.courses.name}', '${p.concept === "MATRÍCULA" ? "Matrícula" : ""}')"><i class="material-icons">receipt</i></button></td></tr>`);
             });
         }
 
@@ -623,7 +623,7 @@
             (data || []).forEach(b => sel.append(`<option value="${b.id}">${b.name}</option>`));
         }
         async function massiveUpdate() { alert('Zona Crítica: Contacte al soporte para actualizaciones masivas.'); }
-        function printTicket(id, num, name, dni, date, amount, total, totalA, rem, course) { window.open(`ticket.html?id=${id}&num=${num}&name=${name}&amount=${amount}&course=${course}`, '_blank'); }
+        function printTicket(id, num, name, dni, date, amount, total, totalA, rem, course, concept) { window.open(`ticket.html?id=${id}&num=${num}&name=${name}&amount=${amount}&course=${course}&concept=${concept || ''}`, '_blank'); }
     </script>
 
     <!-- Modals -->

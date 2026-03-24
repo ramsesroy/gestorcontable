@@ -227,12 +227,13 @@
             const totalAmount = params.get('totalAmount') || amountPaid;
             const remaining = params.get('remaining') || '0';
             const courseName = params.get('course') || '-';
+            const conceptParam = params.get('concept');
 
             const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
 
             document.getElementById('printDate').textContent = new Date().toLocaleString('es-AR');
 
-            const cuotaText = total ? `Cuota ${num} de ${total}` : `Cuota ${num}`;
+            const cuotaText = conceptParam ? conceptParam : (total ? `Cuota ${num} de ${total}` : `Cuota ${num}`);
 
             let extraRows = '';
             if(parseFloat(remaining) > 0) {
