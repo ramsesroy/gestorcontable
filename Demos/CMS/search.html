@@ -686,78 +686,9 @@
         }
 
         // ═══════════════════════════════════════
-            await checkRoleAndUI();
-            loadCourses();
 
-            $('#searchBtn').click(function () { doSearch($('#searchInput').val()); });
-            $('#searchInput').keypress(function (e) { if (e.which == 13) doSearch($('#searchInput').val()); });
 
-            // Live search suggestions
-            var searchTimer;
-            $('#searchInput').on('input', function () {
-                clearTimeout(searchTimer);
-                var val = $(this).val().trim();
-                if (val.length < 2) { $('#searchSuggestions').hide(); showRecentSearches(); return; }
-                searchTimer = setTimeout(function () { fetchSuggestions(val); }, 300);
-            });
 
-            $('#searchInput').on('focus', function () {
-                var val = $(this).val().trim();
-                if (val.length < 2) showRecentSearches();
-            });
-
-            // Hide suggestions when clicking outside
-            $(document).on('click', function (e) {
-                if (!$(e.target).closest('.search-wrapper').length) {
-                    $('#searchSuggestions').hide();
-                }
-            });
-
-            // Edit modal save
-            $('#btnSaveEdit').click(saveStudentEdit);
-
-            // Edit / Deactivate buttons
-            $('#btnEditStudent').click(openEditModal);
-            $('#btnDeactivateStudent').click(openDeactivateModal);
-            $('#btnConfirmDeactivate').click(confirmDeactivate);
-
-            // Course filter change trigger
-            $('#courseFilter').on('change', function() {
-                var val = $('#searchInput').val().trim();
-                if(val) doSearch(val);
-                else if($(this).val()) fetchSuggestions(''); // Show students in this course
-                else $('#searchSuggestions').hide();
-                
-                // Also reload the list with filter
-                currentPage = 0;
-                loadStudentList();
-            });
-
-            // Pagination buttons
-            $('#btnPrevPage').click(function() {
-                if(currentPage > 0) {
-                    currentPage--;
-                    loadStudentList();
-                }
-            });
-
-            $('#btnNextPage').click(function() {
-                currentPage++;
-                loadStudentList();
-            });
-
-            // Initial load
-            loadStudentList();
-        });
-
-        async function loadCourses() {
-            var { data, error } = await supabaseClient.from('courses').select('*').order('name');
-            if (data) {
-                data.forEach(function(c) {
-                    $('#courseFilter').append('<option value="' + c.id + '">' + c.name + '</option>');
-                });
-            }
-        }
 
         // ═══════════════════════════════════════
         //  SEARCH SUGGESTIONS
