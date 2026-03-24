@@ -787,125 +787,144 @@
             
             if (!query && !courseId) { sug.hide(); return; }
 
-            var isNumeric = /^\d+$/.test(query);
-            var results;
-
-            var baseQuery = supabaseClient.from('students').select('id, dni, full_name, branches(name), courses(name)');
-            if (courseId) baseQuery = baseQuery.eq('course_id', courseId);
-            if (window.userRole === 'cajero' && window.userBranchId) {
-                baseQuery = baseQuery.eq('branch_id', window.userBranchId);
-            }
-
-            if (query) {
-                if (isNumeric) {
-                    var res = await baseQuery.ilike('dni', query + '%').eq('status', 'activo').limit(10);
-                    results = res.data;
-                } else {
-                    var res = await baseQuery.ilike('full_name', '%' + query + '%').eq('status', 'activo').limit(10);
-                    results = res.data;
+            try {
+                var baseQuery = supabaseClient.from('students').select('id, dni, full_name, branches(name), courses(name)').eq('status', 'activo');
+                if (courseId) baseQuery = baseQuery.eq('course_id', courseId);
+                if (window.userRole === 'cajero' && window.userBranchId) {
+                    baseQuery = baseQuery.eq('branch_id', window.userBranchId);
                 }
-            } else if (courseId) {
-                var res = await baseQuery.eq('status', 'activo').limit(10);
-                results = res.data;
-            }
 
-            if (!results || results.length === 0) {
-                sug.html('<div class="suggestion-item text-50">Sin resultados</div>').show();
-                return;
-            }
+                let results = [];
+                if (query) {
+                    const { data } = await baseQuery.or(`full_name.ilike.%${query}%,dni.ilike.${query}%`).limit(10);
+                    results = data || [];
+                } else if (courseId) {
+                    const { data } = await baseQuery.limit(10);
+                    results = data || [];
+                }
 
-            var html = '<div class="suggestion-header">Resultados</div>';
-            results.forEach(function (s) {
-                var branch = s.branches ? s.branches.name : '';
-                var course = s.courses ? s.courses.name : 'Sin curso';
-                html += '<div class="suggestion-item" data-dni="' + s.dni + '">' +
-                    '<span><strong>' + s.full_name + '</strong> <small class="text-50">' + branch + ' | ' + course + '</small></span>' +
-                    '<span class="text-50" style="font-size:0.85em">DNI: ' + s.dni + '</span></div>';
-            });
-            sug.html(html).show();
-            sug.find('.suggestion-item').click(function () {
-                var dni = $(this).data('dni');
-                $('#searchInput').val(dni);
-                sug.hide();
-                doSearch(dni);
-            });
+                if (!results || results.length === 0) {
+                    sug.html('<div class="suggestion-item text-50">Sin resultados</div>').show();
+                    return;
+                }
+
+                var html = '<div class="suggestion-header">Resultados</div>';
+                results.forEach(function (s) {
+                    var branch = s.branches ? s.branches.name : '';
+                    var course = s.courses ? s.courses.name : 'Sin curso';
+                    html += '<div class="suggestion-item" data-dni="' + s.dni + '">' +
+                        '<span><strong>' + s.full_name + '</strong> <small class="text-50">' + branch + ' | ' + course + '</small></span>' +
+                        '<span class="text-50" style="font-size:0.85em">DNI: ' + s.dni + '</span></div>';
+                });
+                sug.html(html).show();
+                sug.find('.suggestion-item').click(function () {
+                    var dni = $(this).data('dni');
+                    $('#searchInput').val(dni);
+                    sug.hide();
+                    doSearch(dni);
+                });
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         // ═══════════════════════════════════════
         //  MAIN SEARCH LOGIC
         // ═══════════════════════════════════════
         async function doSearch(query) {
-            query = String(query || "");
-            if (!query.trim()) return;
-            query = query.trim();
+            query = String(query || "").trim();
+            if (!query) return;
             resetUI();
             $('#loader').removeClass('d-none');
             $('#searchSuggestions').hide();
 
             try {
-                var student = null;
                 var courseId = $('#courseFilter').val();
-
-                // unified search (DNI strict or name partial)
-                var baseQuery = supabaseClient.from('students').select('*, branches(name), courses(name)');
+                var baseQuery = supabaseClient.from('students').select('*, branches(name), courses(name)').eq('status', 'activo');
+                
                 if (courseId) baseQuery = baseQuery.eq('course_id', courseId);
+                if (window.userRole === 'cajero' && window.userBranchId) {
+                    baseQuery = baseQuery.eq('branch_id', window.userBranchId);
+                }
 
-                var res = await baseQuery.or('dni.eq.' + query + ',full_name.ilike.%' + query + '%').limit(1).single();
-
-                if (!res.error && res.data) {
-                    student = res.data;
-                } else {
-                    $('#noResults').removeClass('d-none');
+                // 1. Try exact DNI match
+                const { data: exactMatch } = await baseQuery.eq('dni', query).limit(1);
+                if (exactMatch && exactMatch.length === 1) {
+                    loadStudentData(exactMatch[0]);
                     return;
                 }
 
-                // Save to context
-                currentStudent = student;
-                currentStudent.branchName = student.branches ? student.branches.name : 'N/A';
+                // 2. Try partial search
+                const { data: multiMatch, error } = await baseQuery
+                    .or(`full_name.ilike.%${query}%,dni.ilike.${query}%`)
+                    .limit(10);
 
-                // Add to recent searches
-                addRecentSearch(currentStudent);
+                if (error) throw error;
 
-                // Display student info
-                $('#studentName').text(student.full_name);
-                $('#studentDni').text(student.dni);
-                var dobText = student.birth_date ? new Date(student.birth_date).toLocaleDateString() : 'No registrada';
-                $('#studentBirthDate').text(dobText);
-                var courseText = student.courses ? student.courses.name : 'Sin curso asignado';
-                $('#studentBranch').text(currentStudent.branchName + ' | ' + courseText);
-                var statusClass = student.status === 'activo' ? 'badge-success' : 'badge-danger';
-                $('#studentStatus').text(student.status.toUpperCase()).removeClass('badge-success badge-danger').addClass(statusClass);
-
-                if (student.additional_info) {
-                    $('#studentAdditionalInfoText').text(student.additional_info);
-                    $('#studentAdditionalInfoContainer').removeClass('d-none');
+                if (!multiMatch || multiMatch.length === 0) {
+                    $('#noResults').removeClass('d-none');
+                } else if (multiMatch.length === 1) {
+                    loadStudentData(multiMatch[0]);
                 } else {
-                    $('#studentAdditionalInfoContainer').addClass('d-none');
+                    // Show suggestions instead of failing
+                    var sug = $('#searchSuggestions');
+                    var html = '<div class="suggestion-header">Se encontraron varios resultados:</div>';
+                    multiMatch.forEach(function (s) {
+                        var branch = s.branches ? s.branches.name : '';
+                        var course = s.courses ? s.courses.name : 'Sin curso';
+                        html += '<div class="suggestion-item" data-dni="' + s.dni + '">' +
+                            '<span><strong>' + s.full_name + '</strong> <small class="text-50">' + branch + ' | ' + course + '</small></span>' +
+                            '<span class="text-50" style="font-size:0.85em">DNI: ' + s.dni + '</span></div>';
+                    });
+                    sug.html(html).show();
+                    sug.find('.suggestion-item').click(function () {
+                        var dni = $(this).data('dni');
+                        $('#searchInput').val(dni);
+                        sug.hide();
+                        doSearch(dni);
+                    });
+                    showToast('Se encontraron varios alumnos. Por favor selecciona uno.', 'success');
                 }
-
-                $('#studentCard').removeClass('d-none');
-
-                // Toggle deactivate button visibility
-                if (student.status !== 'activo') {
-                    $('#btnDeactivateStudent').hide();
-                } else {
-                    $('#btnDeactivateStudent').show();
-                }
-
-                // Load installments
-                var iRes = await supabaseClient.from('installments').select('*')
-                    .eq('student_id', student.id).order('installment_number', { ascending: true });
-
-                if (iRes.data) {
-                    renderInstallments(iRes.data);
-                    $('#installmentsTable').removeClass('d-none');
-                }
-
             } catch (err) {
                 console.error(err);
                 showToast('Error al buscar alumno.', 'error');
             } finally {
                 $('#loader').addClass('d-none');
+            }
+        }
+
+        async function loadStudentData(student) {
+            currentStudent = student;
+            currentStudent.branchName = student.branches ? student.branches.name : 'N/A';
+            addRecentSearch(currentStudent);
+
+            $('#studentName').text(student.full_name);
+            $('#studentDni').text(student.dni);
+            var dobText = student.birth_date ? new Date(student.birth_date + 'T00:00:00').toLocaleDateString() : 'No registrada';
+            $('#studentBirthDate').text(dobText);
+            var courseText = student.courses ? student.courses.name : 'Sin curso asignado';
+            $('#studentBranch').text(currentStudent.branchName + ' | ' + courseText);
+            
+            var statusClass = student.status === 'activo' ? 'badge-success' : 'badge-danger';
+            $('#studentStatus').text(student.status.toUpperCase()).removeClass('badge-success badge-danger').addClass(statusClass);
+
+            if (student.additional_info) {
+                $('#studentAdditionalInfoText').text(student.additional_info);
+                $('#studentAdditionalInfoContainer').removeClass('d-none');
+            } else {
+                $('#studentAdditionalInfoContainer').addClass('d-none');
+            }
+
+            $('#studentCard').removeClass('d-none');
+            $('#btnDeactivateStudent').toggle(student.status === 'activo');
+
+            // Load installments
+            const { data: iData } = await supabaseClient.from('installments').select('*')
+                .eq('student_id', student.id).order('installment_number', { ascending: true });
+
+            if (iData) {
+                renderInstallments(iData);
+                $('#installmentsTable').removeClass('d-none');
             }
         }
 
