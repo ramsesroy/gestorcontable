@@ -240,7 +240,7 @@
 
                 <!-- Installments Table -->
                 <div id="installmentsTable" class="card mb-32pt d-none">
-                    '<td><strong class="js-lists-values-num">' + (item.concept === 'MATRÍCULA' ? 'Matrícula' : 'Cuota ' + item.installment_number + ' de ' + totalInstallments) + '</strong></td>' +
+                    <div class="table-responsive">
                         <table class="table mb-0 thead-border-top-0 table-nowrap">
                             <thead>
                                 <tr>
@@ -257,7 +257,6 @@
                     </div>
                 </div>
 
-                <!-- Loader -->
                 <div id="loader" class="text-center mb-32pt d-none">
                     <div class="spinner-border text-primary" role="status"></div>
                 </div>
@@ -930,7 +929,7 @@
 
                 body.append(
                     '<tr>' +
-                    '<td><strong class="js-lists-values-num">' + item.installment_number + ' de ' + totalCount + '</strong></td>' +
+                    '<td><strong class="js-lists-values-num">' + (item.concept === 'MATRÍCULA' ? 'Matrícula' : 'Cuota ' + item.installment_number + ' de ' + totalInstallments) + '</strong></td>' +
                     '<td>' + item.due_date + '</td>' +
                     '<td>' + fmt.format(item.amount) + (isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '') + '</td>' +
                     '<td>' + statusBadge + '</td>' +
