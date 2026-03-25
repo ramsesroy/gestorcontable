@@ -435,12 +435,18 @@
         var currentPage = 0;
         var pageSize = 10;
         var currentUserId = null;
+        var currentUserRole = null;
+        var currentUserBranchId = null;
 
         $(document).ready(async function () {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
-                const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).single();
-                if (profile && profile.role === 'admin') $('#sidebarUsersItem').show();
+                const { data: profile } = await supabaseClient.from('profiles').select('role, branch_id').eq('id', session.user.id).single();
+                if (profile) {
+                    currentUserRole = profile.role;
+                    currentUserBranchId = profile.branch_id;
+                    if (profile.role === 'admin') $('#sidebarUsersItem').show();
+                }
             }
 
             supabaseClient.auth.getUser().then(res => { if (res.data && res.data.user) currentUserId = res.data.user.id; });
@@ -472,6 +478,9 @@
             try {
                 let query = supabaseClient.from('students').select('*, branches(name), courses(name)').eq('status', 'activo').order('full_name', { ascending: true }).range(from, to);
                 if (courseId) query = query.eq('course_id', courseId);
+                if (currentUserRole === 'cajero' && currentUserBranchId) {
+                    query = query.eq('branch_id', currentUserBranchId);
+                }
                 const { data: students } = await query;
                 tbody.empty();
                 if (!students || students.length === 0) {
@@ -495,9 +504,13 @@
             if (!query) return;
             $('#loader').removeClass('d-none');
             try {
-                const { data: match } = await supabaseClient.from('students').select('*, branches(name), courses(name)').eq('status', 'activo').or(`dni.eq.${query},full_name.ilike.%${query}%`).limit(1);
+                let sQuery = supabaseClient.from('students').select('*, branches(name), courses(name)').eq('status', 'activo').or(`dni.eq.${query},full_name.ilike.%${query}%`).limit(1);
+                if (currentUserRole === 'cajero' && currentUserBranchId) {
+                    sQuery = sQuery.eq('branch_id', currentUserBranchId);
+                }
+                const { data: match } = await sQuery;
                 if (match && match.length > 0) loadStudentData(match[0]);
-                else showToast('No se encontró el alumno', 'error');
+                else showToast('No se encontró el alumno en su sucursal o no existe.', 'error');
             } catch (err) { console.error(err); } finally { $('#loader').addClass('d-none'); }
         }
 

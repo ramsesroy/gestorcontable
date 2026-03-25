@@ -27,16 +27,21 @@
             margin-bottom: 24px;
         }
 
+        .header img {
+            max-width: 80px;
+            margin-bottom: 12px;
+        }
+
         .header h2 {
-            margin: 0 0 8px 0;
+            margin: 0 0 4px 0;
             color: #333;
-            font-size: 24px;
+            font-size: 22px;
         }
 
         .header p {
             margin: 0;
             color: #666;
-            font-size: 14px;
+            font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -44,8 +49,9 @@
         .row {
             display: flex;
             justify-content: space-between;
-            padding: 12px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
         }
 
         .row:last-child {
@@ -55,59 +61,66 @@
         .row strong {
             color: #555;
             font-weight: 600;
-            min-width: 140px;
+            min-width: 130px;
         }
 
         .row span {
             color: #222;
             text-align: right;
+            word-break: break-word;
         }
 
         .total-row {
             background: #f8f9fa;
-            padding: 16px;
-            margin-top: 24px;
+            padding: 14px;
+            margin-top: 20px;
             border-radius: 6px;
         }
 
         .total-row strong {
-            font-size: 18px;
+            font-size: 16px;
             color: #333;
         }
 
         .total-row span {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             color: #28a745;
         }
 
         .footer {
             text-align: center;
-            margin-top: 32px;
-            font-size: 0.85em;
+            margin-top: 24px;
+            font-size: 0.8em;
             color: #888;
         }
 
         hr {
             border: none;
             border-top: 2px dashed #ddd;
-            margin: 24px 0;
+            margin: 20px 0;
         }
 
         @media print {
+            @page {
+                margin: 0;
+            }
             body {
                 background: #fff;
                 padding: 0;
+                margin: 0;
             }
 
             .ticket {
                 border: none;
                 box-shadow: none;
                 margin: 0;
-                padding: 20px;
+                padding: 10px;
                 width: 100%;
                 max-width: 100%;
             }
+
+            .header img { filter: grayscale(1); }
 
             hr {
                 border-top: 1px dashed #000;
@@ -128,45 +141,46 @@
         body.termica-mode .ticket {
             width: 80mm;
             max-width: 80mm;
-            margin: 20px auto;
-            padding: 5mm;
+            margin: 10px auto;
+            padding: 4mm;
             font-family: 'Courier New', Courier, monospace;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             border-radius: 0;
             border: none;
         }
-        body.termica-mode .header h2 { font-size: 18px; }
-        body.termica-mode .header p { font-size: 12px; }
+        body.termica-mode .header h2 { font-size: 16px; }
+        body.termica-mode .header p { font-size: 11px; }
         body.termica-mode .row { 
             flex-direction: column; 
             border-bottom: 1px dashed #ddd; 
-            padding: 6px 0; 
+            padding: 4px 0; 
         }
         body.termica-mode .row strong { 
             min-width: unset; 
-            font-size: 12px; 
+            font-size: 11px; 
             text-align: left; 
         }
         body.termica-mode .row span { 
-            text-align: right; 
-            font-size: 14px; 
+            text-align: left; 
+            font-size: 13px; 
             font-weight: bold; 
         }
         body.termica-mode .total-row {
             background: transparent;
-            border-top: 2px dashed #000;
-            border-bottom: 2px dashed #000;
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
             border-radius: 0;
-            padding: 10px 0;
-            margin-top: 15px;
+            padding: 8px 0;
+            margin-top: 10px;
             flex-direction: row;
             justify-content: space-between;
         }
-        body.termica-mode hr { border-top: 1px dashed #000; margin: 15px 0; }
+        body.termica-mode hr { border-top: 1px dashed #000; margin: 10px 0; }
+        body.termica-mode .footer { margin-top: 15px; font-size: 10px; }
         
         @media print {
-            body.termica-mode { background: #fff; padding: 0; }
-            body.termica-mode .ticket { width: 80mm !important; margin: 0; padding: 0; box-shadow: none; border: none; }
+            body.termica-mode { background: #fff; padding: 0; margin: 0; }
+            body.termica-mode .ticket { width: 100% !important; margin: 0; padding: 5px; box-shadow: none; border: none; }
         }
     </style>
 </head>
@@ -174,6 +188,7 @@
 <body>
     <div class="ticket">
         <div class="header">
+            <img src="../../public/images/illustration/student/128/black.svg" alt="logo">
             <h2>Comprobante de Pago</h2>
             <p>CMS Cobranzas Oficial</p>
         </div>
@@ -186,10 +201,10 @@
         <div class="footer">
             <p><strong>Copia del Cliente</strong></p>
             <p>Gracias por su pago. Conserve este comprobante.</p>
-            <p id="printDate"></p>
+            <p id="printDate" style="margin-top: 5px;"></p>
         </div>
         <div class="no-print" style="text-align: center; margin-top: 32px;">
-            <div style="margin-bottom: 20px; padding: 10px; background: #fff; border-radius: 6px; display: inline-block;">
+            <div style="margin-bottom: 20px; padding: 10px; background: #fff; border-radius: 6px; display: inline-block; border: 1px solid #ddd;">
                 <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">Seleccione el formato de impresión:</p>
                 <button onclick="setFormat('a4')" id="btnA4" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: bold;">Formato A4</button>
                 <button onclick="setFormat('termica')" id="btnTermica" style="padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Ticketera (80mm)</button>
@@ -233,18 +248,17 @@
 
             document.getElementById('printDate').textContent = new Date().toLocaleString('es-AR');
 
-            const cuotaText = conceptParam ? conceptParam : (total ? `Cuota ${num} de ${total}` : `Cuota ${num}`);
+            const cuotaText = (conceptParam && conceptParam !== 'undefined' && conceptParam !== '') ? conceptParam : ( (num !== '-' && total !== '-' && total !== '') ? `Cuota ${num} de ${total}` : `Cuota ${num}`);
 
             let extraRows = '';
             if(parseFloat(remaining) > 0) {
                 extraRows = `
-                    <div class="row" style="color: #666; margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;"><strong>Valor Total Cuota:</strong><span>${fmt.format(totalAmount)}</span></div>
+                    <div class="row" style="color: #666; margin-top: 8px; border-top: 1px dashed #ddd; padding-top: 8px;"><strong>Valor Total Cuota:</strong><span>${fmt.format(totalAmount)}</span></div>
                     <div class="row" style="color: #dc3545; font-weight: bold;"><strong>FALTA PAGAR (Saldo):</strong><span>${fmt.format(remaining)}</span></div>
                 `;
             } else if (parseFloat(totalAmount) > parseFloat(amountPaid)) {
-                 // Caso donde es un ticket de una cuota ya saldada pero queremos mostrar el total
                  extraRows = `
-                    <div class="row" style="color: #666; margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;"><strong>Valor Total Cuota:</strong><span>${fmt.format(totalAmount)}</span></div>
+                    <div class="row" style="color: #666; margin-top: 8px; border-top: 1px dashed #ddd; padding-top: 8px;"><strong>Valor Total Cuota:</strong><span>${fmt.format(totalAmount)}</span></div>
                 `;
             }
 
@@ -254,14 +268,13 @@
                 <div class="row"><strong>DNI:</strong><span>${dni}</span></div>
                 <div class="row"><strong>Concepto:</strong><span>${cuotaText}</span></div>
                 <div class="row"><strong>Curso:</strong><span>${courseName}</span></div>
-                <div class="row"><strong>Vencimiento Original:</strong><span>${date}</span></div>
-                <div class="row total-row" style="background: #e8f5e9; border: 1px solid #c8e6c9;"><strong>MONTO PAGADO HOY:</strong><span style="color: #2e7d32;">${fmt.format(amountPaid)}</span></div>
+                <div class="row"><strong>Vencimiento:</strong><span>${date}</span></div>
+                <div class="row total-row" style="background: #e8f5e9; border: 1px border-top-width: 0; border-bottom-width: 0; border-left-width: 0; border-right-width: 0;"><strong>MONTO PAGADO HOY:</strong><span style="color: #2e7d32; font-size: 20px;">${fmt.format(amountPaid)}</span></div>
                 ${extraRows}
             `;
 
             document.getElementById('ticketData').innerHTML = html;
 
-            // WhatsApp share
             const waText = encodeURIComponent(
                 '*Comprobante de Pago - CMS Cobranzas*\n' +
                 '\uD83D\uDC64 *Alumno:* ' + name + '\n' +
@@ -273,7 +286,6 @@
             );
             document.getElementById('btnWhatsApp').setAttribute('data-wa', 'https://wa.me/?text=' + waText);
 
-            // Auto-print disabled for QA verification and manual format selection (Bug-04)
             const pFormat = localStorage.getItem('preferredTicketFormat') || 'a4';
             setFormat(pFormat);
         });
@@ -286,3 +298,4 @@
 </body>
 
 </html>
+ml>

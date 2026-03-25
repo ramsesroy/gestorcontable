@@ -598,10 +598,20 @@
         async function loadDashboardData(from, to) {
             const isoF = toArgDate(from);
             const isoT = toArgDateEnd(to);
-            const { count } = await supabaseClient.from('students').select('*', { count: 'exact', head: true }).eq('status', 'activo');
+            let studentQuery = supabaseClient.from('students').select('*', { count: 'exact', head: true }).eq('status', 'activo');
+            if (currentUserRole === 'cajero') {
+                const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', (await supabaseClient.auth.getUser()).data.user.id).single();
+                studentQuery = studentQuery.eq('branch_id', profile.branch_id);
+            }
+            const { count } = await studentQuery;
             $('#activeStudents').text(count || 0);
 
-            const { data: paid } = await supabaseClient.from('installments').select('amount').eq('status', 'pagado').gte('paid_at', isoF).lte('paid_at', isoT);
+            let incomeQuery = supabaseClient.from('installments').select('amount, students!inner(branch_id)').eq('status', 'pagado').gte('paid_at', isoF).lte('paid_at', isoT);
+            if (currentUserRole === 'cajero') {
+                const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', (await supabaseClient.auth.getUser()).data.user.id).single();
+                incomeQuery = incomeQuery.eq('students.branch_id', profile.branch_id);
+            }
+            const { data: paid } = await incomeQuery;
             const total = (paid || []).reduce((s, i) => s + parseFloat(i.amount), 0);
             $('#totalIncome').text(fmt.format(total));
 
@@ -613,8 +623,17 @@
 
         async function loadOverdueKPI() {
             const today = todayISO();
-            const { data } = await supabaseClient.from('installments').select('amount, paid_amount').eq('status', 'pendiente').lte('due_date', today);
-            const { data: parcial } = await supabaseClient.from('installments').select('amount, paid_amount').eq('status', 'parcial').lte('due_date', today);
+            let query = supabaseClient.from('installments').select('amount, paid_amount, students!inner(branch_id)').eq('status', 'pendiente').lte('due_date', today);
+            let partialQuery = supabaseClient.from('installments').select('amount, paid_amount, students!inner(branch_id)').eq('status', 'parcial').lte('due_date', today);
+            
+            if (currentUserRole === 'cajero') {
+                const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', (await supabaseClient.auth.getUser()).data.user.id).single();
+                query = query.eq('students.branch_id', profile.branch_id);
+                partialQuery = partialQuery.eq('students.branch_id', profile.branch_id);
+            }
+
+            const { data } = await query;
+            const { data: parcial } = await partialQuery;
             
             let total = 0;
             if (data) data.forEach(i => total += parseFloat(i.amount));
@@ -624,7 +643,12 @@
         }
 
         async function loadRecentPayments(from, to) {
-            const { data } = await supabaseClient.from('installments').select('amount, paid_at, installment_number, concept, students(full_name, branches(name))').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to).order('paid_at', { ascending: false }).limit(8);
+            let query = supabaseClient.from('installments').select('amount, paid_at, installment_number, concept, students!inner(full_name, branch_id, branches(name))').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to).order('paid_at', { ascending: false }).limit(8);
+            if (currentUserRole === 'cajero') {
+                const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', (await supabaseClient.auth.getUser()).data.user.id).single();
+                query = query.eq('students.branch_id', profile.branch_id);
+            }
+            const { data } = await query;
             const list = $('#recentPayments').empty();
             (data || []).forEach(p => {
                 list.append(`<li class="list-group-item d-flex justify-content-between"><div><strong>${p.students.full_name + (p.concept === "MATRÍCULA" ? " (Matrícula)" : "")}</strong><br><small>${p.students.branches.name}</small></div><div class="text-right"><strong>${fmt.format(p.amount)}</strong></div></li>`);
@@ -632,7 +656,12 @@
         }
 
         async function loadBillingBreakdown(from, to) {
-            const { data } = await supabaseClient.from('installments').select('id, amount, paid_at, installment_number, concept, students(full_name, dni, branches(name), courses(name))').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to).order('paid_at', { ascending: false });
+            let query = supabaseClient.from('installments').select('id, amount, paid_at, installment_number, concept, students!inner(full_name, dni, branch_id, branches(name), courses(name))').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to).order('paid_at', { ascending: false });
+            if (currentUserRole === 'cajero') {
+                const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', (await supabaseClient.auth.getUser()).data.user.id).single();
+                query = query.eq('students.branch_id', profile.branch_id);
+            }
+            const { data } = await query;
             const tbody = $('#billingBreakdownBody').empty();
             (data || []).forEach(p => {
                 tbody.append(`<tr><td>${p.students.branches.name}</td><td>${p.students.full_name}</td><td>${p.concept === "MATRÍCULA" ? "Matrícula" : "Cuota " + p.installment_number}</td><td class="text-right">${fmt.format(p.amount)}</td><td class="text-right">${new Date(p.paid_at).toLocaleDateString()}</td><td class="text-right"><button class="btn btn-sm btn-outline-primary" onclick="printTicket('${p.id}', '${p.installment_number}', '${p.students.full_name}', '', '', '${p.amount}', '', '${p.amount}', '0', '${p.students.courses.name}', '${p.concept === "MATRÍCULA" ? "Matrícula" : ""}')"><i class="material-icons">receipt</i></button></td></tr>`);
@@ -640,6 +669,7 @@
         }
 
         async function renderBranchChart(from, to) {
+            if (currentUserRole === 'cajero') { $('#branchChartCard').hide(); return; }
             const { data: br } = await supabaseClient.from('branches').select('*');
             const { data: inst } = await supabaseClient.from('installments').select('amount, students!inner(branch_id)').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to);
             const totals = {};
