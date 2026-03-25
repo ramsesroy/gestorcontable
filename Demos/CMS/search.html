@@ -553,7 +553,8 @@
                     // Show "Ticket" if any amount was paid
                     if ((item.paid_amount || 0) > 0) {
                         var remaining = item.amount - (item.paid_amount || 0);
-                        actionBtn += `<button class="btn btn-sm btn-outline-success" title="Imprimir Comprobante" onclick="printTicket('${item.id}', ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${item.paid_amount}, ${count}, ${item.amount}, ${remaining}, '${currentStudent.courses?.name || ''}', '${item.concept || ''}')"><i class="material-icons">receipt</i></button>`;
+                        var totalInstallmentsForTicket = currentStudent.total_payments || count;
+                        actionBtn += `<button class="btn btn-sm btn-outline-success" title="Imprimir Comprobante" onclick="printTicket('${item.id}', ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${item.paid_amount}, ${totalInstallmentsForTicket}, ${item.amount}, ${remaining}, '${currentStudent.courses?.name || ''}', '${item.concept || ''}')"><i class="material-icons">receipt</i></button>`;
                     }
                 }
 
