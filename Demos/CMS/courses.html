@@ -368,10 +368,15 @@
                 }
 
                 // Fetch overdue installments for these students to determine debt status
+                const todayStr = new Date().toISOString().split('T')[0];
                 const studentIds = students.map(s => s.id);
-                const { data: overdue, error: oErr } = await supabaseClient.from('installments').select('student_id').in('student_id', studentIds).eq('status', 'vencido');
+                const { data: overdue, error: oErr } = await supabaseClient.from('installments')
+                    .select('student_id')
+                    .in('student_id', studentIds)
+                    .in('status', ['pendiente', 'parcial'])
+                    .lte('due_date', todayStr);
+                
                 if (oErr) throw oErr;
-
                 const debtors = new Set(overdue.map(o => o.student_id));
 
                 tbody.empty();
