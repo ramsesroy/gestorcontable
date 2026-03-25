@@ -594,9 +594,34 @@
             btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Procesando...');
             var newPaid = paid + paying;
             var status = (newPaid >= parseFloat($('#paymentModalTotalAmount').val())) ? 'pagado' : 'parcial';
+
+            var num = parseInt($('#paymentModalNum').val()) || 0;
+            var name = $('#paymentModalName').val() || '';
+            var dni = $('#paymentModalDni').val() || '';
             
             const { error } = await supabaseClient.from('installments').update({ status: status, paid_amount: newPaid, paid_at: new Date().toISOString() }).eq('id', id);
             if (!error) {
+                // Registrar en audit_log para que el Reporte Diario cuente este pago
+                try {
+                    const { data: { user } } = await supabaseClient.auth.getUser();
+                    if (user) {
+                        await supabaseClient.from('audit_log').insert({
+                            user_id: user.id,
+                            action: 'pago',
+                            details: {
+                                installment_id: id,
+                                student_name: name,
+                                dni: dni,
+                                amount: paying,
+                                installment_number: num,
+                                status: status
+                            }
+                        });
+                    }
+                } catch (logErr) {
+                    console.warn('No se pudo registrar en audit_log:', logErr.message);
+                }
+
                 showToast('Pago registrado', 'success');
                 $('#paymentModal').modal('hide');
                 if (currentStudent) doSearch(currentStudent.dni);
