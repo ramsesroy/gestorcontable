@@ -261,7 +261,7 @@
                                 <span class="sidebar-menu-text">Cursos</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
+                        <li class="sidebar-menu-item" id="sidebarBranchesItem" style="display:none">
                             <a class="sidebar-menu-button" href="branches.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
                                 <span class="sidebar-menu-text">Sucursales</span>
@@ -402,6 +402,7 @@
                 if (profile.role === 'admin') {
                     isAdmin = true;
                     $('#sidebarUsersItem').show();
+                    $('#sidebarBranchesItem').show();
                     $('#branchFilterContainer, #branchColHeader, #expenseBranchContainer').removeClass('d-none');
                     await loadBranchOptions();
                 }

@@ -293,7 +293,7 @@
                                 <span class="sidebar-menu-text">Cursos</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
+                        <li class="sidebar-menu-item" id="sidebarBranchesItem" style="display:none">
                             <a class="sidebar-menu-button" href="branches.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
                                 <span class="sidebar-menu-text">Sucursales</span>
@@ -389,6 +389,7 @@
                 }
                 if (userRole === 'admin') {
                    document.getElementById('sidebarUsersItem').style.display = 'block';
+                   document.getElementById('sidebarBranchesItem').style.display = 'block';
                 }
 
                 const today = new Date().toISOString().split('T')[0];
@@ -412,13 +413,15 @@
                 document.getElementById('printDate').textContent = new Date().toLocaleString('es-AR');
 
                 // 3. Get User Profile
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                if (user) {
-                    const { data: profile } = await supabaseClient.from('profiles').select('first_name').eq('id', user.id).single();
-                    document.getElementById('generatedBy').textContent = profile ? profile.first_name : 'Usuario';
-                    if (profile && profile.role === 'admin') {
+                const { data: { user: u2 } } = await supabaseClient.auth.getUser();
+                if (u2) {
+                    const { data: p2 } = await supabaseClient.from('profiles').select('first_name, role').eq('id', u2.id).single();
+                    document.getElementById('generatedBy').textContent = p2 ? p2.first_name : 'Usuario';
+                    if (p2 && p2.role === 'admin') {
                         const usersItem = document.getElementById('sidebarUsersItem');
+                        const branchesItem = document.getElementById('sidebarBranchesItem');
                         if (usersItem) usersItem.style.display = 'block';
+                        if (branchesItem) branchesItem.style.display = 'block';
                     }
                 }
 

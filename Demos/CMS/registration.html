@@ -286,7 +286,7 @@
                                 <span class="sidebar-menu-text">Cursos</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
+                        <li class="sidebar-menu-item" id="sidebarBranchesItem" style="display:none">
                             <a class="sidebar-menu-button" href="branches.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
                                 <span class="sidebar-menu-text">Sucursales</span>
@@ -340,8 +340,10 @@
         $(document).ready(async function () {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
-                const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).single();
-                if (profile && profile.role === 'admin') $('#sidebarUsersItem').show();
+                const { data: profile } = await supabaseClient.from('profiles').select('role, branch_id').eq('id', session.user.id).single();
+                if (profile && profile.role === 'admin') { $('#sidebarUsersItem').show(); $('#sidebarBranchesItem').show(); }
+                window.currentUserBranchId = profile ? profile.branch_id : null;
+                window.currentUserRole = profile ? profile.role : 'cajero';
             }
 
             $('[data-toggle="tooltip"]').tooltip();

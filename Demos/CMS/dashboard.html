@@ -419,7 +419,7 @@
                         <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="registration.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span> Inscripción</a></li>
                         <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="search.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span> Cobranzas</a></li>
                         <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="courses.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span> Cursos</a></li>
-                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="branches.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span> Sucursales</a></li>
+                        <li class="sidebar-menu-item" id="sidebarBranchesItem" style="display:none"><a class="sidebar-menu-button" href="branches.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span> Sucursales</a></li>
                         <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="expenses.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left" style="font-size: 20px;">payments</span> <span class="sidebar-menu-text">Gastos</span></a></li>
                         <li id="sidebarUsersItem" class="sidebar-menu-item" style="display:none;"><a class="sidebar-menu-button" href="users.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span> Usuarios</a></li>
                         <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="report.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span> Reportes</a></li>
@@ -474,6 +474,7 @@
             currentUserRole = profile.role;
             if (profile.role === 'admin') {
                 $('#sidebarUsersItem').show();
+                $('#sidebarBranchesItem').show();
                 $('#btnChangePassword').show();
                 setQuickFilter('month');
                 loadAuditLog();
