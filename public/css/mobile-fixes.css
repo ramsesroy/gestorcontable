@@ -1,0 +1,61 @@
+/* Mobile UX/UI Specific Fixes - CMS Cobranzas */
+
+@media (max-width: 576px) {
+    /* Center Quick Guide Headers */
+    .card-body .d-flex.align-items-center.mb-8pt {
+        flex-direction: column !important;
+        text-align: center !important;
+    }
+    .card-body .d-flex.align-items-center.mb-8pt .material-icons {
+        margin-right: 0 !important;
+        margin-bottom: 8px !important;
+        font-size: 32px !important;
+    }
+
+    /* Improve Button Touch Targets */
+    .btn-sm {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.875rem !important;
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn i.material-icons {
+        font-size: 18px !important;
+    }
+
+    /* Table Column Optimization */
+    .table-mobile-optimized thead th:nth-child(2), 
+    .table-mobile-optimized tbody td:nth-child(2),
+    .table-mobile-optimized thead th:nth-child(3), 
+    .table-mobile-optimized tbody td:nth-child(3) {
+        display: none !important;
+    }
+
+    /* Fix KPI Spacing */
+    .page-section .row > [class*="col-"] {
+        margin-bottom: 16px !important;
+    }
+
+    /* Search Results Table - Hide non-essential columns on mobile */
+    #studentListBody tr td:nth-child(2),
+    #studentListBody tr td:nth-child(3),
+    #studentListSection thead th:nth-child(2),
+    #studentListSection thead th:nth-child(3) {
+        display: none !important;
+    }
+
+    /* Installments Table - Hide DNI/Date on mobile search */
+    #installmentsBody tr td:nth-child(2),
+    #installmentsTable thead th:nth-child(2) {
+        display: none !important;
+    }
+    
+    /* Center Page Titles */
+    .page-separator__text {
+        text-align: center;
+        width: 100%;
+    }
+}
