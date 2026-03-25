@@ -19,6 +19,11 @@
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
         .help-icon:hover { color: #5567ff; }
+        #toastContainer { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+        .toast-msg { background: #333; color: #fff; padding: 12px 24px; border-radius: 4px; margin-top: 10px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 14px; min-width: 250px; }
+        .toast-msg.success { border-left: 4px solid #00c853; }
+        .toast-msg.error { border-left: 4px solid #ff5252; }
+        .toast-msg i { margin-right: 12px; font-size: 20px; }
     </style>
 
     <!-- PWA -->
@@ -78,7 +83,7 @@
                         <form id="enrollmentForm">
                             <div class="form-row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="dni">DNI / Cédula:</label>
+                                    <label class="form-label" for="dni">DNI / Cédula: <i class="material-icons help-icon" data-toggle="tooltip" title="Identificador único del alumno. No se pueden repetir registros con el mismo DNI.">help_outline</i></label>
                                     <input id="dni" type="text" class="form-control" placeholder="Ej: 12345678"
                                         required>
                                 </div>
@@ -109,14 +114,14 @@
                                 </div>
                             </div>
                             <div class="form-group mb-24pt">
-                                <label class="form-label" for="branch">Sucursal de Origen:</label>
+                                <label class="form-label" for="branch">Sucursal de Origen: <i class="material-icons help-icon" data-toggle="tooltip" title="La sucursal donde el alumno realiza físicamente sus trámites o clases.">help_outline</i></label>
                                 <select id="branch" class="form-control custom-select" required>
                                     <option value="" disabled selected>Selecciona una sucursal</option>
                                 </select>
                             </div>
 
                             <div class="form-group mb-24pt">
-                                <label class="form-label" for="course">Curso Asignado (Opcional):</label>
+                                <label class="form-label" for="course">Curso Asignado (Opcional): <i class="material-icons help-icon" data-toggle="tooltip" title="Presiona el botón '+' para crear un curso si no aparece en la lista.">help_outline</i></label>
                                 <div class="d-flex">
                                     <select id="course" class="form-control custom-select" style="flex:1;">
                                         <option value="" selected>Sin curso asignado</option>
@@ -130,7 +135,7 @@
                             <div class="form-group mb-24pt">
                                 <div class="custom-control custom-switch">
                                     <input type="checkbox" class="custom-control-input" id="specialPlanSwitch">
-                                    <label class="custom-control-label" for="specialPlanSwitch">¿Es un Plan Especial o Beca?</label>
+                                    <label class="custom-control-label" for="specialPlanSwitch">¿Es un Plan Especial o Beca? <i class="material-icons help-icon" data-toggle="tooltip" title="Activa esto para definir un monto total y cantidad de pagos específicos (ej. becas o planes personalizados).">help_outline</i></label>
                                 </div>
                             </div>
 
@@ -140,7 +145,7 @@
 
                             <div id="standardPlanFields">
                                 <div class="form-group mb-24pt">
-                                    <label class="form-label" for="amount">Monto de la cuota mensual:</label>
+                                    <label class="form-label" for="amount">Monto de la cuota mensual: <i class="material-icons help-icon" data-toggle="tooltip" title="Monto fijo que el alumno pagará cada mes.">help_outline</i></label>
                                     <div class="input-group input-group-merge">
                                         <input id="amount" type="number" class="form-control form-control-prepended">
                                         <div class="input-group-prepend">
@@ -155,7 +160,7 @@
                                 </div>
 
                                 <div class="form-group mb-24pt">
-                                    <label class="form-label" for="enrollmentFee">Monto de Matrícula (Único):</label>
+                                    <label class="form-label" for="enrollmentFee">Monto de Matrícula (Único): <i class="material-icons help-icon" data-toggle="tooltip" title="Monto que se cobra una única vez al momento de la inscripción.">help_outline</i></label>
                                     <div class="input-group input-group-merge">
                                         <input id="enrollmentFee" type="number" class="form-control form-control-prepended" value="0">
                                         <div class="input-group-prepend">
@@ -319,6 +324,8 @@
                 $('#specialPlanFields').toggleClass('d-none', !checked);
             });
 
+            $('#btnAddCourse').on('click', openCourseModal);
+
             $('#enrollmentForm').on('submit', async function (e) {
                 e.preventDefault();
                 $('#btnText').addClass('d-none');
@@ -396,6 +403,58 @@
                 }
             });
         });
+
+        // MODAL: Crear Nuevo Curso
+        function openCourseModal() { $('#courseModal').modal('show'); }
+        async function saveNewCourse() {
+            const name = $('#newCourseName').val().trim();
+            if (!name) return alert('Ingrese un nombre');
+            try {
+                const { data, error } = await supabaseClient.from('courses').insert([{ name }]).select();
+                if (error) throw error;
+                $('#courseModal').modal('hide');
+                $('#newCourseName').val('');
+                
+                // Refresh dropdown
+                const { data: allCourses } = await supabaseClient.from('courses').select('*').order('name');
+                const sel = $('#course').empty().append('<option value="">Sin curso asignado</option>');
+                allCourses.forEach(c => sel.append(`<option value="${c.id}">${c.name}</option>`));
+                
+                // Select the new one
+                if (data && data[0]) sel.val(data[0].id);
+                showToast('Curso creado y seleccionado', 'success');
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        function showToast(msg, type) {
+            var toast = $(`<div class="toast-msg ${type}"><i class="material-icons">${type === 'success' ? 'check_circle' : 'error'}</i>${msg}</div>`);
+            $('#toastContainer').append(toast);
+            setTimeout(() => toast.fadeOut(400, () => toast.remove()), 3000);
+        }
     </script>
+
+    <div id="toastContainer"></div>
+
+    <!-- Modal: Agregar Curso -->
+    <div class="modal fade" id="courseModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuevo Curso</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Nombre del Curso</label>
+                        <input type="text" id="newCourseName" class="form-control" placeholder="Ej: Excel Avanzado">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" onclick="saveNewCourse()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
