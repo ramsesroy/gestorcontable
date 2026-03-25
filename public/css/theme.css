@@ -1,73 +1,56 @@
-/* CMS Theme Override */
-:root {
+/* CMS Theme Override - Scoped to .theme-institutional */
+body.theme-institutional {
     --primary-color: #1917ca;
     --bg-main: #fbf9b8;
     --secondary-1: #6f76ba;
     --secondary-2: #cdaa41;
     --text-on-primary: #ffffff;
-}
-
-body {
     background-color: var(--bg-main) !important;
 }
 
-/* Primary buttons and highlights */
-.btn-primary, 
-.bg-primary, 
-.navbar-dark, 
-.sidebar-dark,
-.btn-outline-primary:hover,
-.badge-primary {
+/* Primary buttons and highlights only when theme is active */
+body.theme-institutional .btn-primary, 
+body.theme-institutional .bg-primary, 
+body.theme-institutional .navbar-dark, 
+body.theme-institutional .sidebar-dark,
+body.theme-institutional .btn-outline-primary:hover,
+body.theme-institutional .badge-primary {
     background-color: var(--primary-color) !important;
     border-color: var(--primary-color) !important;
     color: var(--text-on-primary) !important;
 }
 
-.btn-primary:hover {
+body.theme-institutional .btn-primary:hover {
     filter: brightness(1.1);
 }
 
-.text-primary, 
-.help-icon:hover {
+body.theme-institutional .text-primary, 
+body.theme-institutional .help-icon:hover {
     color: var(--primary-color) !important;
 }
 
 /* Card aesthetics */
-.card {
+body.theme-institutional .card {
     border: 1px solid var(--secondary-1) !important;
     box-shadow: 0 4px 6px rgba(25, 23, 202, 0.1) !important;
 }
 
-.card-header {
+body.theme-institutional .card-header {
     border-bottom: 1px solid var(--secondary-1) !important;
 }
 
 /* Secondary states and icons */
-.text-secondary, 
-.material-icons.text-muted,
-.sidebar-menu-icon {
+body.theme-institutional .text-secondary, 
+body.theme-institutional .material-icons.text-muted,
+body.theme-institutional .sidebar-menu-icon {
     color: var(--secondary-1) !important;
 }
 
-.border-left-primary {
+body.theme-institutional .border-left-primary {
     border-left: 4px solid var(--primary-color) !important;
 }
 
-/* Sidebar and Navbar branding */
-.navbar-brand, .sidebar-brand {
-    font-weight: bold;
-}
-
 /* Tables */
-.table Missouri {
+body.theme-institutional .table {
     border-color: var(--secondary-1);
-}
-
-/* Custom Scrollbar for premium feel */
-::-webkit-scrollbar {
-    width: 6px;
-}
-::-webkit-scrollbar-thumb {
-    background: var(--secondary-1);
-    border-radius: 10px;
 }
