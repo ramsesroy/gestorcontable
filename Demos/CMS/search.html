@@ -867,6 +867,7 @@
             body.empty();
             var totalDebt = 0;
             var totalInstallments = installments.filter(i => i.concept !== 'MATRÍCULA').length;
+            var today = new Date().toISOString().split('T')[0];
 
             var studentName = $('#studentName').text();
             var studentDni = $('#studentDni').text();
@@ -880,14 +881,22 @@
                 var amountDue = parseFloat(item.amount);
                 var paidAmount = parseFloat(item.paid_amount || 0);
                 var remaining = amountDue - paidAmount;
+                var isOverdue = !isPaid && item.due_date <= today;
 
-                if (!isPaid && !isAnulado) totalDebt += remaining;
+                if (isOverdue && !isAnulado) totalDebt += remaining;
 
                 var statusBadge;
                 if (isPaid) statusBadge = '<span class="badge badge-success">PAGADO</span>';
                 else if (isAnulado) statusBadge = '<span class="badge badge-dark">ANULADO</span>';
-                else if (isParcial) statusBadge = '<span class="badge badge-info">PARCIAL</span>';
-                else statusBadge = '<span class="badge badge-warning">PENDIENTE</span>';
+                else if (isParcial) {
+                    statusBadge = (item.due_date <= today) ? '<span class="badge badge-danger">VENCIDA (P)</span>' : '<span class="badge badge-info">PARCIAL</span>';
+                }
+                else {
+                    statusBadge = (item.due_date <= today) ? '<span class="badge badge-danger">VENCIDA</span>' : '<span class="badge badge-warning">PENDIENTE</span>';
+                }
+
+                var rowClass = (item.due_date > today && !isPaid) ? 'text-muted' : '';
+                var dateColor = (isOverdue) ? 'text-danger font-weight-bold' : '';
 
                 var actionBtn = '';
 
@@ -930,9 +939,9 @@
                 }
 
                 body.append(
-                    '<tr>' +
+                    `<tr class="${rowClass}">` +
                     '<td><strong class="js-lists-values-num">' + (item.concept === 'MATRÍCULA' ? 'Matrícula' : 'Cuota ' + item.installment_number + ' de ' + totalInstallments) + '</strong></td>' +
-                    '<td>' + item.due_date + '</td>' +
+                    `<td class="${dateColor}">` + item.due_date + '</td>' +
                     '<td>' + fmt.format(item.amount) + '</td>' +
                     '<td>' + fmt.format(paidAmount) + (isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '') + '</td>' +
                     '<td>' + statusBadge + '</td>' +

@@ -196,8 +196,8 @@
                         <div class="col-lg-4 col-md-6 mb-24pt">
                             <div class="card card-body flex-row align-items-center m-0">
                                 <div class="flex">
-                                    <h4 class="mb-0" id="todayCollections">0</h4>
-                                    <p class="text-50 mb-0">Inscriptos en Período</p>
+                                    <h4 class="mb-0" id="overdueAmountKPI">Gs. 0</h4>
+                                    <p class="text-50 mb-0">Deuda Vencida Total</p>
                                 </div>
                                 <div class="avatar avatar-sm ml-12pt">
                                     <span class="avatar-title rounded bg-soft-warning text-warning"><i class="material-icons">receipt</i></span>
@@ -563,6 +563,19 @@
             loadBillingBreakdown(isoF, isoT);
             loadRecentPayments(isoF, isoT);
             renderBranchChart(isoF, isoT);
+            loadOverdueKPI();
+        }
+
+        async function loadOverdueKPI() {
+            const today = todayISO();
+            const { data } = await supabaseClient.from('installments').select('amount, paid_amount').eq('status', 'pendiente').lte('due_date', today);
+            const { data: parcial } = await supabaseClient.from('installments').select('amount, paid_amount').eq('status', 'parcial').lte('due_date', today);
+            
+            let total = 0;
+            if (data) data.forEach(i => total += parseFloat(i.amount));
+            if (parcial) parcial.forEach(i => total += (parseFloat(i.amount) - parseFloat(i.paid_amount || 0)));
+            
+            $('#overdueAmountKPI').text(fmt.format(total));
         }
 
         async function loadRecentPayments(from, to) {
@@ -594,23 +607,55 @@
         }
 
         async function loadOverdueAlert(branchId = null) {
-            const today = new Date().toISOString().split('T')[0];
-            let query = supabaseClient.from('installments').select('*, students!inner(full_name, branch_id, branches(name))').eq('status', 'pendiente').lt('due_date', today);
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const firstOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+
+            let query = supabaseClient.from('installments').select('*, students!inner(full_name, branch_id, branches(name))').in('status', ['pendiente', 'parcial']).lte('due_date', todayStr);
             if (branchId) query = query.eq('students.branch_id', branchId);
+            
             const { data } = await query;
             if (!data || data.length === 0) return;
+            
             overdueData = data;
-            const total = data.reduce((s, i) => s + parseFloat(i.amount), 0);
+            const total = data.reduce((s, i) => {
+                const amount = parseFloat(i.amount);
+                const paid = parseFloat(i.paid_amount || 0);
+                return s + (amount - paid);
+            }, 0);
+
+            const morosaCount = data.filter(i => i.due_date < firstOfCurrentMonth).length;
+            const mesCount = data.filter(i => i.due_date >= firstOfCurrentMonth).length;
+
             const suffix = branchId ? 'Cajero' : '';
             $(`#overdueCount${suffix}`).text(data.length);
             $(`#overdueAmount${suffix}`).text(fmt.format(total));
             $(`#overdueAlertBanner${suffix}`).removeClass('d-none');
+            
+            // Add detail about morosa vs mes in the banner text if possible or just in the count
+            if (morosaCount > 0 && mesCount > 0) {
+                $(`#overdueCount${suffix}`).html(`${morosaCount} morosa(s) + ${mesCount} del mes`);
+            }
         }
 
         function showOverdueDetails() {
             const body = $('#overdueDetailsBody').empty();
+            const today = new Date();
+            const firstOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+
+            overdueData.sort((a, b) => a.due_date.localeCompare(b.due_date));
+
             overdueData.forEach(i => {
-                body.append(`<tr><td><strong>${i.students.full_name}</strong><br><small>${i.students.branches.name}</small></td><td>Cuota ${i.installment_number}</td><td class="text-danger">${new Date(i.due_date).toLocaleDateString()}</td><td class="text-right"><strong>${fmt.format(i.amount)}</strong></td></tr>`);
+                const isMorosa = i.due_date < firstOfCurrentMonth;
+                const typeLabel = isMorosa ? '<span class="badge badge-dark">MOROSA</span>' : '<span class="badge badge-warning">DEL MES</span>';
+                const unpaid = parseFloat(i.amount) - parseFloat(i.paid_amount || 0);
+                
+                body.append(`<tr>
+                    <td><strong>${i.students.full_name}</strong><br><small>${i.students.branches.name}</small></td>
+                    <td>Cuota ${i.installment_number}<br>${typeLabel}</td>
+                    <td class="text-danger">${new Date(i.due_date + 'T00:00:00').toLocaleDateString()}</td>
+                    <td class="text-right"><strong>${fmt.format(unpaid)}</strong></td>
+                </tr>`);
             });
             $('#overdueDetailsModal').modal('show');
         }
