@@ -9,7 +9,9 @@
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#5567ff">
+    <meta name="theme-color" content="#1917ca">
+
+    <link rel="stylesheet" href="../../public/css/theme.css">
 
     <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CRoboto:400,500%7CExo+2:600&display=swap"
         rel="stylesheet">
@@ -28,11 +30,11 @@
 
     <style>
         .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
-        .help-icon:hover { color: #5567ff; }
+        .help-icon:hover { color: #1917ca; }
         
         .audit-entry {
             font-size: 0.9em;
-            border-left: 3px solid #5567ff;
+            border-left: 3px solid #1917ca;
             background: #f8f9fa;
         }
 
@@ -42,7 +44,7 @@
         .audit-entry.inscripcion { border-left-color: #3498db; }
 
         .cajero-welcome {
-            background: linear-gradient(135deg, #5567ff 0%, #6C63FF 100%);
+            background: linear-gradient(135deg, #1917ca 0%, #6f76ba 100%);
             color: #fff;
             border-radius: 8px;
             padding: 24px;
@@ -73,7 +75,7 @@
                 <a href="index.html" class="navbar-brand mr-16pt">
                     <span class="avatar avatar-sm navbar-brand-icon mr-0 mr-lg-8pt">
                         <span class="avatar-title rounded bg-primary"><img
-                                src="../../public/images/illustration/student/128/white.svg" alt="logo"
+                                src="logoplayer.svg" alt="logo"
                                 class="img-fluid" /></span>
                     </span>
                     <span class="d-none d-lg-block">CMS Cobranzas</span>
@@ -110,8 +112,8 @@
 
                 <!-- Birthday Alert Banner (Admin) -->
                 <div id="birthdayAlertBanner" class="container page__container mt-16pt d-none">
-                    <div class="alert alert-soft-primary d-flex align-items-center" role="alert" style="border: 2px dashed #5567ff;">
-                        <i class="material-icons mr-16pt" style="font-size: 32px; color: #5567ff;">cake</i>
+                    <div class="alert alert-soft-primary d-flex align-items-center" role="alert" style="border: 2px dashed #1917ca;">
+                        <i class="material-icons mr-16pt" style="font-size: 32px; color: #1917ca;">cake</i>
                         <div class="flex">
                             <h4 class="mb-0">¡Cumpleaños de hoy! 🎂</h4>
                             <p class="mb-0" id="birthdayList">Cargando...</p>
@@ -345,8 +347,8 @@
                 </div>
 
                 <div id="birthdayAlertBannerCajero" class="container page__container mt-16pt d-none">
-                    <div class="alert alert-soft-primary d-flex align-items-center" role="alert" style="border: 2px dashed #5567ff;">
-                        <i class="material-icons mr-16pt" style="font-size: 32px;">cake</i>
+                    <div class="alert alert-soft-primary d-flex align-items-center" role="alert" style="border: 2px dashed #1917ca;">
+                        <i class="material-icons mr-16pt" style="font-size: 32px; color: #1917ca;">cake</i>
                         <div class="flex"><h4 class="mb-0">¡Cumpleaños de hoy! 🎂</h4><p class="mb-0" id="birthdayListCajero">Cargando...</p></div>
                     </div>
                 </div>
@@ -461,7 +463,7 @@
                 <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
                     <a href="index.html" class="sidebar-brand">
                         <span class="avatar avatar-xl sidebar-brand-icon h-auto">
-                            <span class="avatar-title rounded bg-primary"><img src="../../public/images/illustration/student/128/white.svg" class="img-fluid" alt="logo" /></span>
+                            <span class="avatar-title rounded bg-primary"><img src="logoplayer.svg" class="img-fluid" alt="logo" /></span>
                         </span>
                         <span>CMS Cobranzas</span>
                     </a>
@@ -768,7 +770,7 @@
             
             const ctx = document.getElementById('branchChart').getContext('2d');
             if (branchChartInstance) branchChartInstance.destroy();
-            branchChartInstance = new Chart(ctx, { type: 'bar', data: { labels: br.map(b => b.name), datasets: [{ label: 'Ingresos Gs.', data: br.map(b => totals[b.id]), backgroundColor: '#5567ff' }] }, options: { maintainAspectRatio: false } });
+            branchChartInstance = new Chart(ctx, { type: 'bar', data: { labels: br.map(b => b.name), datasets: [{ label: 'Ingresos Gs.', data: br.map(b => totals[b.id]), backgroundColor: '#1917ca' }] }, options: { maintainAspectRatio: false } });
         }
 
         async function loadOverdueAlert(branchId = null) {

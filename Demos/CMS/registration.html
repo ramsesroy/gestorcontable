@@ -19,7 +19,7 @@
     <style>
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
-        .help-icon:hover { color: #5567ff; }
+        .help-icon:hover { color: #1917ca; }
         #toastContainer { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
         .toast-msg { background: #333; color: #fff; padding: 12px 24px; border-radius: 4px; margin-top: 10px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 14px; min-width: 250px; }
         .toast-msg.success { border-left: 4px solid #00c853; }
@@ -29,7 +29,8 @@
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#5567ff">
+    <meta name="theme-color" content="#1917ca">
+    <link rel="stylesheet" href="../../public/css/theme.css">
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -59,7 +60,7 @@
                 <a href="index.html" class="navbar-brand mr-16pt">
                     <span class="avatar avatar-sm navbar-brand-icon mr-0 mr-lg-8pt">
                         <span class="avatar-title rounded bg-primary"><img
-                                src="../../public/images/illustration/student/128/white.svg" alt="logo"
+                                src="logoplayer.svg" alt="logo"
                                 class="img-fluid" /></span>
                     </span>
                     <span class="d-none d-lg-block">CMS Cobranzas</span>
@@ -256,7 +257,7 @@
                     <a href="index.html" class="sidebar-brand">
                         <span class="avatar avatar-xl sidebar-brand-icon h-auto">
                             <span class="avatar-title rounded bg-primary"><img
-                                    src="../../public/images/illustration/student/128/white.svg" class="img-fluid"
+                                    src="logoplayer.svg" class="img-fluid"
                                     alt="logo" /></span>
                         </span>
                         <span>CMS Cobranzas</span>
