@@ -248,7 +248,9 @@
 
             document.getElementById('printDate').textContent = new Date().toLocaleString('es-AR');
 
-            const cuotaText = (conceptParam && conceptParam !== 'undefined' && conceptParam !== '') ? conceptParam : ( (num !== '-' && total !== '-' && total !== '') ? `Cuota ${num} de ${total}` : `Cuota ${num}`);
+            const genericConcepts = ['CUOTA', 'cuota', 'Cuota'];
+            const isGenericConcept = !conceptParam || conceptParam === 'undefined' || conceptParam === '' || genericConcepts.includes(conceptParam);
+            const cuotaText = !isGenericConcept ? conceptParam : ((num !== '-' && total !== '-' && total !== '') ? `Cuota ${num} de ${total}` : `Cuota ${num}`);
 
             let extraRows = '';
             if(parseFloat(remaining) > 0) {
