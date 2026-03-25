@@ -394,10 +394,61 @@
                     <div class="page-separator"><div class="page-separator__text">Últimos Movimientos</div></div>
                     <div class="card">
                         <div class="table-responsive">
-                            <table class="table mb-0">
+                            <table class="table mb-0 table-hover" style="cursor:pointer">
                                 <thead><tr><th>Alumno</th><th>Concepto</th><th>Monto</th><th>Fecha</th></tr></thead>
                                 <tbody id="cajeroRecentBody"></tbody>
                             </table>
+                        </div>
+                        <p class="text-center text-50 small mb-0 pb-8pt" style="font-size:11px;"><i class="material-icons" style="font-size:13px;vertical-align:middle">touch_app</i> Toca una fila para ver detalles</p>
+                    </div>
+
+                    <!-- Payment Detail Modal -->
+                    <div class="modal fade" id="payDetailModal" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title"><i class="material-icons mr-8pt" style="vertical-align:middle;color:#28a745">receipt</i> Detalle del Pago</h5>
+                                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-6 mb-12pt">
+                                            <p class="text-50 small mb-0">Alumno</p>
+                                            <p class="mb-0 font-weight-bold" id="pdAlumno">-</p>
+                                        </div>
+                                        <div class="col-6 mb-12pt">
+                                            <p class="text-50 small mb-0">DNI</p>
+                                            <p class="mb-0 font-weight-bold" id="pdDni">-</p>
+                                        </div>
+                                        <div class="col-6 mb-12pt">
+                                            <p class="text-50 small mb-0">Concepto</p>
+                                            <p class="mb-0 font-weight-bold" id="pdConcepto">-</p>
+                                        </div>
+                                        <div class="col-6 mb-12pt">
+                                            <p class="text-50 small mb-0">Monto Pagado</p>
+                                            <p class="mb-0 font-weight-bold text-success" id="pdMonto">-</p>
+                                        </div>
+                                        <div class="col-6 mb-12pt">
+                                            <p class="text-50 small mb-0">Estado</p>
+                                            <p class="mb-0" id="pdEstado">-</p>
+                                        </div>
+                                        <div class="col-6 mb-12pt">
+                                            <p class="text-50 small mb-0">Cajero</p>
+                                            <p class="mb-0" id="pdCajero">-</p>
+                                        </div>
+                                        <div class="col-12">
+                                            <p class="text-50 small mb-0">Fecha y Hora</p>
+                                            <p class="mb-0" id="pdFecha">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cerrar</button>
+                                    <a id="pdBuscarBtn" href="#" class="btn btn-primary">
+                                        <i class="material-icons mr-4pt" style="vertical-align:middle;font-size:16px">search</i> Buscar Alumno
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -581,9 +632,49 @@
             const { data: recent } = await supabaseClient.from('audit_log').select('*, profiles(first_name)').in('user_id', userIds).order('created_at', { ascending: false }).limit(10);
             const body = $('#cajeroRecentBody').empty();
             (recent || []).forEach(r => {
+                if (r.action !== 'pago') return;
                 const date = new Date(r.created_at).toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
-                body.append(`<tr><td>${r.details.student_name || 'N/A'}</td><td>${r.action}</td><td>${fmt.format(r.details.amount || 0)}</td><td>${date}</td></tr>`);
+                const dateFull = new Date(r.created_at).toLocaleString('es-AR');
+                const d = r.details || {};
+                const num = d.installment_number || '-';
+                const cajero = r.profiles ? r.profiles.first_name : '-';
+                const statusBadge = d.status === 'pagado'
+                    ? '<span class="badge badge-soft-success">Pagado</span>'
+                    : '<span class="badge badge-soft-warning">Parcial</span>';
+
+                const rowData = encodeURIComponent(JSON.stringify({
+                    name: d.student_name || 'N/A', dni: d.dni || '', num,
+                    amount: d.amount || 0, status: d.status || '-', cajero, fecha: dateFull
+                }));
+
+                body.append(`<tr style="cursor:pointer" onclick='showPayDetail("${rowData}")'>
+                    <td><strong>${d.student_name || 'N/A'}</strong></td>
+                    <td>${statusBadge}</td>
+                    <td>${fmt.format(d.amount || 0)}</td>
+                    <td>${date}</td>
+                </tr>`);
             });
+            if (!$('#cajeroRecentBody tr').length) {
+                body.append('<tr><td colspan="4" class="text-center text-50 p-16pt">Sin movimientos recientes</td></tr>');
+            }
+        }
+
+        function showPayDetail(encoded) {
+            const d = JSON.parse(decodeURIComponent(encoded));
+            const fmtAmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
+            const num = d.num !== '-' ? `Cuota ${d.num}` : '-';
+            const estadoBadge = d.status === 'pagado'
+                ? '<span class="badge badge-soft-success">✅ Pagado</span>'
+                : '<span class="badge badge-soft-warning">⚠️ Pago Parcial</span>';
+            $('#pdAlumno').text(d.name);
+            $('#pdDni').text(d.dni || '-');
+            $('#pdConcepto').text(num);
+            $('#pdMonto').text(fmtAmt.format(d.amount));
+            $('#pdEstado').html(estadoBadge);
+            $('#pdCajero').text(d.cajero || '-');
+            $('#pdFecha').text(d.fecha);
+            $('#pdBuscarBtn').attr('href', `search.html?q=${encodeURIComponent(d.dni || d.name)}`);
+            $('#payDetailModal').modal('show');
         }
 
         function setQuickFilter(type) {
