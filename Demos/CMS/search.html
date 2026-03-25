@@ -453,6 +453,13 @@
             loadCourses();
             loadStudentList();
 
+            // Pre-búsqueda desde URL (botón "Buscar Alumno" del dashboard)
+            const urlQ = new URLSearchParams(window.location.search).get('q');
+            if (urlQ) {
+                $('#searchInput').val(urlQ);
+                setTimeout(() => doSearch(urlQ), 600); // esperar a que load inicial termine
+            }
+
             $('#searchBtn').click(() => doSearch($('#searchInput').val()));
             $('#searchInput').keypress(e => { if (e.which == 13) doSearch($('#searchInput').val()); });
             $('#btnSaveEdit').click(saveStudentEdit);

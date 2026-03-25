@@ -412,10 +412,9 @@
                 document.getElementById('reportPeriod').textContent = `Periodo: ${from} al ${to} (${periodType})`;
                 document.getElementById('printDate').textContent = new Date().toLocaleString('es-AR');
 
-                // 3. Get User Profile
-                const { data: { user: u2 } } = await supabaseClient.auth.getUser();
-                if (u2) {
-                    const { data: p2 } = await supabaseClient.from('profiles').select('first_name, role').eq('id', u2.id).single();
+                // 3. Get User Profile (reuse existing session user)
+                if (user) {
+                    const { data: p2 } = await supabaseClient.from('profiles').select('first_name, role').eq('id', user.id).single();
                     document.getElementById('generatedBy').textContent = p2 ? p2.first_name : 'Usuario';
                     if (p2 && p2.role === 'admin') {
                         const usersItem = document.getElementById('sidebarUsersItem');
@@ -468,8 +467,7 @@
                 document.getElementById('totalAmount').textContent = fmt.format(grandTotal);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
-
-                setTimeout(() => { window.print(); }, 800);
+                // Auto-print removido — use el botón Imprimir para imprimir el reporte
 
             } catch (err) {
                 console.error(err);

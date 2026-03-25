@@ -499,8 +499,6 @@
         const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
         var branchChartInstance = null;
         var currentUserRole = null;
-        var recentPaymentsOffset = 0;
-        var PAYMENTS_PER_PAGE = 8;
         var overdueData = [];
 
         supabaseClient.auth.getSession().then(({ data: { session } }) => {
@@ -827,15 +825,45 @@
             $('#overdueDetailsModal').modal('show');
         }
 
-        async function exportToExcel() { alert('Función de exportación simplificada. Use Reportes para talles.'); }
-        async function exportStudentList() { alert('Exportando alumnos...'); }
+        async function exportToExcel() {
+            const { data } = await supabaseClient.from('audit_log').select('created_at, details').eq('action', 'pago').gte('created_at', toArgDate($('#dateFrom').val())).lte('created_at', toArgDateEnd($('#dateTo').val())).order('created_at', { ascending: false });
+            if (!data || data.length === 0) { alert('No hay datos para exportar en el período seleccionado.'); return; }
+            const rows = data.map(r => ({
+                'Fecha': new Date(r.created_at).toLocaleString('es-AR'),
+                'Alumno': r.details.student_name || '',
+                'DNI': r.details.dni || '',
+                'Cuota': r.details.installment_number || '',
+                'Estado': r.details.status || '',
+                'Monto (Gs.)': r.details.amount || 0
+            }));
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, 'Cobros');
+            XLSX.writeFile(wb, `Cobros_${$('#dateFrom').val()}_${$('#dateTo').val()}.xlsx`);
+        }
+        async function exportStudentList() {
+            const { data } = await supabaseClient.from('students').select('full_name, dni, phone, email, branches(name), courses(name)').eq('status', 'activo').order('full_name');
+            if (!data || data.length === 0) { alert('No hay alumnos activos.'); return; }
+            const rows = data.map(s => ({
+                'Nombre': s.full_name,
+                'DNI': s.dni,
+                'Teléfono': s.phone || '',
+                'Email': s.email || '',
+                'Sucursal': s.branches ? s.branches.name : '',
+                'Curso': s.courses ? s.courses.name : ''
+            }));
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, 'Alumnos');
+            XLSX.writeFile(wb, `Alumnos_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
         async function loadMassiveUpdateBranches() {
             const { data } = await supabaseClient.from('branches').select('*').eq('active', true);
             const sel = $('#massUpdateBranch');
             (data || []).forEach(b => sel.append(`<option value="${b.id}">${b.name}</option>`));
         }
         async function massiveUpdate() { alert('Zona Crítica: Contacte al soporte para actualizaciones masivas.'); }
-        function printTicket(id, num, name, dni, date, amount, total, totalA, rem, course, concept) { window.open(`ticket.html?id=${id}&num=${num}&name=${name}&amount=${amount}&course=${course}&total=${total || ''}&concept=${concept || ''}`, '_blank'); }
+        function printTicket(id, num, name, dni, date, amount, total, totalA, rem, course, concept) { window.open(`ticket.html?id=${id}&num=${num}&name=${encodeURIComponent(name)}&dni=${encodeURIComponent(dni || '')}&date=${encodeURIComponent(date || '')}&amount=${amount}&course=${encodeURIComponent(course || '')}&total=${total || ''}&concept=${encodeURIComponent(concept || '')}`, '_blank'); }
     </script>
 
     <!-- Modals -->

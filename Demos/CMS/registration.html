@@ -352,9 +352,13 @@
             $('#classStartDate').val(todayISO);
 
             // Fetch Branches
-            const { data: branches } = await supabaseClient.from('branches').select('*').eq('active', true);
+            const { data: branches } = await supabaseClient.from('branches').select('*').eq('active', true).order('name');
             if (branches) {
                 branches.forEach(b => $('#branch').append(`<option value="${b.id}">${b.name}</option>`));
+            }
+            // Lock branch selector for cajero
+            if (window.currentUserRole === 'cajero' && window.currentUserBranchId) {
+                $('#branch').val(window.currentUserBranchId).prop('disabled', true);
             }
 
             // Fetch Courses
@@ -384,7 +388,7 @@
                     phone: $('#phone').val(),
                     birth_date: $('#birthDate').val() || null,
                     start_date: $('#classStartDate').val(),
-                    branch_id: $('#branch').val(),
+                    branch_id: window.currentUserRole === 'cajero' ? window.currentUserBranchId : $('#branch').val(),
                     course_id: $('#course').val() || null,
                     additional_info: $('#additionalInfo').val()
                 };
@@ -392,6 +396,7 @@
                 const isSpecial = $('#specialPlanSwitch').is(':checked');
                 const installmentsCount = parseInt(isSpecial ? $('#paymentsCountSpecial').val() : $('#installmentsCount').val());
                 const amount = isSpecial ? Math.round($('#totalAmountSpecial').val() / installmentsCount) : $('#amount').val();
+                studentData.total_payments = installmentsCount;
 
                 try {
                     const { data: student, error: sError } = await supabaseClient.from('students').insert([studentData]).select().single();
