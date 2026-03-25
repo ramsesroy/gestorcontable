@@ -561,6 +561,9 @@
             });
             $('#totalDebt').text(fmt.format(totalDebt));
             $('#installmentsTable').removeClass('d-none');
+
+            // Scroll to details
+            document.getElementById('studentCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function payInstallment(id, total, paid, num, name, dni, date, totalInstallments) {
