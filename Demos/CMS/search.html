@@ -490,13 +490,19 @@
 
                 var rowClass = (item.due_date > today && !isPaid) ? 'text-muted' : '';
                 var actionBtn = '';
-                if (!isPaid && item.status !== 'anulado') {
-                    actionBtn = `<button class="btn btn-sm btn-primary" onclick="payInstallment('${item.id}', ${item.amount}, ${item.paid_amount || 0}, ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${count})">Cobrar</button>`;
-                } else if (isPaid) {
-                    actionBtn = `<button class="btn btn-sm btn-outline-success" onclick="printTicket('${item.id}', ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${item.paid_amount}, ${count}, ${item.amount}, 0, '${currentStudent.courses?.name || ''}', '${item.concept || ''}')"><i class="material-icons">receipt</i></button>`;
+                if (item.status !== 'anulado') {
+                    // Show "Cobrar" if not fully paid
+                    if (item.status !== 'pagado') {
+                        actionBtn += `<button class="btn btn-sm btn-primary mr-1" onclick="payInstallment('${item.id}', ${item.amount}, ${item.paid_amount || 0}, ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${count})">Cobrar</button>`;
+                    }
+                    // Show "Ticket" if any amount was paid
+                    if ((item.paid_amount || 0) > 0) {
+                        var remaining = item.amount - (item.paid_amount || 0);
+                        actionBtn += `<button class="btn btn-sm btn-outline-success" title="Imprimir Comprobante" onclick="printTicket('${item.id}', ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${item.paid_amount}, ${count}, ${item.amount}, ${remaining}, '${currentStudent.courses?.name || ''}', '${item.concept || ''}')"><i class="material-icons">receipt</i></button>`;
+                    }
                 }
 
-                body.append(`<tr class="${rowClass}"><td>${item.concept || 'Cuota ' + item.installment_number}</td><td>${item.due_date}</td><td>${fmt.format(item.amount)}</td><td>${fmt.format(item.paid_amount || 0)}</td><td>${item.status.toUpperCase()}</td><td class="text-right">${actionBtn}</td></tr>`);
+                body.append(`<tr class="${rowClass}"><td>${item.concept || 'Cuota ' + item.installment_number}</td><td>${item.due_date}</td><td>${fmt.format(item.amount)}</td><td>${fmt.format(item.paid_amount || 0)}</td><td>${item.status.toUpperCase()}</td><td class="text-right d-flex justify-content-end">${actionBtn}</td></tr>`);
             });
             $('#totalDebt').text(fmt.format(totalDebt));
             $('#installmentsTable').removeClass('d-none');
