@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Búsqueda de Alumnos - CMS Cobranzas (Fix v2)</title>
+    <title>Búsqueda de Alumnos - CMS Cobranzas (v2.1)</title>
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
@@ -22,116 +22,22 @@
     <style>
         .help-icon { color: #adb5bd; cursor: help; font-size: 16px; vertical-align: middle; margin-left: 4px; transition: color 0.2s; }
         .help-icon:hover { color: #5567ff; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast-msg { min-width: 320px; padding: 16px 20px; border-radius: 8px; color: #fff; font-weight: 500; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); animation: slideIn 0.3s ease; display: flex; align-items: center; margin-bottom: 8px; }
+        .toast-msg.success { background: #27ae60; }
+        .toast-msg.error { background: #e74c3c; }
+        .toast-msg .material-icons { margin-right: 10px; font-size: 22px; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(80px); } to { opacity: 1; transform: translateX(0); } }
+        .search-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; z-index: 100; max-height: 260px; overflow-y: auto; display: none; }
+        .search-suggestions .suggestion-item { padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .search-suggestions .suggestion-item:hover { background: #f5f7fa; }
+        .search-suggestions .suggestion-header { padding: 6px 16px; font-size: 0.75em; text-transform: uppercase; color: #999; background: #fafafa; font-weight: 600; }
+        .search-wrapper { position: relative; }
+        .student-list-row:hover { background-color: #f8f9fa; cursor: pointer; }
     </style>
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <style>
-        /* Toast notification */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-        }
-
-        .toast-msg {
-            min-width: 320px;
-            padding: 16px 20px;
-            border-radius: 8px;
-            color: #fff;
-            font-weight: 500;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            animation: slideIn 0.3s ease;
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .toast-msg.success {
-            background: #27ae60;
-        }
-
-        .toast-msg.error {
-            background: #e74c3c;
-        }
-
-        .toast-msg .material-icons {
-            margin-right: 10px;
-            font-size: 22px;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(80px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Search suggestions dropdown */
-        .search-suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            z-index: 100;
-            max-height: 260px;
-            overflow-y: auto;
-            display: none;
-        }
-
-        .search-suggestions .suggestion-item {
-            padding: 10px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .search-suggestions .suggestion-item:hover {
-            background: #f5f7fa;
-        }
-
-        .search-suggestions .suggestion-header {
-            padding: 6px 16px;
-            font-size: 0.75em;
-            text-transform: uppercase;
-            color: #999;
-            background: #fafafa;
-            font-weight: 600;
-        }
-
-        .search-wrapper {
-            position: relative;
-        }
-
-        /* Status dots for student list */
-        .status-dot {
-            height: 10px;
-            width: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-        .status-up-to-date { background-color: #27ae60; }
-        .status-debtor { background-color: #e74c3c; }
-
-        .student-list-row:hover {
-            background-color: #f8f9fa;
-            cursor: pointer;
-        }
-    </style>
 </head>
 
 <body class="layout-app ">
@@ -214,6 +120,7 @@
                                 DNI: <span id="studentDni"></span> |
                                 Nacimiento: <span id="studentBirthDate"></span> |
                                 Sucursal: <span id="studentBranch"></span> |
+                                <span class="text-primary font-weight-bold">Inicia: <span id="studentStartDate"></span></span> |
                                 Estado: <span id="studentStatus" class="badge badge-success">activo</span>
                             </p>
                             <div id="studentAdditionalInfoContainer" class="alert alert-soft-secondary p-8pt mb-0 d-none">
@@ -223,13 +130,10 @@
                         <div class="mt-16pt mt-md-0 d-flex align-items-center">
                             <div class="text-right mr-16pt">
                                 <h3 class="mb-0" id="totalDebt">Gs. 0</h3>
-                                <p class="text-50 mb-0">Deuda Pendiente</p>
+                                <p class="text-50 mb-0">Deuda Vencida</p>
                             </div>
                             <button class="btn btn-sm btn-outline-primary mr-8pt" id="btnEditStudent">
                                 <i class="material-icons icon--left">edit</i> EDITAR
-                            </button>
-                            <button class="btn btn-sm btn-outline-warning mr-8pt d-none" id="btnTransferStudent">
-                                <i class="material-icons icon--left">swap_horiz</i> TRASLADAR
                             </button>
                             <button class="btn btn-sm btn-outline-danger" id="btnDeactivateStudent">
                                 <i class="material-icons icon--left">person_off</i> DAR DE BAJA
@@ -262,17 +166,14 @@
                     <div class="spinner-border text-primary" role="status"></div>
                 </div>
 
-                <!-- No Results -->
                 <div id="noResults" class="alert alert-soft-warning mb-32pt d-none">
                     No se encontró ningún alumno con ese criterio.
                 </div>
 
-                <!-- NEW Layout: Paginated Student List at the Bottom -->
                 <div id="studentListSection" class="card mb-32pt">
                     <div class="card-header d-flex align-items-center bg-light">
                         <div class="flex">
                             <h4 class="card-title">Listado de Alumnos</h4>
-                            <p class="card-subtitle text-50 small">Explorá la base de datos completa</p>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -286,9 +187,7 @@
                                 </tr>
                             </thead>
                             <tbody id="studentListBody">
-                                <tr>
-                                    <td colspan="4" class="text-center text-50 p-4">Cargando alumnos...</td>
-                                </tr>
+                                <tr><td colspan="4" class="text-center text-50 p-4">Cargando alumnos...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -302,7 +201,6 @@
                 </div>
 
             </div>
-
         </div>
 
         <!-- Sidebar -->
@@ -310,77 +208,22 @@
             <div class="mdk-drawer__content">
                 <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
                     <a href="index.html" class="sidebar-brand">
-                        <span class="avatar avatar-xl sidebar-brand-icon h-auto">
-                            <span class="avatar-title rounded bg-primary"><img
-                                    src="../../public/images/illustration/student/128/white.svg" class="img-fluid"
-                                    alt="logo" /></span>
-                        </span>
                         <span>CMS Cobranzas</span>
                     </a>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="dashboard.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
-                                <span class="sidebar-menu-text">Dashboard</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="registration.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
-                                <span class="sidebar-menu-text">Inscripción</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item active">
-                            <a class="sidebar-menu-button" href="search.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span>
-                                <span class="sidebar-menu-text">Cobranzas</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="courses.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
-                                <span class="sidebar-menu-text">Cursos</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="branches.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
-                                <span class="sidebar-menu-text">Sucursales</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="expenses.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">payments</span>
-                                <span class="sidebar-menu-text">Gastos</span>
-                            </a>
-                        </li>
-                        <li id="sidebarUsersItem" class="sidebar-menu-item" style="display:none;">
-                            <a class="sidebar-menu-button" href="users.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span>
-                                <span class="sidebar-menu-text">Usuarios</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="report.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
-                                <span class="sidebar-menu-text">Reportes</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item mt-4">
-                            <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
-                                <span class="sidebar-menu-text">Cerrar Sesión</span>
-                            </a>
-                        </li>
+                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="dashboard.html">Dashboard</a></li>
+                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="registration.html">Inscripción</a></li>
+                        <li class="sidebar-menu-item active"><a class="sidebar-menu-button" href="search.html">Cobranzas</a></li>
+                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="report.html">Reportes</a></li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: Registrar Cobro (Parcial o Total) -->
-    <div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+    <!-- MODAL: Registrar Cobro -->
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Registrar Cobro</h5>
@@ -389,14 +232,11 @@
                 <div class="modal-body">
                     <p>Monto restante: <strong id="paymentModalTotalStr" class="text-danger">$0</strong></p>
                     <div class="form-group mb-0">
-                        <label class="form-label" for="paymentModalAmount">¿Cuánto está pagando el alumno ahora? <i class="material-icons help-icon" data-toggle="tooltip" title="Si el alumno paga menos del total, la cuota quedará en estado 'Parcial' y se podrá cobrar el resto luego.">help_outline</i></label>
+                        <label class="form-label">¿Cuánto está pagando el alumno ahora?</label>
                         <div class="input-group input-group-merge">
-                            <input type="number" id="paymentModalAmount" class="form-control form-control-prepended" min="1" step="1">
-                            <div class="input-group-prepend">
-                                <div class="input-group-text">Gs.</div>
-                            </div>
+                            <input type="number" id="paymentModalAmount" class="form-control form-control-prepended">
+                            <div class="input-group-prepend"><div class="input-group-text">Gs.</div></div>
                         </div>
-                        <small class="text-muted">Si el monto es menor al restante, la cuota quedará como "Parcial".</small>
                     </div>
                     <input type="hidden" id="paymentModalId">
                     <input type="hidden" id="paymentModalNum">
@@ -443,8 +283,8 @@
                         <input type="date" class="form-control" id="editBirthDate">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Monto de Cuota (afecta cuotas futuras pendientes)</label>
-                        <input type="number" class="form-control" id="editAmount" step="0.01" min="0">
+                        <label class="form-label">Fecha de Inicio de Clases</label>
+                        <input type="date" class="form-control" id="editStartDate">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Datos Adicionales</label>
@@ -469,10 +309,6 @@
                 </div>
                 <div class="modal-body">
                     <p>¿Estás seguro de dar de baja a <strong id="deactivateName"></strong>?</p>
-                    <div class="alert alert-soft-warning">
-                        <strong>Atención:</strong> Todas las cuotas pendientes pasarán a estado <span
-                            class="badge badge-dark">ANULADO</span> y el alumno quedará inactivo.
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
@@ -493,585 +329,149 @@
     <script src="../../public/js/preloader.js"></script>
 
     <script>
-        // CONFIGURACIÓN DE SUPABASE
         const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
 
-        // Current student context
         var currentStudent = null;
         var currentPage = 0;
         var pageSize = 10;
+        var currentUserId = null;
+
+        $(document).ready(async function () {
+            supabaseClient.auth.getUser().then(res => { if (res.data && res.data.user) currentUserId = res.data.user.id; });
+            loadCourses();
+            loadStudentList();
+
+            $('#searchBtn').click(() => doSearch($('#searchInput').val()));
+            $('#searchInput').keypress(e => { if (e.which == 13) doSearch($('#searchInput').val()); });
+            $('#btnSaveEdit').click(saveStudentEdit);
+            $('#btnEditStudent').click(openEditModal);
+            $('#btnDeactivateStudent').click(() => { $('#deactivateName').text(currentStudent.full_name); $('#deactivateModal').modal('show'); });
+            $('#btnConfirmDeactivate').click(confirmDeactivate);
+            
+            $('#courseFilter').on('change', () => { currentPage = 0; loadStudentList(); });
+            $('#btnPrevPage').click(() => { if(currentPage > 0) { currentPage--; loadStudentList(); } });
+            $('#btnNextPage').click(() => { currentPage++; loadStudentList(); });
+        });
+
+        async function loadCourses() {
+            var { data } = await supabaseClient.from('courses').select('*').order('name');
+            if (data) data.forEach(c => $('#courseFilter').append('<option value="' + c.id + '">' + c.name + '</option>'));
+        }
 
         async function loadStudentList() {
             const tbody = $('#studentListBody');
             const courseId = $('#courseFilter').val();
             const from = currentPage * pageSize;
             const to = from + pageSize - 1;
-
             try {
-                let query = supabaseClient.from('students')
-                    .select('*, branches(name), courses(name)')
-                    .eq('status', 'activo')
-                    .order('full_name', { ascending: true })
-                    .range(from, to);
-
-                if (courseId) {
-                    query = query.eq('course_id', courseId);
-                }
-                if (window.userRole === 'cajero' && window.userBranchId) {
-                    query = query.eq('branch_id', window.userBranchId);
-                }
-
-                const { data: students, error } = await query;
-                if (error) throw error;
-
+                let query = supabaseClient.from('students').select('*, branches(name), courses(name)').eq('status', 'activo').order('full_name', { ascending: true }).range(from, to);
+                if (courseId) query = query.eq('course_id', courseId);
+                const { data: students } = await query;
                 tbody.empty();
                 if (!students || students.length === 0) {
-                    tbody.append('<tr><td colspan="4" class="text-center text-50 p-4">No se encontraron alumnos.</td></tr>');
+                    tbody.append('<tr><td colspan="4" class="text-center p-4">No hay más alumnos.</td></tr>');
                     $('#btnNextPage').prop('disabled', true);
                 } else {
                     students.forEach(s => {
                         const branchName = s.branches ? s.branches.name : 'N/A';
                         const courseName = s.courses ? s.courses.name : 'Sin curso';
-                        tbody.append(`
-                            <tr class="student-list-row" onclick="doSearch('${s.dni}')">
-                                <td><strong>${s.full_name}</strong></td>
-                                <td>${s.dni}</td>
-                                <td><span class="text-50 small">${branchName} / ${courseName}</span></td>
-                                <td class="text-right">
-                                    <button class="btn btn-sm btn-outline-primary">Ver</button>
-                                </td>
-                            </tr>
-                        `);
+                        tbody.append(`<tr class="student-list-row" onclick="doSearch('${s.dni}')"><td><strong>${s.full_name}</strong></td><td>${s.dni}</td><td>${branchName} / ${courseName}</td><td class="text-right"><button class="btn btn-sm btn-outline-primary">Ver</button></td></tr>`);
                     });
-                    // Enable/disable navigation based on results length
                     $('#btnNextPage').prop('disabled', students.length < pageSize);
                 }
-
                 $('#btnPrevPage').prop('disabled', currentPage === 0);
                 $('#pageIndicator').text(`Página ${currentPage + 1}`);
-
-            } catch (err) {
-                console.error(err);
-                tbody.html('<tr><td colspan="4" class="text-center text-danger p-4">Error al cargar la lista.</td></tr>');
-            }
+            } catch (err) { console.error(err); }
         }
 
-        // Check authentication
-        supabaseClient.auth.getSession().then(({ data: { session } }) => {
-            if (!session) {
-                window.location.replace('login.html');
-            }
-        });
-
-        async function logout() {
-            await supabaseClient.auth.signOut();
-            window.location.replace('login.html');
-        }
-
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(function () { });
-        }
-
-        // Get current user ID for audit logging
-        var currentUserId = null;
-        supabaseClient.auth.getUser().then(function (res) {
-            if (res.data && res.data.user) currentUserId = res.data.user.id;
-        });
-
-        // ═══════════════════════════════════════
-        //  TOAST NOTIFICATIONS
-        // ═══════════════════════════════════════
-        function showToast(message, type) {
-            var icon = type === 'success' ? 'check_circle' : 'error';
-            var toast = $('<div class="toast-msg ' + type + '">' +
-                '<i class="material-icons">' + icon + '</i>' + message + '</div>');
-            $('#toastContainer').append(toast);
-            setTimeout(function () { toast.fadeOut(400, function () { toast.remove(); }); }, 3500);
-        }
-
-        // ═══════════════════════════════════════
-        //  RECENT SEARCHES (localStorage)
-        // ═══════════════════════════════════════
-        function getRecentSearches() {
-            try {
-                return JSON.parse(localStorage.getItem('cms_recent_searches') || '[]');
-            } catch (e) { return []; }
-        }
-        function addRecentSearch(student) {
-            var recents = getRecentSearches().filter(function (r) { return r.dni !== student.dni; });
-            recents.unshift({ dni: student.dni, name: student.full_name, branch: student.branchName || '' });
-            if (recents.length > 5) recents = recents.slice(0, 5);
-            localStorage.setItem('cms_recent_searches', JSON.stringify(recents));
-        }
-
-        // ═══════════════════════════════════════
-        //  DOCUMENT READY
-        // ═══════════════════════════════════════
-        $(document).ready(async function () {
-            await checkRoleAndUI();
-            loadCourses();
-
-            $('#searchBtn').click(function () { doSearch($('#searchInput').val()); });
-            $('#searchInput').keypress(function (e) { if (e.which == 13) doSearch($('#searchInput').val()); });
-
-            // Live search suggestions
-            var searchTimer;
-            $('#searchInput').on('input', function () {
-                clearTimeout(searchTimer);
-                var val = $(this).val().trim();
-                if (val.length < 2) { $('#searchSuggestions').hide(); showRecentSearches(); return; }
-                searchTimer = setTimeout(function () { fetchSuggestions(val); }, 300);
-            });
-
-            $('#searchInput').on('focus', function () {
-                var val = $(this).val().trim();
-                if (val.length < 2) showRecentSearches();
-            });
-
-            // Hide suggestions when clicking outside
-            $(document).on('click', function (e) {
-                if (!$(e.target).closest('.search-wrapper').length) {
-                    $('#searchSuggestions').hide();
-                }
-            });
-
-            // Edit modal save
-            $('#btnSaveEdit').click(saveStudentEdit);
-
-            // Edit / Deactivate buttons
-            $('#btnEditStudent').click(openEditModal);
-            $('#btnDeactivateStudent').click(openDeactivateModal);
-            $('#btnConfirmDeactivate').click(confirmDeactivate);
-
-            // Course filter change trigger
-            $('#courseFilter').on('change', function() {
-                var val = $('#searchInput').val().trim();
-                if(val) doSearch(val);
-                else if($(this).val()) fetchSuggestions(''); // Show students in this course
-                else $('#searchSuggestions').hide();
-                
-                // Also reload the list with filter
-                currentPage = 0;
-                loadStudentList();
-            });
-
-            // Pagination buttons
-            $('#btnPrevPage').click(function() {
-                if(currentPage > 0) {
-                    currentPage--;
-                    loadStudentList();
-                }
-            });
-
-            $('#btnNextPage').click(function() {
-                currentPage++;
-                loadStudentList();
-            });
-
-            // Initial load
-            loadStudentList();
-        });
-
-        async function loadCourses() {
-            var { data, error } = await supabaseClient.from('courses').select('*').order('name');
-            if (data) {
-                data.forEach(function(c) {
-                    $('#courseFilter').append('<option value="' + c.id + '">' + c.name + '</option>');
-                });
-            }
-        }
-
-        // ═══════════════════════════════════════
-
-
-
-
-        // ═══════════════════════════════════════
-        //  SEARCH SUGGESTIONS
-        // ═══════════════════════════════════════
-        function showRecentSearches() {
-            var recents = getRecentSearches();
-            if (recents.length === 0) { $('#searchSuggestions').hide(); return; }
-            var html = '<div class="suggestion-header">Búsquedas Recientes</div>';
-            recents.forEach(function (r) {
-                html += '<div class="suggestion-item" data-dni="' + r.dni + '">' +
-                    '<span><strong>' + r.name + '</strong></span>' +
-                    '<span class="text-50" style="font-size:0.85em">DNI: ' + r.dni + '</span></div>';
-            });
-            $('#searchSuggestions').html(html).show();
-            $('#searchSuggestions .suggestion-item').click(function () {
-                var dni = $(this).data('dni');
-                $('#searchInput').val(dni);
-                $('#searchSuggestions').hide();
-                doSearch(dni);
-            });
-        }
-
-        async function fetchSuggestions(query) {
-            query = (query || "").trim();
-            var sug = $('#searchSuggestions');
-            var courseId = $('#courseFilter').val();
-            
-            if (!query && !courseId) { sug.hide(); return; }
-
-            try {
-                var baseQuery = supabaseClient.from('students').select('id, dni, full_name, branches(name), courses(name)').eq('status', 'activo');
-                if (courseId) baseQuery = baseQuery.eq('course_id', courseId);
-                if (window.userRole === 'cajero' && window.userBranchId) {
-                    baseQuery = baseQuery.eq('branch_id', window.userBranchId);
-                }
-
-                let results = [];
-                if (query) {
-                    const { data } = await baseQuery.or(`full_name.ilike.%${query}%,dni.ilike.${query}%`).limit(10);
-                    results = data || [];
-                } else if (courseId) {
-                    const { data } = await baseQuery.limit(10);
-                    results = data || [];
-                }
-
-                if (!results || results.length === 0) {
-                    sug.html('<div class="suggestion-item text-50">Sin resultados</div>').show();
-                    return;
-                }
-
-                var html = '<div class="suggestion-header">Resultados</div>';
-                results.forEach(function (s) {
-                    var branch = s.branches ? s.branches.name : '';
-                    var course = s.courses ? s.courses.name : 'Sin curso';
-                    html += '<div class="suggestion-item" data-dni="' + s.dni + '">' +
-                        '<span><strong>' + s.full_name + '</strong> <small class="text-50">' + branch + ' | ' + course + '</small></span>' +
-                        '<span class="text-50" style="font-size:0.85em">DNI: ' + s.dni + '</span></div>';
-                });
-                sug.html(html).show();
-                sug.find('.suggestion-item').click(function () {
-                    var dni = $(this).data('dni');
-                    $('#searchInput').val(dni);
-                    sug.hide();
-                    doSearch(dni);
-                });
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        // ═══════════════════════════════════════
-        //  MAIN SEARCH LOGIC
-        // ═══════════════════════════════════════
         async function doSearch(query) {
             query = String(query || "").trim();
             if (!query) return;
-            resetUI();
             $('#loader').removeClass('d-none');
-            $('#searchSuggestions').hide();
-
             try {
-                var courseId = $('#courseFilter').val();
-                
-                const getBaseQuery = () => {
-                    let q = supabaseClient.from('students').select('*, branches(name), courses(name)').eq('status', 'activo');
-                    if (courseId) q = q.eq('course_id', courseId);
-                    if (window.userRole === 'cajero' && window.userBranchId) {
-                        q = q.eq('branch_id', window.userBranchId);
-                    }
-                    return q;
-                };
-
-                // 1. Try exact DNI match
-                const { data: exactMatch } = await getBaseQuery().eq('dni', query).limit(1);
-                if (exactMatch && exactMatch.length === 1) {
-                    loadStudentData(exactMatch[0]);
-                    return;
-                }
-
-                // 2. Try partial search
-                const { data: multiMatch, error } = await getBaseQuery()
-                    .or(`full_name.ilike.%${query}%,dni.ilike.${query}%`)
-                    .limit(10);
-
-                if (error) throw error;
-
-                if (!multiMatch || multiMatch.length === 0) {
-                    $('#noResults').removeClass('d-none');
-                } else if (multiMatch.length === 1) {
-                    loadStudentData(multiMatch[0]);
-                } else {
-                    // Show suggestions instead of failing
-                    var sug = $('#searchSuggestions');
-                    var html = '<div class="suggestion-header">Se encontraron varios resultados:</div>';
-                    multiMatch.forEach(function (s) {
-                        var branch = s.branches ? s.branches.name : '';
-                        var course = s.courses ? s.courses.name : 'Sin curso';
-                        html += '<div class="suggestion-item" data-dni="' + s.dni + '">' +
-                            '<span><strong>' + s.full_name + '</strong> <small class="text-50">' + branch + ' | ' + course + '</small></span>' +
-                            '<span class="text-50" style="font-size:0.85em">DNI: ' + s.dni + '</span></div>';
-                    });
-                    sug.html(html).show();
-                    sug.find('.suggestion-item').click(function () {
-                        var dni = $(this).data('dni');
-                        $('#searchInput').val(dni);
-                        sug.hide();
-                        doSearch(dni);
-                    });
-                    showToast('Se encontraron varios alumnos. Por favor selecciona uno.', 'success');
-                }
-            } catch (err) {
-                console.error(err);
-                showToast('Error al buscar alumno.', 'error');
-            } finally {
-                $('#loader').addClass('d-none');
-            }
+                const { data: match } = await supabaseClient.from('students').select('*, branches(name), courses(name)').eq('status', 'activo').or(`dni.eq.${query},full_name.ilike.%${query}%`).limit(1);
+                if (match && match.length > 0) loadStudentData(match[0]);
+                else showToast('No se encontró el alumno', 'error');
+            } catch (err) { console.error(err); } finally { $('#loader').addClass('d-none'); }
         }
 
         async function loadStudentData(student) {
             currentStudent = student;
-            currentStudent.branchName = student.branches ? student.branches.name : 'N/A';
-            addRecentSearch(currentStudent);
-
             $('#studentName').text(student.full_name);
             $('#studentDni').text(student.dni);
-            var dobText = student.birth_date ? new Date(student.birth_date + 'T00:00:00').toLocaleDateString() : 'No registrada';
-            $('#studentBirthDate').text(dobText);
-            var courseText = student.courses ? student.courses.name : 'Sin curso asignado';
-            $('#studentBranch').text(currentStudent.branchName + ' | ' + courseText);
+            $('#studentBirthDate').text(student.birth_date ? new Date(student.birth_date + 'T00:00:00').toLocaleDateString() : 'N/R');
+            $('#studentStartDate').text(student.start_date ? new Date(student.start_date + 'T00:00:00').toLocaleDateString() : 'N/R');
+            $('#studentBranch').text((student.branches ? student.branches.name : 'N/A') + ' | ' + (student.courses ? student.courses.name : 'Sin curso'));
             
-            var statusClass = student.status === 'activo' ? 'badge-success' : 'badge-danger';
-            $('#studentStatus').text(student.status.toUpperCase()).removeClass('badge-success badge-danger').addClass(statusClass);
-
-            if (student.additional_info) {
-                $('#studentAdditionalInfoText').text(student.additional_info);
-                $('#studentAdditionalInfoContainer').removeClass('d-none');
-            } else {
-                $('#studentAdditionalInfoContainer').addClass('d-none');
-            }
+            if (student.additional_info) { $('#studentAdditionalInfoText').text(student.additional_info); $('#studentAdditionalInfoContainer').removeClass('d-none'); }
+            else $('#studentAdditionalInfoContainer').addClass('d-none');
 
             $('#studentCard').removeClass('d-none');
-            $('#btnDeactivateStudent').toggle(student.status === 'activo');
-
-            // Load installments
-            const { data: iData } = await supabaseClient.from('installments').select('*')
-                .eq('student_id', student.id).order('installment_number', { ascending: true });
-
-            if (iData) {
-                renderInstallments(iData);
-                $('#installmentsTable').removeClass('d-none');
-            }
+            const { data: installments } = await supabaseClient.from('installments').select('*').eq('student_id', student.id).order('installment_number', { ascending: true });
+            if (installments) renderInstallments(installments);
         }
 
         function renderInstallments(installments) {
             var body = $('#installmentsBody');
             body.empty();
             var totalDebt = 0;
-            var totalInstallments = installments.filter(i => i.concept !== 'MATRÍCULA').length;
             var today = new Date().toISOString().split('T')[0];
+            var count = installments.filter(i => i.concept !== 'MATRÍCULA').length;
 
-            var studentName = $('#studentName').text();
-            var studentDni = $('#studentDni').text();
-            var courseName = currentStudent.courses ? currentStudent.courses.name : 'Sin curso';
-
-            installments.forEach(function (item) {
+            installments.forEach(item => {
                 var isPaid = item.status === 'pagado';
-                var isAnulado = item.status === 'anulado';
-                var isParcial = item.status === 'parcial';
-                
-                var amountDue = parseFloat(item.amount);
-                var paidAmount = parseFloat(item.paid_amount || 0);
-                var remaining = amountDue - paidAmount;
-                var isOverdue = !isPaid && item.due_date <= today;
-
-                if (isOverdue && !isAnulado) totalDebt += remaining;
-
-                var statusBadge;
-                if (isPaid) statusBadge = '<span class="badge badge-success">PAGADO</span>';
-                else if (isAnulado) statusBadge = '<span class="badge badge-dark">ANULADO</span>';
-                else if (isParcial) {
-                    statusBadge = (item.due_date <= today) ? '<span class="badge badge-danger">VENCIDA (P)</span>' : '<span class="badge badge-info">PARCIAL</span>';
-                }
-                else {
-                    statusBadge = (item.due_date <= today) ? '<span class="badge badge-danger">VENCIDA</span>' : '<span class="badge badge-warning">PENDIENTE</span>';
-                }
+                var isOverdue = !isPaid && item.due_date <= today && item.status !== 'anulado';
+                var remaining = item.amount - (item.paid_amount || 0);
+                if (isOverdue) totalDebt += remaining;
 
                 var rowClass = (item.due_date > today && !isPaid) ? 'text-muted' : '';
-                var dateColor = (isOverdue) ? 'text-danger font-weight-bold' : '';
-
                 var actionBtn = '';
-
-                if (isPaid || isParcial) {
-                    actionBtn += '<button class="btn btn-sm btn-outline-primary btn-ticket mr-8pt"' +
-                        ' data-id="' + item.id + '"' +
-                        ' data-num="' + item.installment_number + '"' +
-                        ' data-total="' + totalInstallments + '"' +
-                        ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
-                        ' data-dni="' + studentDni + '"' +
-                        ' data-course="' + courseName.replace(/"/g, '&quot;') + '"' +
-                        ' data-date="' + item.due_date + '"' +
-                        ' data-concept="' + (item.concept === 'MATRÍCULA' ? 'Matrícula' : '') + '"' +
-                        ' data-amount="' + paidAmount + '"' +
-                        ' data-total-amount="' + item.amount + '"' +
-                        ' data-remaining="' + remaining + '" title="Imprimir Ticket">' +
-                        '<i class="material-icons" style="font-size:18px;">receipt</i></button>';
-
-                    actionBtn += '<button class="btn btn-sm btn-outline-danger btn-anular mr-8pt"' +
-                        ' data-id="' + item.id + '"' +
-                        ' data-num="' + item.installment_number + '"' +
-                        ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
-                        ' title="Anular último cobro">' +
-                        '<i class="material-icons" style="font-size:16px;">history</i></button>';
-                } 
-                
-                if (!isPaid && !isAnulado) {
-                    var btnClass = isParcial ? 'btn-outline-primary' : 'btn-primary';
-                    var btnText = isParcial ? 'Cobrar Resto' : 'Cobrar';
-                    actionBtn += '<button class="btn btn-sm ' + btnClass + ' btn-cobrar"' +
-                        ' data-id="' + item.id + '"' +
-                        ' data-amount="' + item.amount + '"' +
-                        ' data-paid="' + paidAmount + '"' +
-                        ' data-num="' + item.installment_number + '"' +
-                        ' data-total="' + totalInstallments + '"' +
-                        ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
-                        ' data-dni="' + studentDni + '"' +
-                        ' data-course="' + courseName.replace(/"/g, '&quot;') + '"' +
-                        ' data-date="' + item.due_date + '">' + btnText + '</button>';
+                if (!isPaid && item.status !== 'anulado') {
+                    actionBtn = `<button class="btn btn-sm btn-primary" onclick="payInstallment('${item.id}', ${item.amount}, ${item.paid_amount || 0}, ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${count})">Cobrar</button>`;
+                } else if (isPaid) {
+                    actionBtn = `<button class="btn btn-sm btn-outline-success" onclick="printTicket('${item.id}', ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${item.paid_amount}, ${count}, ${item.amount}, 0, '${currentStudent.courses?.name || ''}', '${item.concept || ''}')"><i class="material-icons">receipt</i></button>`;
                 }
 
-                body.append(
-                    `<tr class="${rowClass}">` +
-                    '<td><strong class="js-lists-values-num">' + (item.concept === 'MATRÍCULA' ? 'Matrícula' : 'Cuota ' + item.installment_number + ' de ' + totalInstallments) + '</strong></td>' +
-                    `<td class="${dateColor}">` + item.due_date + '</td>' +
-                    '<td>' + fmt.format(item.amount) + '</td>' +
-                    '<td>' + fmt.format(paidAmount) + (isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '') + '</td>' +
-                    '<td>' + statusBadge + '</td>' +
-                    '<td class="text-right">' + actionBtn + '</td>' +
-                    '</tr>'
-                );
+                body.append(`<tr class="${rowClass}"><td>${item.concept || 'Cuota ' + item.installment_number}</td><td>${item.due_date}</td><td>${fmt.format(item.amount)}</td><td>${fmt.format(item.paid_amount || 0)}</td><td>${item.status.toUpperCase()}</td><td class="text-right">${actionBtn}</td></tr>`);
             });
-
-            $('.btn-cobrar').off('click').on('click', function (e) {
-                e.preventDefault();
-                var btn = $(this);
-                payInstallment(
-                    btn.data('id'), btn.data('amount'), btn.data('paid'), btn.data('num'),
-                    btn.data('name'), btn.data('dni'), btn.data('date'), btn.data('total')
-                );
-            });
-
-            $('.btn-ticket').off('click').on('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var btn = $(this);
-                printTicket(
-                    btn.data('id'), btn.data('num'), btn.data('name'),
-                    btn.data('dni'), btn.data('date'), 
-                    btn.data('amount'), btn.data('total'), 
-                    btn.data('total-amount'), 
-                    btn.data('remaining'),
-                    btn.data('course')
-                );
-            });
-
-            $('.btn-anular').off('click').on('click', function (e) {
-                e.preventDefault();
-                var btn = $(this);
-                annulPayment(btn.data('id'), btn.data('num'), btn.data('name'));
-            });
-
             $('#totalDebt').text(fmt.format(totalDebt));
+            $('#installmentsTable').removeClass('d-none');
         }
 
-        function payInstallment(id, totalAmount, paidAmount, num, name, dni, date, totalInstallments) {
-            paidAmount = parseFloat(paidAmount || 0);
-            totalAmount = parseFloat(totalAmount || 0);
-            var remaining = totalAmount - paidAmount;
-            
+        function payInstallment(id, total, paid, num, name, dni, date, totalInstallments) {
+            var rem = total - paid;
             $('#paymentModalId').val(id);
-            $('#paymentModalTotalAmount').val(totalAmount);
-            $('#paymentModalPaidAmount').val(paidAmount);
-            $('#paymentModalRemainingAmount').val(remaining);
+            $('#paymentModalTotalAmount').val(total);
+            $('#paymentModalPaidAmount').val(paid);
+            $('#paymentModalRemainingAmount').val(rem);
+            $('#paymentModalAmount').val(rem);
             $('#paymentModalNum').val(num);
             $('#paymentModalName').val(name);
             $('#paymentModalDni').val(dni);
             $('#paymentModalDate').val(date);
             $('#paymentModalTotalInstalments').val(totalInstallments);
-
-            $('#paymentModalTotalStr').text(fmt.format(remaining));
-            $('#paymentModalAmount').val(remaining);
+            $('#paymentModalTotalStr').text(fmt.format(rem));
             $('#paymentModal').modal('show');
         }
 
-        window.confirmPayment = async function() {
-            var payingStr = $('#paymentModalAmount').val();
-            if(!payingStr) { showToast('Ingresa un monto válido', 'error'); return; }
-            var payingNow = parseFloat(payingStr);
-            var remaining = parseFloat($('#paymentModalRemainingAmount').val());
-            var currentPaid = parseFloat($('#paymentModalPaidAmount').val());
-            
-            if(payingNow <= 0 || payingNow > remaining) {
-                showToast("El monto debe ser numérico y no superar el saldo pendiente de " + fmt.format(remaining), 'error');
-                return;
-            }
-
+        async function confirmPayment() {
             var id = $('#paymentModalId').val();
-            var newTotalPaid = currentPaid + payingNow;
-            var totalAmount = parseFloat($('#paymentModalTotalAmount').val());
-            var newStatus = (newTotalPaid >= totalAmount) ? 'pagado' : 'parcial';
+            var paying = parseFloat($('#paymentModalAmount').val());
+            var rem = parseFloat($('#paymentModalRemainingAmount').val());
+            var paid = parseFloat($('#paymentModalPaidAmount').val());
+            if (paying <= 0 || paying > rem) return showToast('Monto inválido', 'error');
 
-            var btnConfirm = $('#paymentModal').find('.btn-primary');
-            btnConfirm.prop('disabled', true).text('Procesando...');
-
-            try {
-                var res = await supabaseClient.from('installments')
-                    .update({ status: newStatus, paid_at: new Date(), paid_amount: newTotalPaid }).eq('id', id);
-                if (res.error) throw res.error;
-
-                await supabaseClient.from('audit_log').insert({
-                    user_id: currentUserId,
-                    action: 'pago',
-                    entity_type: 'installment',
-                    entity_id: id,
-                    details: { 
-                        student_name: $('#paymentModalName').val(), 
-                        dni: $('#paymentModalDni').val(), 
-                        installment_number: $('#paymentModalNum').val(), 
-                        amount: payingNow,
-                        status: newStatus 
-                    }
-                });
-
-                showToast('¡Pago registrado!', 'success');
+            var newPaid = paid + paying;
+            var status = (newPaid >= parseFloat($('#paymentModalTotalAmount').val())) ? 'pagado' : 'parcial';
+            
+            const { error } = await supabaseClient.from('installments').update({ status: status, paid_amount: newPaid, paid_at: new Date() }).eq('id', id);
+            if (!error) {
+                showToast('Pago registrado', 'success');
                 $('#paymentModal').modal('hide');
                 doSearch($('#searchInput').val());
-            } catch (err) {
-                showToast('Error al registrar pago.', 'error');
-                console.error(err);
-            } finally {
-                btnConfirm.prop('disabled', false).text('Confirmar Cobro');
-            }
-        }
-
-        async function annulPayment(id, num, name) {
-            if (!confirm('¿Seguro que deseas ANULAR el último pago de la cuota ' + num + ' para ' + name + '?')) return;
-            try {
-                var res = await supabaseClient.from('installments')
-                    .update({ status: 'pendiente', paid_at: null, paid_amount: 0 }).eq('id', id);
-                if (res.error) throw res.error;
-
-                await supabaseClient.from('audit_log').insert({
-                    user_id: currentUserId,
-                    action: 'anulacion_pago',
-                    entity_type: 'installment',
-                    entity_id: id,
-                    details: { student_name: name, installment_number: num }
-                });
-
-                showToast('¡Pago anulado!', 'success');
-                doSearch($('#searchInput').val());
-            } catch (err) {
-                showToast('Error al anular pago.', 'error');
-                console.error(err);
             }
         }
 
@@ -1082,78 +482,40 @@
             $('#editEmail').val(currentStudent.email || '');
             $('#editPhone').val(currentStudent.phone || '');
             $('#editBirthDate').val(currentStudent.birth_date || '');
-            $('#editAmount').val(currentStudent.monthly_amount || '');
+            $('#editStartDate').val(currentStudent.start_date || '');
             $('#editAdditionalInfo').val(currentStudent.additional_info || '');
             $('#editStudentModal').modal('show');
         }
 
         async function saveStudentEdit() {
-            var sid = $('#editStudentId').val();
-            var newName = $('#editFullName').val().trim();
-            if (!newName) { showToast('El nombre no puede estar vacío.', 'error'); return; }
-            try {
-                var updateData = { 
-                    full_name: newName, 
-                    email: $('#editEmail').val().trim(), 
-                    phone: $('#editPhone').val().trim(),
-                    birth_date: $('#editBirthDate').val() || null,
-                    additional_info: $('#editAdditionalInfo').val()
-                };
-                var res = await supabaseClient.from('students').update(updateData).eq('id', sid);
-                if (res.error) throw res.error;
-                showToast('Datos actualizados.', 'success');
-                $('#editStudentModal').modal('hide');
-                doSearch($('#searchInput').val());
-            } catch (err) {
-                showToast('Error al guardar.', 'error');
-            }
-        }
-
-        function openDeactivateModal() {
-            if (!currentStudent) return;
-            $('#deactivateName').text(currentStudent.full_name);
-            $('#deactivateModal').modal('show');
+            var upData = { 
+                full_name: $('#editFullName').val(), 
+                email: $('#editEmail').val(), 
+                phone: $('#editPhone').val(), 
+                birth_date: $('#editBirthDate').val() || null,
+                start_date: $('#editStartDate').val() || null,
+                additional_info: $('#editAdditionalInfo').val()
+            };
+            const { error } = await supabaseClient.from('students').update(upData).eq('id', $('#editStudentId').val());
+            if (!error) { showToast('Alumno actualizado', 'success'); $('#editStudentModal').modal('hide'); doSearch($('#searchInput').val()); }
         }
 
         async function confirmDeactivate() {
-            if (!currentStudent) return;
-            try {
-                await supabaseClient.from('installments').update({ status: 'anulado' }).eq('student_id', currentStudent.id).eq('status', 'pendiente');
-                await supabaseClient.from('students').update({ status: 'inactivo' }).eq('id', currentStudent.id);
-                showToast('Alumno dado de baja.', 'success');
-                $('#deactivateModal').modal('hide');
-                doSearch($('#searchInput').val());
-            } catch (err) {
-                showToast('Error al dar de baja.', 'error');
-            }
+            await supabaseClient.from('students').update({ status: 'inactivo' }).eq('id', currentStudent.id);
+            $('#deactivateModal').modal('hide');
+            doSearch($('#searchInput').val());
         }
 
-        function resetUI() {
-            $('#studentCard').addClass('d-none');
-            $('#installmentsTable').addClass('d-none');
-            $('#noResults').addClass('d-none');
-            $('#loader').addClass('d-none');
+        function printTicket(id, num, name, dni, date, paid, total, totalAmt, rem, course, concept) {
+            var params = new URLSearchParams({ name, dni, date, amount: paid, num, total, totalAmount: totalAmt, remaining: rem, course, concept });
+            window.open('ticket.html?' + params.toString());
         }
 
-        function printTicket(id, num, name, dni, date, amountPaid, totalCount, totalInstallmentAmount, remainingAmount, course, concept) {
-            var params = new URLSearchParams({ id:id, num:num, name:name, dni:dni, date:date, amount:amountPaid, total:totalCount, totalAmount:totalInstallmentAmount, remaining:remainingAmount, course:course, concept:concept });
-            window.open('ticket.html?' + params.toString(), 'Comprobante', 'width=600,height=700');
-        }
-
-        async function checkRoleAndUI() {
-            var res = await supabaseClient.auth.getUser();
-            if (!res.data || !res.data.user) return;
-            var pRes = await supabaseClient.from('profiles').select('role, branch_id').eq('id', res.data.user.id).single();
-            if (pRes.data && pRes.data.role === 'cajero') {
-                $('#sidebarDashLabel').text('Panel Sucursal');
-                window.userRole = 'cajero';
-                window.userBranchId = pRes.data.branch_id;
-            } else if (pRes.data && pRes.data.role === 'admin') {
-                $('#sidebarUsersItem').show();
-                window.userRole = 'admin';
-            }
+        function showToast(msg, type) {
+            var toast = $(`<div class="toast-msg ${type}"><i class="material-icons">${type === 'success' ? 'check_circle' : 'error'}</i>${msg}</div>`);
+            $('#toastContainer').append(toast);
+            setTimeout(() => toast.fadeOut(400, () => toast.remove()), 3000);
         }
     </script>
 </body>
-
 </html>

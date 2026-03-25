@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Inscripción de Alumnos - CMS Cobranzas (Fix v2)</title>
+    <title>Inscripción de Alumnos - CMS Cobranzas (v2.1)</title>
 
     <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CRoboto:400,500%7CExo+2:600&display=swap"
         rel="stylesheet">
@@ -89,24 +89,29 @@
                                 </div>
                             </div>
                             <div class="form-row">
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-6 mb-3">
                                     <label class="form-label" for="email">Email:</label>
                                     <input id="email" type="email" class="form-control" placeholder="email@ejemplo.com">
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-6 mb-3">
                                     <label class="form-label" for="phone">Teléfono:</label>
                                     <input id="phone" type="text" class="form-control" placeholder="Ej: 011 1234-5678">
                                 </div>
-                                <div class="col-md-4 mb-3">
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-6 mb-3">
                                     <label class="form-label" for="birthDate">Fecha de Nacimiento:</label>
                                     <input id="birthDate" type="date" class="form-control">
                                 </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="classStartDate">Inicio de Clases: <i class="material-icons help-icon" data-toggle="tooltip" title="La fecha en la que el alumno comenzará efectivamente sus clases. La primera cuota mensual vencerá un mes después de esta fecha.">help_outline</i></label>
+                                    <input id="classStartDate" type="date" class="form-control" required>
+                                </div>
                             </div>
                             <div class="form-group mb-24pt">
-                                <label class="form-label" for="branch">Sucursal de Origen: <i class="material-icons help-icon" data-toggle="tooltip" title="La sucursal donde el alumno cursará y realizará sus pagos habitualmente.">help_outline</i></label>
+                                <label class="form-label" for="branch">Sucursal de Origen:</label>
                                 <select id="branch" class="form-control custom-select" required>
                                     <option value="" disabled selected>Selecciona una sucursal</option>
-                                    <!-- Options will be loaded from Supabase -->
                                 </select>
                             </div>
 
@@ -116,11 +121,8 @@
                                     <select id="course" class="form-control custom-select" style="flex:1;">
                                         <option value="" selected>Sin curso asignado</option>
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary ml-2" id="btnAddCourse" title="Crear Nuevo Curso">
+                                    <button type="button" class="btn btn-outline-primary ml-2" id="btnAddCourse">
                                         <i class="material-icons">add</i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary ml-2 d-none" id="btnManageCourses" title="Administrar Cursos">
-                                        <i class="material-icons">settings</i>
                                     </button>
                                 </div>
                             </div>
@@ -128,7 +130,7 @@
                             <div class="form-group mb-24pt">
                                 <div class="custom-control custom-switch">
                                     <input type="checkbox" class="custom-control-input" id="specialPlanSwitch">
-                                    <label class="custom-control-label" for="specialPlanSwitch">¿Es un Plan Especial o Beca? <i class="material-icons help-icon" data-toggle="tooltip" title="Usar para arreglos de pago únicos, descuentos totales o paquetes cerrados que no siguen la cuota mensual estándar.">help_outline</i></label>
+                                    <label class="custom-control-label" for="specialPlanSwitch">¿Es un Plan Especial o Beca?</label>
                                 </div>
                             </div>
 
@@ -140,8 +142,7 @@
                                 <div class="form-group mb-24pt">
                                     <label class="form-label" for="amount">Monto de la cuota mensual:</label>
                                     <div class="input-group input-group-merge">
-                                        <input id="amount" type="number" class="form-control form-control-prepended"
-                                            placeholder="Ej: 5000">
+                                        <input id="amount" type="number" class="form-control form-control-prepended">
                                         <div class="input-group-prepend">
                                             <div class="input-group-text">Gs.</div>
                                         </div>
@@ -149,57 +150,42 @@
                                 </div>
 
                                 <div class="form-group mb-24pt">
-                                    <label class="form-label" for="installmentsCount">Cantidad de cuotas a generar: <i class="material-icons help-icon" data-toggle="tooltip" title="Se crearán compromisos de pago mensuales consecutivos. Por defecto son 12 cuotas (un año).">help_outline</i></label>
-                                    <input id="installmentsCount" type="number" class="form-control" value="12" min="1"
-                                        max="60">
-                                    <small class="text-muted">Se generarán las cuotas mensuales consecutivas a partir del
-                                        mes actual.</small>
+                                    <label class="form-label" for="installmentsCount">Cantidad de cuotas a generar:</label>
+                                    <input id="installmentsCount" type="number" class="form-control" value="12" min="1" max="60">
                                 </div>
 
                                 <div class="form-group mb-24pt">
                                     <label class="form-label" for="enrollmentFee">Monto de Matrícula (Único):</label>
                                     <div class="input-group input-group-merge">
-                                        <input id="enrollmentFee" type="number" class="form-control form-control-prepended"
-                                            placeholder="Ej: 50000" value="0">
+                                        <input id="enrollmentFee" type="number" class="form-control form-control-prepended" value="0">
                                         <div class="input-group-prepend">
                                             <div class="input-group-text">Gs.</div>
                                         </div>
                                     </div>
-                                    <small class="text-muted">Este monto se registrará como un pago ya realizado hoy.</small>
                                 </div>
                             </div>
 
                             <div id="specialPlanFields" class="d-none">
                                 <div class="form-group mb-24pt">
                                     <label class="form-label" for="totalAmountSpecial">Monto Total del Paquete (Gs.):</label>
-                                    <div class="input-group input-group-merge">
-                                        <input id="totalAmountSpecial" type="number" class="form-control form-control-prepended"
-                                            placeholder="Ej: 600000">
-                                        <div class="input-group-prepend">
-                                            <div class="input-group-text">Gs.</div>
-                                        </div>
-                                    </div>
+                                    <input id="totalAmountSpecial" type="number" class="form-control">
                                 </div>
-
                                 <div class="form-group mb-24pt">
                                     <label class="form-label" for="paymentsCountSpecial">Cantidad de Pagos:</label>
-                                    <input id="paymentsCountSpecial" type="number" class="form-control" value="1" min="1" max="60">
-                                    <small class="text-muted" id="calcFootnote">El sistema dividirá el total en pagos iguales.</small>
+                                    <input id="paymentsCountSpecial" type="number" class="form-control" value="1">
                                 </div>
                             </div>
 
                             <div class="form-group mb-24pt">
                                 <label class="form-label" for="additionalInfo">Datos Adicionales (Opcional):</label>
-                                <textarea id="additionalInfo" class="form-control" rows="3" placeholder="Información relevante sobre el alumno..."></textarea>
+                                <textarea id="additionalInfo" class="form-control" rows="3"></textarea>
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
                                 <span id="btnText">Inscribir Alumno y Generar Plan</span>
-                                <span id="btnLoader" class="spinner-border spinner-border-sm d-none"
-                                    role="status"></span>
+                                <span id="btnLoader" class="spinner-border spinner-border-sm d-none"></span>
                             </button>
 
-                            <!-- Feedback Alerts -->
                             <div id="successAlert" class="alert alert-soft-success d-none mt-3">
                                 <div><strong>¡Éxito!</strong> Alumno inscrito y plan de cuotas generado correctamente.</div>
                                 <div class="mt-2" id="successActions">
@@ -211,15 +197,8 @@
                             <div id="errorAlert" class="alert alert-soft-danger d-none mt-3"></div>
                         </form>
                     </div>
-
-                    </div>
                 </div>
             </div>
-
-        </div>
-                </div>
-            </div>
-
         </div>
 
         <!-- Sidebar -->
@@ -227,68 +206,12 @@
             <div class="mdk-drawer__content">
                 <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
                     <a href="index.html" class="sidebar-brand">
-                        <span class="avatar avatar-xl sidebar-brand-icon h-auto">
-                            <span class="avatar-title rounded bg-primary"><img
-                                    src="../../public/images/illustration/student/128/white.svg" class="img-fluid"
-                                    alt="logo" /></span>
-                        </span>
                         <span>CMS Cobranzas</span>
                     </a>
                     <ul class="sidebar-menu">
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="dashboard.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
-                                <span class="sidebar-menu-text">Dashboard</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item active">
-                            <a class="sidebar-menu-button" href="registration.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
-                                <span class="sidebar-menu-text">Inscripción</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="search.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span>
-                                <span class="sidebar-menu-text">Cobranzas</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="courses.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
-                                <span class="sidebar-menu-text">Cursos</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="branches.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
-                                <span class="sidebar-menu-text">Sucursales</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="expenses.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">payments</span>
-                                <span class="sidebar-menu-text">Gastos</span>
-                            </a>
-                        </li>
-                        <li id="sidebarUsersItem" class="sidebar-menu-item" style="display:none;">
-                            <a class="sidebar-menu-button" href="users.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span>
-                                <span class="sidebar-menu-text">Usuarios</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="report.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
-                                <span class="sidebar-menu-text">Reportes</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item mt-4">
-                            <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
-                                <span class="sidebar-menu-text">Cerrar Sesión</span>
-                            </a>
-                        </li>
+                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="dashboard.html">Dashboard</a></li>
+                        <li class="sidebar-menu-item active"><a class="sidebar-menu-button" href="registration.html">Inscripción</a></li>
+                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="search.html">Cobranzas</a></li>
                     </ul>
                 </div>
             </div>
@@ -306,194 +229,64 @@
     <script src="../../public/js/preloader.js"></script>
 
     <script>
-        // CONFIGURACIÓN DE SUPABASE (Completar con tus credenciales)
         const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Check authentication
-        supabaseClient.auth.getSession().then(({ data: { session } }) => {
-            if (!session) {
-                window.location.replace('login.html');
-            }
-        });
-
-        async function logout() {
-            await supabaseClient.auth.signOut();
-            window.location.replace('login.html');
-        }
-
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(function () { });
-        }
-
-        // Get current user ID for audit logging
-        var currentUserId = null;
-        supabaseClient.auth.getUser().then(function (res) {
-            if (res.data && res.data.user) currentUserId = res.data.user.id;
-        });
-
         $(document).ready(async function () {
-            // Initialize Bootstrap Tooltips
             $('[data-toggle="tooltip"]').tooltip();
+            
+            const todayISO = new Date().toISOString().split('T')[0];
+            $('#classStartDate').val(todayISO);
 
-            // Cargar Sucursales
-            const { data: branches, error: bError } = await supabaseClient.from('branches').select('*').eq('active', true);
+            // Fetch Branches
+            const { data: branches } = await supabaseClient.from('branches').select('*').eq('active', true);
             if (branches) {
-                // Ensure branches are unique by name to avoid duplicates if DB has redundant data
-                const uniqueBranches = [];
-                const branchMap = new Map();
-                for (const b of branches) {
-                    if (!branchMap.has(b.name)) {
-                        branchMap.set(b.name, true);
-                        uniqueBranches.push(b);
-                    }
-                }
-                $('#branch').html('<option value="" disabled selected>Selecciona una sucursal</option>');
-                uniqueBranches.forEach(branch => {
-                    $('#branch').append(`<option value="${branch.id}">${branch.name}</option>`);
-                });
+                branches.forEach(b => $('#branch').append(`<option value="${b.id}">${b.name}</option>`));
             }
 
-            // Cargar datos al inicio
-            checkRoleAndUI();
-            loadCourses();
-
-            // Evento para botón Crear Curso (BUG-01: Modal en vez de prompt)
-            $('#btnAddCourse').on('click', function() {
-                $('#newCourseName').val('');
-                $('#courseModal').modal('show');
-            });
-
-            // Evento para Administrar Cursos (Gap Funcional #5)
-            $('#btnManageCourses').on('click', function() {
-                loadCoursesManager();
-                $('#manageCoursesModal').modal('show');
-            });
-
-            window.loadCoursesManager = async function() {
-                const { data: courses, error } = await supabaseClient.from('courses').select('*').order('name');
-                var list = $('#manageCoursesList');
-                list.empty();
-                if (courses && courses.length > 0) {
-                    courses.forEach(c => {
-                        list.append(`
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <strong>${c.name}</strong>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
-                                    <i class="material-icons" style="font-size:16px;">delete</i>
-                                </button>
-                            </li>
-                        `);
-                    });
-                } else {
-                    list.append('<li class="list-group-item text-center text-50">No hay cursos creados.</li>');
-                }
-            };
-
-            window.deleteCourse = async function(id, name) {
-                if(!confirm(`¿Seguro que deseas eliminar el curso "${name}"?`)) return;
-                try {
-                    const { error } = await supabaseClient.from('courses').delete().eq('id', id);
-                    if (error) throw error;
-                    alert('Curso eliminado.');
-                    loadCoursesManager();
-                    loadCourses(); // Refresh the main dropdown
-                } catch(err) {
-                    alert('No se puede eliminar el curso. Verifica que no tenga alumnos vinculados.');
-                }
+            // Fetch Courses
+            const { data: courses } = await supabaseClient.from('courses').select('*').order('name');
+            if (courses) {
+                courses.forEach(c => $('#course').append(`<option value="${c.id}">${c.name}</option>`));
             }
 
-            window.saveNewCourse = async function() {
-                var courseName = $('#newCourseName').val();
-                if (courseName && courseName.trim() !== '') {
-                    try {
-                        $('#courseModal').modal('hide');
-                        const { data, error } = await supabaseClient.from('courses').insert([{ name: courseName.trim() }]).select();
-                        if (error) throw error;
-                        await loadCourses(data[0].id);
-                    } catch(err) {
-                        alert("Error al crear curso: " + err.message);
-                    }
-                }
-            };
-
-            async function loadCourses(selectedId = null) {
-                const { data: courses, error } = await supabaseClient.from('courses').select('*').order('name');
-                if (courses) {
-                    var select = $('#course');
-                    select.html('<option value="" selected>Sin curso asignado</option>');
-                    courses.forEach(c => {
-                        select.append(`<option value="${c.id}">${c.name}</option>`);
-                    });
-                    if (selectedId) select.val(selectedId);
-                }
-            }
-
-            // Toggle Planes Especiales
             $('#specialPlanSwitch').on('change', function() {
-                if ($(this).is(':checked')) {
-                    $('#standardPlanFields').addClass('d-none');
-                    $('#specialPlanFields').removeClass('d-none');
-                    $('#amount').prop('required', false);
-                    $('#installmentsCount').prop('required', false);
-                    $('#totalAmountSpecial').prop('required', true);
-                    $('#paymentsCountSpecial').prop('required', true);
-                } else {
-                    $('#standardPlanFields').removeClass('d-none');
-                    $('#specialPlanFields').addClass('d-none');
-                    $('#amount').prop('required', true);
-                    $('#installmentsCount').prop('required', true);
-                    $('#totalAmountSpecial').prop('required', false);
-                    $('#paymentsCountSpecial').prop('required', false);
-                }
-            });
-
-            $('#enrollmentForm input, #enrollmentForm select').on('input change', function() {
-                $('#errorAlert').addClass('d-none');
+                const checked = $(this).is(':checked');
+                $('#standardPlanFields').toggleClass('d-none', checked);
+                $('#specialPlanFields').toggleClass('d-none', !checked);
             });
 
             $('#enrollmentForm').on('submit', async function (e) {
                 e.preventDefault();
-                setLoading(true);
+                $('#btnText').addClass('d-none');
+                $('#btnLoader').removeClass('d-none');
                 $('#successAlert, #errorAlert').addClass('d-none');
 
-                const courseId = $('#course').val();
                 const studentData = {
                     dni: $('#dni').val(),
                     full_name: $('#fullName').val(),
                     email: $('#email').val(),
                     phone: $('#phone').val(),
                     birth_date: $('#birthDate').val() || null,
+                    start_date: $('#classStartDate').val(),
                     branch_id: $('#branch').val(),
-                    course_id: courseId || null,
+                    course_id: $('#course').val() || null,
                     additional_info: $('#additionalInfo').val()
                 };
 
                 const isSpecial = $('#specialPlanSwitch').is(':checked');
-                let amount = 0;
-                let installmentsCount = 0;
-
-                if (isSpecial) {
-                    const totalSpecial = parseFloat($('#totalAmountSpecial').val()) || 0;
-                    installmentsCount = parseInt($('#paymentsCountSpecial').val()) || 1;
-                    amount = Math.round(totalSpecial / installmentsCount);
-                } else {
-                    amount = parseFloat($('#amount').val()) || 0;
-                    installmentsCount = parseInt($('#installmentsCount').val()) || 12;
-                }
+                const installmentsCount = parseInt(isSpecial ? $('#paymentsCountSpecial').val() : $('#installmentsCount').val());
+                const amount = isSpecial ? Math.round($('#totalAmountSpecial').val() / installmentsCount) : $('#amount').val();
 
                 try {
-                    // 1. Insertar Alumno
                     const { data: student, error: sError } = await supabaseClient.from('students').insert([studentData]).select().single();
                     if (sError) throw sError;
 
-                    // 2. Generar Cuotas Dinámicas
                     const installments = [];
-                    const startDate = new Date();
+                    const baseDate = new Date(studentData.start_date + 'T00:00:00');
                     for (let i = 1; i <= installmentsCount; i++) {
-                        const dueDate = new Date(startDate.getFullYear(), startDate.getMonth() + i - 1, 10); // Día 10 de cada mes
+                        const dueDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 10);
                         installments.push({
                             student_id: student.id,
                             installment_number: i,
@@ -502,160 +295,45 @@
                             status: 'pendiente'
                         });
                     }
+                    await supabaseClient.from('installments').insert(installments);
 
-                    const { error: iError } = await supabaseClient.from('installments').insert(installments);
-                    if (iError) throw iError;
-
-                    // Audit log
-
-                    // 3. Matrícula - Insertar como pagada si tiene monto
+                    // Enrollment Fee
                     const enrollmentAmount = parseFloat($('#enrollmentFee').val()) || 0;
                     if (enrollmentAmount > 0) {
-                        try {
-                            const enrollmentData = {
-                                student_id: student.id,
-                                installment_number: 0,
-                                due_date: new Date().toISOString().split('T')[0],
-                                amount: enrollmentAmount,
-                                paid_amount: enrollmentAmount,
-                                status: 'pagado',
-                                paid_at: new Date().toISOString(),
-                                concept: 'MATRÍCULA'
-                            };
-                            await supabaseClient.from('installments').insert([enrollmentData]);
-                        } catch (e) { console.error(e); }
-                        
-                        $('#btnPrintEnrollment').off('click').on('click', function() {
+                        await supabaseClient.from('installments').insert([{
+                            student_id: student.id,
+                            installment_number: 0,
+                            due_date: todayISO,
+                            amount: enrollmentAmount,
+                            paid_amount: enrollmentAmount,
+                            status: 'pagado',
+                            paid_at: new Date().toISOString(),
+                            concept: 'MATRÍCULA'
+                        }]);
+                        $('#btnPrintEnrollment').on('click', () => {
                             const params = new URLSearchParams({
-                                id: student.id.split('-')[0],
                                 name: student.full_name,
                                 dni: student.dni,
                                 concept: 'Matrícula',
                                 amount: enrollmentAmount,
-                                date: new Date().toLocaleDateString(),
-                                course: $('#course option:selected').text()
+                                date: new Date().toLocaleDateString()
                             });
-                            window.open('ticket.html?' + params.toString(), 'Ticket', 'width=600,height=700');
+                            window.open('ticket.html?' + params.toString());
                         });
                         $('#successActions').removeClass('d-none');
-                    } else {
-                        $('#successActions').addClass('d-none');
                     }
-
-                    await supabaseClient.from('audit_log').insert({
-                        user_id: currentUserId,
-                        action: 'inscripcion',
-                        entity_type: 'student',
-                        entity_id: student.id,
-                        details: { 
-                            student_name: student.full_name, 
-                            monthly_amount: amount, enrollment_fee: enrollmentAmount,
-                            is_special_plan: isSpecial,
-                            total_payments: installmentsCount
-                        }
-                    });
 
                     $('#successAlert').removeClass('d-none');
                     $('#enrollmentForm')[0].reset();
-                    // BUG-04 FIX: Reset UI visibility
-                    $('#specialPlanSwitch').prop('checked', false).trigger('change');
+                    $('#classStartDate').val(todayISO);
                 } catch (err) {
-                    console.error(err);
-                    var errMsg = err.message || "";
-                    if (errMsg.toLowerCase().includes('students_dni_key') || errMsg.toLowerCase().includes('duplicate key value')) {
-                        errMsg = 'Ya existe un alumno registrado con ese DNI.';
-                    }
-                    $('#errorAlert').removeClass('d-none').text('Error: ' + errMsg);
+                    $('#errorAlert').removeClass('d-none').text('Error: ' + err.message);
                 } finally {
-                    setLoading(false);
+                    $('#btnText').removeClass('d-none');
+                    $('#btnLoader').addClass('d-none');
                 }
             });
         });
-
-        function setLoading(isLoading) {
-            if (isLoading) {
-                $('#submitBtn').attr('disabled', true);
-                $('#btnText').addClass('d-none');
-                $('#btnLoader').removeClass('d-none');
-            } else {
-                $('#submitBtn').attr('disabled', false);
-                $('#btnText').removeClass('d-none');
-                $('#btnLoader').addClass('d-none');
-            }
-        }
-
-        async function checkRoleAndUI() {
-            var res = await supabaseClient.auth.getUser();
-            if (!res.data || !res.data.user) return;
-            var pRes = await supabaseClient.from('profiles').select('role').eq('id', res.data.user.id).single();
-            if (pRes.data && pRes.data.role === 'cajero') {
-                $('#sidebarDashLabel').text('Panel Sucursal');
-            } else if (pRes.data && pRes.data.role === 'admin') {
-                // BUG #05: Show "Manage Courses" only for admin
-                $('#btnManageCourses').removeClass('d-none');
-                $('#sidebarUsersItem').show();
-            }
-        }
-    </script>
-
-    <!-- MODAL: Crear Nuevo Curso (Moved to end of body to fix BUG-02, BUG-03 and Escape issue) -->
-    <div class="modal fade" id="courseModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Nuevo Curso</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Nombre del Curso</label>
-                        <input type="text" class="form-control" id="newCourseName" placeholder="Ej: Soldadura Pro">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="saveNewCourse()">Guardar Curso</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: Administrar Cursos (Gap Funcional #05) -->
-    <div class="modal fade" id="manageCoursesModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Administrar Cursos</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
-                    <ul class="list-group list-group-flush" id="manageCoursesList">
-                        <!-- List loaded by loadCoursesManager -->
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-        // ═══════════════════════════════════════
-        //  AUTO-LOGOUT POR INACTIVIDAD (15 min)
-        // ═══════════════════════════════════════
-        var inactivityTimer;
-        function resetInactivityTimer() {
-            clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(async function () {
-                await supabaseClient.auth.signOut();
-                window.location.replace('login.html');
-            }, 15 * 60 * 1000);
-        }
-        $(document).on('mousemove keydown click touchstart', resetInactivityTimer);
-        resetInactivityTimer();
     </script>
 </body>
-
-</html>
+</html>
