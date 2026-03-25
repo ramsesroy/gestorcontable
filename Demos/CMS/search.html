@@ -103,7 +103,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label" for="courseFilter">Filtrar por Curso</label>
+                            <label class="form-label" for="courseFilter">Filtrar por Curso <i class="material-icons help-icon" data-toggle="tooltip" title="Filtra la lista inferior para encontrar alumnos de una carrera específica.">help_outline</i></label>
                             <select id="courseFilter" class="form-control">
                                 <option value="">Todos los cursos</option>
                             </select>
@@ -121,7 +121,7 @@
                                 Nacimiento: <span id="studentBirthDate"></span> |
                                 Sucursal: <span id="studentBranch"></span> |
                                 <span class="text-primary font-weight-bold">Inicia: <span id="studentStartDate"></span></span> |
-                                Estado: <span id="studentStatus" class="badge badge-success">activo</span>
+                                Estado: <span id="studentStatus" class="badge badge-success" data-toggle="tooltip" title="Solo los alumnos activos aparecen en las búsquedas y reportes de mora.">activo</span>
                             </p>
                             <div id="studentAdditionalInfoContainer" class="alert alert-soft-secondary p-8pt mb-0 d-none">
                                 <small><strong>Datos Adicionales:</strong> <span id="studentAdditionalInfoText"></span></small>
@@ -130,7 +130,7 @@
                         <div class="mt-16pt mt-md-0 d-flex align-items-center">
                             <div class="text-right mr-16pt">
                                 <h3 class="mb-0" id="totalDebt">Gs. 0</h3>
-                                <p class="text-50 mb-0">Deuda Vencida</p>
+                                <p class="text-50 mb-0">Deuda Vencida <i class="material-icons help-icon" data-toggle="tooltip" title="Suma de todas las cuotas cuyo vencimiento es anterior a hoy y no han sido pagadas por completo.">help_outline</i></p>
                             </div>
                             <button class="btn btn-sm btn-outline-primary mr-8pt" id="btnEditStudent">
                                 <i class="material-icons icon--left">edit</i> EDITAR
@@ -149,10 +149,10 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Vencimiento</th>
+                                    <th>Vencimiento <i class="material-icons help-icon" data-toggle="tooltip" title="Fecha límite para abonar la cuota sin entrar en mora.">help_outline</i></th>
                                     <th>Monto</th>
-                                    <th>Pagado</th>
-                                    <th>Estado</th>
+                                    <th>Pagado <i class="material-icons help-icon" data-toggle="tooltip" title="Monto total abonado hasta la fecha para esta cuota específica.">help_outline</i></th>
+                                    <th>Estado <i class="material-icons help-icon" data-toggle="tooltip" title="PENDIENTE (sin pagos), PARCIAL (pago incompleto), PAGADO (saldada).">help_outline</i></th>
                                     <th class="text-right">Acción</th>
                                 </tr>
                             </thead>
