@@ -189,17 +189,17 @@
                                 <input type="date" id="dateTo" class="form-control">
                             </div>
                             <div class="form-group mb-md-0 mr-md-8pt">
-                                <button class="btn btn-primary" onclick="applyFilter()">
+                                <button class="btn btn-primary" onclick="applyFilter()" data-toggle="tooltip" title="Aplica el rango de fechas para actualizar todas las estadísticas y gráficos.">
                                     <i class="material-icons mr-4pt">filter_list</i> Filtrar
                                 </button>
                             </div>
                             <div class="form-group mb-md-0">
-                                <button class="btn btn-success" onclick="exportToExcel()">
+                                <button class="btn btn-success" onclick="exportToExcel()" data-toggle="tooltip" title="Genera un archivo Excel con el detalle de cobros registrados en el periodo seleccionado.">
                                     <i class="material-icons mr-4pt">file_download</i> Descargar Excel
                                 </button>
                             </div>
                             <div class="form-group mb-md-0 ml-md-8pt">
-                                <button class="btn btn-outline-secondary" onclick="exportStudentList()">
+                                <button class="btn btn-outline-secondary" onclick="exportStudentList()" data-toggle="tooltip" title="Descarga la lista completa de alumnos de todas las sucursales con su información de contacto.">
                                     <i class="material-icons mr-4pt">people</i> Exportar Alumnos
                                 </button>
                             </div>
@@ -219,7 +219,7 @@
                             <div class="card card-body flex-row align-items-center m-0">
                                 <div class="flex">
                                     <h4 class="mb-0" id="totalIncome">Gs. 0</h4>
-                                    <p class="text-50 mb-0">Ingresos del Período</p>
+                                    <p class="text-50 mb-0">Ingresos del Período <i class="material-icons help-icon" data-toggle="tooltip" title="Suma de todos los cobros (matrículas y cuotas) realizados dentro del rango de fechas que has filtrado arriba.">help_outline</i></p>
                                 </div>
                                 <div class="avatar avatar-sm ml-12pt">
                                     <span class="avatar-title rounded bg-soft-success text-success"><i class="material-icons">trending_up</i></span>
@@ -230,7 +230,7 @@
                             <div class="card card-body flex-row align-items-center m-0">
                                 <div class="flex">
                                     <h4 class="mb-0" id="activeStudents">0</h4>
-                                    <p class="text-50 mb-0">Alumnos Activos</p>
+                                    <p class="text-50 mb-0">Alumnos Activos <i class="material-icons help-icon" data-toggle="tooltip" title="Cantidad total de alumnos marcados como 'activos' hasta el día de hoy en el sistema.">help_outline</i></p>
                                 </div>
                                 <div class="avatar avatar-sm ml-12pt">
                                     <span class="avatar-title rounded bg-soft-primary text-primary"><i class="material-icons">people</i></span>
@@ -241,7 +241,7 @@
                             <div class="card card-body flex-row align-items-center m-0">
                                 <div class="flex">
                                     <h4 class="mb-0" id="overdueAmountKPI">Gs. 0</h4>
-                                    <p class="text-50 mb-0">Deuda Vencida Total</p>
+                                    <p class="text-50 mb-0">Deuda Vencida Total <i class="material-icons help-icon" data-toggle="tooltip" title="Suma de todas las cuotas cuyo vencimiento es anterior a hoy y aún no han sido cobradas.">help_outline</i></p>
                                 </div>
                                 <div class="avatar avatar-sm ml-12pt">
                                     <span class="avatar-title rounded bg-soft-warning text-warning"><i class="material-icons">receipt</i></span>
@@ -252,7 +252,7 @@
 
                     <div class="row">
                         <div class="col-lg-8">
-                            <div class="page-separator"><div class="page-separator__text">Ingresos por Sucursal</div></div>
+                            <div class="page-separator"><div class="page-separator__text">Ingresos por Sucursal <i class="material-icons help-icon" data-toggle="tooltip" title="Distribución de la recaudación total entre las diferentes sedes activas para el periodo filtrado.">help_outline</i></div></div>
                             <div class="card card-body">
                                 <div class="chart" style="height: 250px;">
                                     <canvas id="branchChart" class="chart-canvas"></canvas>
@@ -288,7 +288,7 @@
                     <!-- Massive Update -->
                     <div class="row mt-24pt">
                         <div class="col-12">
-                            <div class="page-separator"><div class="page-separator__text">Gestión Avanzada: Actualización de Aranceles</div></div>
+                            <div class="page-separator"><div class="page-separator__text">Gestión Avanzada: Actualización de Aranceles <i class="material-icons help-icon" data-toggle="tooltip" title="Aplica un aumento porcentual (%) sobre el valor de todas las cuotas pendientes de pago.">help_outline</i></div></div>
                             <div class="card card-body">
                                 <div class="alert alert-soft-danger mb-24pt">
                                     <div class="d-flex align-items-center">
@@ -318,7 +318,7 @@
                     <!-- Billing Breakdown -->
                     <div class="row mt-24pt">
                         <div class="col-12">
-                            <div class="page-separator"><div class="page-separator__text">Desglose Detallado de Facturación</div></div>
+                            <div class="page-separator"><div class="page-separator__text">Desglose Detallado de Facturación <i class="material-icons help-icon" data-toggle="tooltip" title="Lista pormenorizada de cada ingreso registrado, incluyendo sucursal, alumno y concepto.">help_outline</i></div></div>
                             <div class="card">
                                 <div class="table-responsive">
                                     <table class="table mb-0">
