@@ -519,21 +519,26 @@
         }
 
         async function confirmPayment() {
+            var btn = $('#btnConfirmPayment');
             var id = $('#paymentModalId').val();
             var paying = parseFloat($('#paymentModalAmount').val());
             var rem = parseFloat($('#paymentModalRemainingAmount').val());
             var paid = parseFloat($('#paymentModalPaidAmount').val());
             if (paying <= 0 || paying > rem) return showToast('Monto inválido', 'error');
 
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Procesando...');
             var newPaid = paid + paying;
             var status = (newPaid >= parseFloat($('#paymentModalTotalAmount').val())) ? 'pagado' : 'parcial';
             
-            const { error } = await supabaseClient.from('installments').update({ status: status, paid_amount: newPaid, paid_at: new Date() }).eq('id', id);
+            const { error } = await supabaseClient.from('installments').update({ status: status, paid_amount: newPaid, paid_at: new Date().toISOString() }).eq('id', id);
             if (!error) {
                 showToast('Pago registrado', 'success');
                 $('#paymentModal').modal('hide');
-                doSearch($('#searchInput').val());
+                if (currentStudent) doSearch(currentStudent.dni);
+            } else {
+                showToast('Error al registrar pago', 'error');
             }
+            btn.prop('disabled', false).text('Confirmar Pago');
         }
 
         function openEditModal() {
@@ -558,13 +563,21 @@
                 additional_info: $('#editAdditionalInfo').val()
             };
             const { error } = await supabaseClient.from('students').update(upData).eq('id', $('#editStudentId').val());
-            if (!error) { showToast('Alumno actualizado', 'success'); $('#editStudentModal').modal('hide'); doSearch($('#searchInput').val()); }
+            if (!error) { 
+                showToast('Alumno actualizado', 'success'); 
+                $('#editStudentModal').modal('hide'); 
+                if (currentStudent) doSearch(currentStudent.dni);
+            }
         }
 
         async function confirmDeactivate() {
-            await supabaseClient.from('students').update({ status: 'inactivo' }).eq('id', currentStudent.id);
+            const { error } = await supabaseClient.from('students').update({ status: 'inactivo' }).eq('id', currentStudent.id);
             $('#deactivateModal').modal('hide');
-            doSearch($('#searchInput').val());
+            if (!error) {
+                showToast('Alumno desactivado', 'success');
+                $('#studentCard').addClass('d-none');
+                loadStudentList();
+            }
         }
 
         function printTicket(id, num, name, dni, date, paid, total, totalAmt, rem, course, concept) {
