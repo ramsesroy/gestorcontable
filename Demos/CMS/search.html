@@ -247,6 +247,7 @@
                                     <th>#</th>
                                     <th>Vencimiento</th>
                                     <th>Monto</th>
+                                    <th>Pagado</th>
                                     <th>Estado</th>
                                     <th class="text-right">Acción</th>
                                 </tr>
@@ -891,7 +892,7 @@
                 var actionBtn = '';
 
                 if (isPaid || isParcial) {
-                    actionBtn += '<button class="btn btn-sm btn-outline-secondary btn-ticket mr-8pt"' +
+                    actionBtn += '<button class="btn btn-sm btn-outline-primary btn-ticket mr-8pt"' +
                         ' data-id="' + item.id + '"' +
                         ' data-num="' + item.installment_number + '"' +
                         ' data-total="' + totalInstallments + '"' +
@@ -902,7 +903,8 @@
                         ' data-concept="' + (item.concept === 'MATRÍCULA' ? 'Matrícula' : '') + '"' +
                         ' data-amount="' + paidAmount + '"' +
                         ' data-total-amount="' + item.amount + '"' +
-                        ' data-remaining="' + remaining + '">Ticket</button>';
+                        ' data-remaining="' + remaining + '" title="Imprimir Ticket">' +
+                        '<i class="material-icons" style="font-size:18px;">receipt</i></button>';
 
                     actionBtn += '<button class="btn btn-sm btn-outline-danger btn-anular mr-8pt"' +
                         ' data-id="' + item.id + '"' +
@@ -920,7 +922,7 @@
                         ' data-amount="' + item.amount + '"' +
                         ' data-paid="' + paidAmount + '"' +
                         ' data-num="' + item.installment_number + '"' +
-                        ' data-total="' + totalCount + '"' +
+                        ' data-total="' + totalInstallments + '"' +
                         ' data-name="' + studentName.replace(/"/g, '&quot;') + '"' +
                         ' data-dni="' + studentDni + '"' +
                         ' data-course="' + courseName.replace(/"/g, '&quot;') + '"' +
@@ -931,7 +933,8 @@
                     '<tr>' +
                     '<td><strong class="js-lists-values-num">' + (item.concept === 'MATRÍCULA' ? 'Matrícula' : 'Cuota ' + item.installment_number + ' de ' + totalInstallments) + '</strong></td>' +
                     '<td>' + item.due_date + '</td>' +
-                    '<td>' + fmt.format(item.amount) + (isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '') + '</td>' +
+                    '<td>' + fmt.format(item.amount) + '</td>' +
+                    '<td>' + fmt.format(paidAmount) + (isParcial ? `<br><small class="text-danger">Resta: ${fmt.format(remaining)}</small>` : '') + '</td>' +
                     '<td>' + statusBadge + '</td>' +
                     '<td class="text-right">' + actionBtn + '</td>' +
                     '</tr>'
