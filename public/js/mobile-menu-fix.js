@@ -8,6 +8,13 @@
     function initMobileToggle() {
         console.log('[MobileFix] Initializing mobile toggle handlers...');
         
+        // 0. RELOCATE DRAWER TO BODY (to prevent clipping by mdk-drawer-layout)
+        const $drawer = $('#default-drawer, [id*="drawer"]');
+        if ($drawer.length && !$drawer.parent().is('body')) {
+            $('body').prepend($drawer);
+            console.log('[MobileFix] Moved drawer to <body> for viewport stability.');
+        }
+
         // 1. Force Upgrade MDK Components
         if (typeof domFactory !== 'undefined') {
             try {
