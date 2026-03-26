@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="../../public/css/theme.css">
 
     <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -35,6 +35,10 @@
         .stat-card { transition: transform 0.2s; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .stat-card:hover { transform: translateY(-5px); }
     </style>
+    <!-- Supabase & Auth Guard -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="../../public/js/auth-guard.js"></script>
 </head>
 
 <body class="layout-app ">
@@ -298,6 +302,14 @@
                                 <span class="sidebar-menu-text">Reportes</span>
                             </a>
                         </li>
+                                            <li class="sidebar-menu-item">
+                            <div class="sidebar-search" style="padding-top: 0;">
+                                <button id="themeToggle" class="btn btn-outline-light btn-block btn-sm" onclick="toggleTheme()">
+                                    <i class="material-icons" style="position: static; vertical-align: middle; margin-right: 4px;">style</i>
+                                    Cambiar Vista
+                                </button>
+                            </div>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -368,7 +380,7 @@
     <script src="../../public/js/preloader.js"></script>
 
     
-<script src="../../public/js/db.js"></script>
+
 <script src="../../public/js/utils.js"></script>
 <script>
 
@@ -624,6 +636,8 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
+
 
 
 
