@@ -158,59 +158,65 @@
                         </span>
                         <span>CMS Cobranzas</span>
                     </a>
-                    <ul class="sidebar-menu">
-                        <li class="sidebar-menu-item">
+                                        <ul class="sidebar-menu">
+                                            <div class="sidebar-search">
+                        <i class="material-icons">search</i>
+                        <input type="text" id="globalSidebarSearch" placeholder="Buscar Alumno (Nombre/DNI)..." autocomplete="off">
+                        <div id="globalSearchResults" class="sidebar-search-results"></div>
+                    </div>
+                    <li class="sidebar-menu-category">Métricas</li>
+                        <li class="sidebar-menu-item ">
                             <a class="sidebar-menu-button" href="dashboard.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
                                 <span class="sidebar-menu-text">Dashboard</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
+
+                        <li class="sidebar-menu-category">Operaciones</li>
+                        <li class="sidebar-menu-item ">
                             <a class="sidebar-menu-button" href="registration.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
                                 <span class="sidebar-menu-text">Inscripción</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
+                        <li class="sidebar-menu-item ">
                             <a class="sidebar-menu-button" href="search.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span>
                                 <span class="sidebar-menu-text">Cobranzas</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="courses.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
-                                <span class="sidebar-menu-text">Cursos</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item active">
-                            <a class="sidebar-menu-button" href="branches.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
-                                <span class="sidebar-menu-text">Sucursales</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
+                        <li class="sidebar-menu-item ">
                             <a class="sidebar-menu-button" href="expenses.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">payments</span>
                                 <span class="sidebar-menu-text">Gastos</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="report.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
-                                <span class="sidebar-menu-text">Reportes</span>
+
+                        <li class="sidebar-menu-category">Gestión</li>
+                        <li class="sidebar-menu-item ">
+                            <a class="sidebar-menu-button" href="courses.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
+                                <span class="sidebar-menu-text">Cursos</span>
                             </a>
                         </li>
-                        <li id="sidebarUsersItem" class="sidebar-menu-item" style="display:none;">
+                        <li class="sidebar-menu-item active" id="sidebarBranchesItem" style="display:none">
+                            <a class="sidebar-menu-button" href="branches.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
+                                <span class="sidebar-menu-text">Sucursales</span>
+                            </a>
+                        </li>
+                        <li id="sidebarUsersItem" class="sidebar-menu-item " style="display:none;">
                             <a class="sidebar-menu-button" href="users.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span>
                                 <span class="sidebar-menu-text">Usuarios</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item mt-4">
-                            <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
-                                <span class="sidebar-menu-text">Cerrar Sesión</span>
+
+                        <li class="sidebar-menu-category">Auditoría</li>
+                        <li class="sidebar-menu-item ">
+                            <a class="sidebar-menu-button" href="report.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
+                                <span class="sidebar-menu-text">Reportes</span>
                             </a>
                         </li>
                     </ul>
@@ -319,203 +325,10 @@
     <script src="../../public/js/app.js"></script>
     <script src="../../public/js/preloader.js"></script>
 
-    <script>
-        const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let currentUser = null;
-        let branchesData = [];
-
-        $(document).ready(async function () {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) return window.location.replace('login.html');
-            
-            currentUser = session.user;
-            await checkRole();
-            await loadBranches();
-
-            $('#searchBranch').on('input', function() {
-                renderBranches($(this).val());
-            });
-        });
-
-        async function checkRole() {
-            const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', currentUser.id).single();
-            if (profile && profile.role === 'admin') {
-                $('#adminActions').html(`
-                    <button class="btn btn-primary" onclick="openBranchModal()">
-                        <i class="material-icons mr-8pt">add</i> Nueva Sucursal
-                    </button>
-                `);
-                window.isAdmin = true;
-                $('#sidebarUsersItem').show();
-            } else {
-                window.location.replace('dashboard.html');
-            }
-        }
-
-        async function loadBranches() {
-            // Get branches with user counts
-            const { data: branches, error } = await supabaseClient.from('branches').select('*').order('name');
-            const { data: profiles } = await supabaseClient.from('profiles').select('id, branch_id');
-
-            if (error) return console.error(error);
-            
-            // Map user counts
-            const userCounts = {};
-            (profiles || []).forEach(p => {
-                if (p.branch_id) {
-                    userCounts[p.branch_id] = (userCounts[p.branch_id] || 0) + 1;
-                }
-            });
-
-            branchesData = branches.map(b => ({
-                ...b,
-                userCount: userCounts[b.id] || 0
-            }));
-
-            renderBranches();
-        }
-
-        function renderBranches(filter = '') {
-            const tbody = $('#branchTableBody');
-            tbody.empty();
-
-            // Frontend deduplication as a safety measure
-            const uniqueMap = new Map();
-            branchesData.forEach(b => {
-                const stdName = b.name.trim().toLowerCase();
-                if (!uniqueMap.has(stdName)) {
-                    uniqueMap.set(stdName, b);
-                }
-            });
-
-            const uniqueBranches = Array.from(uniqueMap.values());
-            const filtered = uniqueBranches.filter(b => b.name.toLowerCase().includes(filter.toLowerCase()));
-
-            if (filtered.length === 0) {
-                tbody.append('<tr><td colspan="4" class="text-center">No se encontraron sucursales.</td></tr>');
-                return;
-            }
-
-            filtered.forEach(b => {
-                const date = new Date(b.created_at).toLocaleDateString();
-                const isActive = b.active !== false;
-                const statusBadge = isActive ? 
-                    '<span class="badge badge-soft-success">Activa</span>' : 
-                    '<span class="badge badge-soft-secondary">Archivada</span>';
-                
-                const toggleBtn = window.isAdmin ? `
-                    <button class="btn btn-sm ${isActive ? 'btn-outline-warning' : 'btn-outline-success'} ml-4pt" 
-                            onclick="toggleBranchStatus('${b.id}', ${isActive}, '${b.name.replace(/'/g, "\\'")}')"
-                            title="${isActive ? 'Archivar' : 'Activar'}">
-                        <i class="material-icons">${isActive ? 'archive' : 'unarchive'}</i>
-                    </button>
-                ` : '';
-
-                const detailBtn = `
-                    <button class="btn btn-sm btn-outline-info ml-4pt" onclick="openBranchDetailModal('${b.id}', '${b.name.replace(/'/g, "\\'")}')" title="Ver Detalles">
-                        <i class="material-icons">visibility</i>
-                    </button>
-                `;
-
-                const actionBtn = window.isAdmin ? `
-                    <button class="btn btn-sm btn-outline-primary" onclick="openBranchModal('${b.id}', '${b.name.replace(/'/g, "\\'")}')" title="Editar">
-                        <i class="material-icons">edit</i>
-                    </button>
-                    ${detailBtn}
-                    ${toggleBtn}
-                ` : detailBtn;
-
-                tbody.append(`
-                    <tr style="${isActive ? '' : 'opacity: 0.6;'}">
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <strong>${b.name}</strong>
-                                <span class="ml-8pt">${statusBadge}</span>
-                            </div>
-                        </td>
-                        <td><span class="text-50 small">${date}</span></td>
-                        <td><span class="badge badge-soft-dark">${b.userCount} usuarios</span></td>
-                        <td class="text-right">${actionBtn}</td>
-                    </tr>
-                `);
-            });
-        }
-
-        window.openBranchModal = function(id = '', name = '') {
-            $('#branchId').val(id);
-            $('#branchName').val(name);
-            $('#branchModalTitle').text(id ? 'Editar Sucursal' : 'Nueva Sucursal');
-            $('#branchModal').modal('show');
-        };
-
-        window.saveBranch = async function() {
-            const id = $('#branchId').val();
-            const name = $('#branchName').val().trim();
-
-            if (!name) return alert('Ingrese un nombre para la sucursal.');
-
-            try {
-                if (id) {
-                    const { error } = await supabaseClient.from('branches').update({ name }).eq('id', id);
-                    if (error) throw error;
-                    alert('Sucursal actualizada correctamente.');
-                } else {
-                    const { error } = await supabaseClient.from('branches').insert([{ name }]);
-                    if (error) throw error;
-                    alert('Sucursal creada correctamente.');
-                }
-                $('#branchModal').modal('hide');
-                await loadBranches();
-            } catch (err) {
-                if (err.code === '23505') {
-                    alert('Error: Ya existe una sucursal con ese nombre.');
-                } else {
-                    alert('Error al guardar: ' + err.message);
-                }
-            }
-        };
-
-        window.toggleBranchStatus = async function(id, currentStatus, name) {
-            const action = currentStatus ? 'archivar' : 'activar';
-            if (!confirm(`¿Estás seguro de que deseas ${action} la sucursal "${name}"?`)) return;
-
-            try {
-                const { error } = await supabaseClient.from('branches').update({ active: !currentStatus }).eq('id', id);
-                if (error) throw error;
-                alert(`Sucursal ${currentStatus ? 'archivada' : 'activada'} correctamente.`);
-                await loadBranches();
-            } catch (err) {
-                alert(`Error al ${action} la sucursal: ` + err.message);
-                console.error(err);
-            }
-        };
-
-        async function logout() {
-            await supabaseClient.auth.signOut();
-            window.location.replace('login.html');
-        }
-        // ═══════════════════════════════════════
-        //  AUTO-LOGOUT POR INACTIVIDAD (15 min)
-        // ═══════════════════════════════════════
-        var inactivityTimer;
-        function resetInactivityTimer() {
-            clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(async function () {
-                await supabaseClient.auth.signOut();
-                window.location.replace('login.html');
-            }, 15 * 60 * 1000);
-        }
-        $(document).on('mousemove keydown click touchstart', resetInactivityTimer);
-        resetInactivityTimer();
-
-        // ═══════════════════════════════════════
-        //  BRANCH DETAILS & USER MANAGEMENT
-        // ═══════════════════════════════════════
-        let currentEditingBranchId = null;
-        const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
+    
+<script src="../../public/js/db.js"></script>
+<script src="../../public/js/utils.js"></script>
+<script>
 
         window.openBranchDetailModal = async function(id, name) {
             currentEditingBranchId = id;
@@ -632,7 +445,7 @@
                 loadAvailableUsers(currentEditingBranchId);
                 loadBranches(); // Refresh overview counts
             } catch (err) {
-                alert('Error al asignar usuario.');
+                showToast('Error al asignar usuario.');
             }
         };
 
@@ -645,14 +458,22 @@
                 loadAvailableUsers(currentEditingBranchId);
                 loadBranches(); // Refresh overview counts
             } catch (err) {
-                alert('Error al desvincular usuario.');
+                showToast('Error al desvincular usuario.');
             }
         };
     </script>
 <script src="../../public/js/theme-switcher.js"></script>
+<script src="../../public/js/toasts.js"></script>
+<script src="../../public/js/global-search.js"></script>
 </body>
 
 </html>
+
+
+
+
+
+
 
 
 

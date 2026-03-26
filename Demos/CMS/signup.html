@@ -104,10 +104,10 @@
     <script src="../../public/js/app.js"></script>
     <script src="../../public/js/preloader.js"></script>
 
-    <script>
-        const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+<script src="../../public/js/db.js"></script>
+<script src="../../public/js/utils.js"></script>
+<script>
 
         function setStatus(msg, type = 'info') {
             const div = $('#signupMsg');
@@ -169,8 +169,13 @@
         });
     </script>
 <script src="../../public/js/theme-switcher.js"></script>
+<script src="../../public/js/toasts.js"></script>
 </body>
 
 </html>
+
+
+
+
 
 

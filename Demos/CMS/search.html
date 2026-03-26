@@ -258,14 +258,22 @@
                         </span>
                         <span>CMS Cobranzas</span>
                     </a>
-                    <ul class="sidebar-menu">
-                        <li class="sidebar-menu-item">
+                                        <ul class="sidebar-menu">
+                                            <div class="sidebar-search">
+                        <i class="material-icons">search</i>
+                        <input type="text" id="globalSidebarSearch" placeholder="Buscar Alumno (Nombre/DNI)..." autocomplete="off">
+                        <div id="globalSearchResults" class="sidebar-search-results"></div>
+                    </div>
+                    <li class="sidebar-menu-category">Métricas</li>
+                        <li class="sidebar-menu-item ">
                             <a class="sidebar-menu-button" href="dashboard.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
                                 <span class="sidebar-menu-text">Dashboard</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
+
+                        <li class="sidebar-menu-category">Operaciones</li>
+                        <li class="sidebar-menu-item ">
                             <a class="sidebar-menu-button" href="registration.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
                                 <span class="sidebar-menu-text">Inscripción</span>
@@ -277,40 +285,38 @@
                                 <span class="sidebar-menu-text">Cobranzas</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
-                            <a class="sidebar-menu-button" href="courses.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
-                                <span class="sidebar-menu-text">Cursos</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item" id="sidebarBranchesItem" style="display:none">
-                            <a class="sidebar-menu-button" href="branches.html">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
-                                <span class="sidebar-menu-text">Sucursales</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
+                        <li class="sidebar-menu-item ">
                             <a class="sidebar-menu-button" href="expenses.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">payments</span>
                                 <span class="sidebar-menu-text">Gastos</span>
                             </a>
                         </li>
-                        <li id="sidebarUsersItem" class="sidebar-menu-item" style="display:none;">
+
+                        <li class="sidebar-menu-category">Gestión</li>
+                        <li class="sidebar-menu-item ">
+                            <a class="sidebar-menu-button" href="courses.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
+                                <span class="sidebar-menu-text">Cursos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item " id="sidebarBranchesItem" style="display:none">
+                            <a class="sidebar-menu-button" href="branches.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
+                                <span class="sidebar-menu-text">Sucursales</span>
+                            </a>
+                        </li>
+                        <li id="sidebarUsersItem" class="sidebar-menu-item " style="display:none;">
                             <a class="sidebar-menu-button" href="users.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span>
                                 <span class="sidebar-menu-text">Usuarios</span>
                             </a>
                         </li>
-                        <li class="sidebar-menu-item">
+
+                        <li class="sidebar-menu-category">Auditoría</li>
+                        <li class="sidebar-menu-item ">
                             <a class="sidebar-menu-button" href="report.html">
                                 <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
                                 <span class="sidebar-menu-text">Reportes</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item mt-4">
-                            <a class="sidebar-menu-button" href="#" onclick="logout(); return false;">
-                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span>
-                                <span class="sidebar-menu-text">Cerrar Sesión</span>
                             </a>
                         </li>
                     </ul>
@@ -426,11 +432,10 @@
     <script src="../../public/js/app.js"></script>
     <script src="../../public/js/preloader.js"></script>
 
-    <script>
-        const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
+    
+<script src="../../public/js/db.js"></script>
+<script src="../../public/js/utils.js"></script>
+<script>
 
         var currentStudent = null;
         var currentPage = 0;
@@ -690,6 +695,14 @@
         }
     </script>
 <script src="../../public/js/theme-switcher.js"></script>
+<script src="../../public/js/toasts.js"></script>
+<script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
+
+
+
+
+
 

@@ -253,19 +253,31 @@
                         </div>
                     </div>
 
+                    <!-- Revenue Trend Chart -->
                     <div class="row">
-                        <div class="col-lg-8">
-                            <div class="page-separator"><div class="page-separator__text">Ingresos por Sucursal <i class="material-icons help-icon" data-toggle="tooltip" title="Distribución de la recaudación total entre las diferentes sedes activas para el periodo filtrado.">help_outline</i></div></div>
+                        <div class="col-12">
+                            <div class="page-separator"><div class="page-separator__text">Tendencia de Recaudación Diaria <i class="material-icons help-icon" data-toggle="tooltip" title="Evolución de los cobros realizados día a día en el periodo seleccionado.">help_outline</i></div></div>
+                            <div class="card card-body">
+                                <div class="chart" style="height: 300px;">
+                                    <canvas id="revenueTrendChart" class="chart-canvas"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-6" id="branchChartCard">
+                            <div class="page-separator"><div class="page-separator__text">Distribución por Sucursal <i class="material-icons help-icon" data-toggle="tooltip" title="Distribución de la recaudación total entre las diferentes sedes activas para el periodo filtrado.">help_outline</i></div></div>
                             <div class="card card-body">
                                 <div class="chart" style="height: 250px;">
                                     <canvas id="branchChart" class="chart-canvas"></canvas>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
+                        <div class="col-lg-6">
                             <div class="page-separator"><div class="page-separator__text">Pagos Recientes</div></div>
                             <div class="card">
-                                <ul class="list-group list-group-flush" id="recentPayments"></ul>
+                                <ul class="list-group list-group-flush" id="recentPayments" style="max-height: 290px; overflow-y: auto;"></ul>
                             </div>
                         </div>
                     </div>
@@ -467,16 +479,67 @@
                         </span>
                         <span>CMS Cobranzas</span>
                     </a>
-                    <ul class="sidebar-menu">
-                        <li class="sidebar-menu-item active"><a class="sidebar-menu-button" href="dashboard.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span> Dashboard</a></li>
-                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="registration.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span> Inscripción</a></li>
-                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="search.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span> Cobranzas</a></li>
-                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="courses.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span> Cursos</a></li>
-                        <li class="sidebar-menu-item" id="sidebarBranchesItem" style="display:none"><a class="sidebar-menu-button" href="branches.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span> Sucursales</a></li>
-                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="expenses.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left" style="font-size: 20px;">payments</span> <span class="sidebar-menu-text">Gastos</span></a></li>
-                        <li id="sidebarUsersItem" class="sidebar-menu-item" style="display:none;"><a class="sidebar-menu-button" href="users.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span> Usuarios</a></li>
-                        <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="report.html"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span> Reportes</a></li>
-                        <li class="sidebar-menu-item mt-4"><a class="sidebar-menu-button" href="#" onclick="logout(); return false;"><span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">exit_to_app</span> Cerrar Sesión</a></li>
+                                        <ul class="sidebar-menu">
+                                            <div class="sidebar-search">
+                        <i class="material-icons">search</i>
+                        <input type="text" id="globalSidebarSearch" placeholder="Buscar Alumno (Nombre/DNI)..." autocomplete="off">
+                        <div id="globalSearchResults" class="sidebar-search-results"></div>
+                    </div>
+                    <li class="sidebar-menu-category">Métricas</li>
+                        <li class="sidebar-menu-item active">
+                            <a class="sidebar-menu-button" href="dashboard.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">dashboard</span>
+                                <span class="sidebar-menu-text">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-menu-category">Operaciones</li>
+                        <li class="sidebar-menu-item ">
+                            <a class="sidebar-menu-button" href="registration.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">person_add</span>
+                                <span class="sidebar-menu-text">Inscripción</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item ">
+                            <a class="sidebar-menu-button" href="search.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">search</span>
+                                <span class="sidebar-menu-text">Cobranzas</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item ">
+                            <a class="sidebar-menu-button" href="expenses.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">payments</span>
+                                <span class="sidebar-menu-text">Gastos</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-menu-category">Gestión</li>
+                        <li class="sidebar-menu-item ">
+                            <a class="sidebar-menu-button" href="courses.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">library_books</span>
+                                <span class="sidebar-menu-text">Cursos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item " id="sidebarBranchesItem" style="display:none">
+                            <a class="sidebar-menu-button" href="branches.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">store</span>
+                                <span class="sidebar-menu-text">Sucursales</span>
+                            </a>
+                        </li>
+                        <li id="sidebarUsersItem" class="sidebar-menu-item " style="display:none;">
+                            <a class="sidebar-menu-button" href="users.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">people_outline</span>
+                                <span class="sidebar-menu-text">Usuarios</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-menu-category">Auditoría</li>
+                        <li class="sidebar-menu-item ">
+                            <a class="sidebar-menu-button" href="report.html">
+                                <span class="material-icons sidebar-menu-icon sidebar-menu-icon--left">trending_up</span>
+                                <span class="sidebar-menu-text">Reportes</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -494,12 +557,12 @@
     <script src="../../public/js/app.js"></script>
     <script src="../../public/js/preloader.js"></script>
 
-    <script>
-        const SUPABASE_URL = 'https://rdxvcftqfelrsfwkryzo.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeHZjZnRxZmVscnNmd2tyeXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzMzOTQsImV4cCI6MjA4OTE0OTM5NH0.QDz2KZ7pCN0u53sJgNG9RC_GUTQgH6nugDjSIg28eTg';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const fmt = new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 });
+    
+<script src="../../public/js/db.js"></script>
+<script src="../../public/js/utils.js"></script>
+<script>
         var branchChartInstance = null;
+        var revenueTrendChartInstance = null;
         var currentUserRole = null;
         var overdueData = [];
 
@@ -509,10 +572,10 @@
 
         async function logout() { await supabaseClient.auth.signOut(); window.location.replace('login.html'); }
 
-        function toArgDate(dateStr) { return dateStr + 'T00:00:00-03:00'; }
-        function toArgDateEnd(dateStr) { return dateStr + 'T23:59:59-03:00'; }
-        function todayISO() { var n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0'); }
-        function getDefaultRange() { var now = new Date(); var y = now.getFullYear(); var m = String(now.getMonth() + 1).padStart(2, '0'); var lastDay = new Date(y, now.getMonth() + 1, 0).getDate(); return { from: y + '-' + m + '-01', to: y + '-' + m + '-' + String(lastDay).padStart(2, '0') }; }
+        
+        
+        
+        
 
         $(document).ready(initDashboard);
 
@@ -710,6 +773,7 @@
             loadBillingBreakdown(isoF, isoT);
             loadRecentPayments(isoF, isoT);
             renderBranchChart(isoF, isoT);
+            renderRevenueTrendChart(isoF, isoT);
             loadOverdueKPI();
         }
 
@@ -764,13 +828,97 @@
             if (currentUserRole === 'cajero') { $('#branchChartCard').hide(); return; }
             const { data: br } = await supabaseClient.from('branches').select('*');
             const { data: inst } = await supabaseClient.from('installments').select('amount, students!inner(branch_id)').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to);
+            
             const totals = {};
             br.forEach(b => totals[b.id] = 0);
             (inst || []).forEach(i => { if (totals[i.students.branch_id] !== undefined) totals[i.students.branch_id] += parseFloat(i.amount); });
             
+            const labels = br.map(b => b.name);
+            const values = br.map(b => totals[b.id]);
+            const colors = ['#1917ca', '#6f76ba', '#cdaa41', '#adb5bd', '#333333'];
+
             const ctx = document.getElementById('branchChart').getContext('2d');
             if (branchChartInstance) branchChartInstance.destroy();
-            branchChartInstance = new Chart(ctx, { type: 'bar', data: { labels: br.map(b => b.name), datasets: [{ label: 'Ingresos Gs.', data: br.map(b => totals[b.id]), backgroundColor: '#1917ca' }] }, options: { maintainAspectRatio: false } });
+            branchChartInstance = new Chart(ctx, { 
+                type: 'doughnut', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{ 
+                        data: values, 
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }] 
+                }, 
+                options: { 
+                    maintainAspectRatio: false,
+                    legend: { position: 'right' },
+                    cutoutPercentage: 70
+                } 
+            });
+        }
+
+        async function renderRevenueTrendChart(from, to) {
+            const { data: inst } = await supabaseClient.from('installments').select('amount, paid_at').eq('status', 'pagado').gte('paid_at', from).lte('paid_at', to).order('paid_at');
+            
+            // Group by day
+            const dailyData = {};
+            const startDate = new Date(from);
+            const endDate = new Date(to);
+            let current = new Date(startDate);
+            while (current <= endDate) {
+                dailyData[current.toISOString().split('T')[0]] = 0;
+                current.setDate(current.getDate() + 1);
+            }
+
+            (inst || []).forEach(p => {
+                const day = new Date(p.paid_at).toISOString().split('T')[0];
+                if (dailyData[day] !== undefined) dailyData[day] += parseFloat(p.amount);
+            });
+
+            const labels = Object.keys(dailyData).map(d => {
+                const parts = d.split('-');
+                return `${parts[2]}/${parts[1]}`;
+            });
+            const values = Object.values(dailyData);
+
+            const ctx = document.getElementById('revenueTrendChart').getContext('2d');
+            if (revenueTrendChartInstance) revenueTrendChartInstance.destroy();
+
+            revenueTrendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Ingresos Recaudados (Gs.)',
+                        data: values,
+                        fill: true,
+                        backgroundColor: 'rgba(25, 23, 202, 0.1)',
+                        borderColor: '#1917ca',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#1917ca',
+                        pointRadius: 4,
+                        lineTension: 0.1
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                callback: value => fmt.format(value)
+                            }
+                        }]
+                    },
+                    tooltips: {
+                        callbacks: {
+                            label: (item, data) => `Recaudado: ${fmt.format(item.yLabel)}`
+                        }
+                    }
+                }
+            });
         }
 
         async function loadOverdueAlert(branchId = null) {
@@ -829,7 +977,7 @@
 
         async function exportToExcel() {
             const { data } = await supabaseClient.from('audit_log').select('created_at, details').eq('action', 'pago').gte('created_at', toArgDate($('#dateFrom').val())).lte('created_at', toArgDateEnd($('#dateTo').val())).order('created_at', { ascending: false });
-            if (!data || data.length === 0) { alert('No hay datos para exportar en el período seleccionado.'); return; }
+            if (!data || data.length === 0) { showToast('No hay datos para exportar en el período seleccionado.'); return; }
             const rows = data.map(r => ({
                 'Fecha': new Date(r.created_at).toLocaleString('es-AR'),
                 'Alumno': r.details.student_name || '',
@@ -845,7 +993,7 @@
         }
         async function exportStudentList() {
             const { data } = await supabaseClient.from('students').select('full_name, dni, phone, email, branches(name), courses(name)').eq('status', 'activo').order('full_name');
-            if (!data || data.length === 0) { alert('No hay alumnos activos.'); return; }
+            if (!data || data.length === 0) { showToast('No hay alumnos activos.'); return; }
             const rows = data.map(s => ({
                 'Nombre': s.full_name,
                 'DNI': s.dni,
@@ -864,7 +1012,7 @@
             const sel = $('#massUpdateBranch');
             (data || []).forEach(b => sel.append(`<option value="${b.id}">${b.name}</option>`));
         }
-        async function massiveUpdate() { alert('Zona Crítica: Contacte al soporte para actualizaciones masivas.'); }
+        async function massiveUpdate() { showToast('Zona Crítica: Contacte al soporte para actualizaciones masivas.'); }
         function printTicket(id, num, name, dni, date, amount, total, totalA, rem, course, concept) { window.open(`ticket.html?id=${id}&num=${num}&name=${encodeURIComponent(name)}&dni=${encodeURIComponent(dni || '')}&date=${encodeURIComponent(date || '')}&amount=${amount}&course=${encodeURIComponent(course || '')}&total=${total || ''}&concept=${encodeURIComponent(concept || '')}`, '_blank'); }
     </script>
 
@@ -872,6 +1020,15 @@
     <div class="modal fade" id="changePwdModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Cambiar Contraseña</h5></div><div class="modal-body"><input type="password" id="newPassword" class="form-control mb-2" placeholder="Nueva"><input type="password" id="confirmPassword" class="form-control" placeholder="Repetir"></div><div class="modal-footer"><button class="btn btn-primary" id="btnSavePassword">Guardar</button></div></div></div></div>
     <div class="modal fade" id="overdueDetailsModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Cuotas Vencidas</h5></div><div class="modal-body p-0"><table class="table mb-0"><thead><tr><th>Alumno</th><th>Cuota</th><th>Vencimiento</th><th class="text-right">Monto</th></tr></thead><tbody id="overdueDetailsBody"></tbody></table></div><div class="modal-footer"><button class="btn btn-light" data-dismiss="modal">Cerrar</button></div></div></div></div>
 <script src="../../public/js/theme-switcher.js"></script>
+<script src="../../public/js/toasts.js"></script>
+<script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
+
+
+
+
+
+
 
