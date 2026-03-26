@@ -59,8 +59,8 @@
         width: 100%;
     }
 
-    /* HYPER-AGGRESSIVE SIDEBAR FIX (v6.0) */
-    #default-drawer, .mdk-drawer, [id*="drawer"] {
+    /* NUCLEAR SIDEBAR FIX (v7.0) - Library-Agnostic */
+    #ultimate-mobile-nav {
         display: block !important;
         visibility: visible !important;
         position: fixed !important;
@@ -68,43 +68,58 @@
         left: -320px !important;
         width: 280px !important;
         height: 100% !important;
-        z-index: 200000 !important; /* Higher than anything */
-        transition: left 0.3s ease-out !important;
+        z-index: 300000 !important; /* Higher than everything */
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         background: #232231 !important;
-        transform: none !important;
-        opacity: 1 !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+        border-right: 1px solid rgba(255,255,255,0.1) !important;
     }
 
-    /* Active State */
-    #default-drawer.mdk-drawer--open, 
-    body.has-drawer-opened #default-drawer {
+    #ultimate-mobile-nav.active {
         left: 0 !important;
-        box-shadow: 20px 0 50px rgba(0,0,0,0.7) !important;
+        box-shadow: 20px 0 60px rgba(0,0,0,0.8) !important;
     }
 
-    #default-drawer .mdk-drawer__content,
-    #default-drawer .sidebar {
+    /* Target original sidebar classes inside the custom container */
+    #ultimate-mobile-nav .sidebar {
         display: block !important;
         visibility: visible !important;
         width: 100% !important;
-        height: 100% !important;
+        background: transparent !important;
+        position: static !important;
         transform: none !important;
-        opacity: 1 !important;
-        background: #232231 !important;
     }
 
-    /* Top-level Scrim */
-    body.has-drawer-opened::after {
-        content: "" !important;
+    #ultimate-mobile-nav .sidebar-menu-item {
+        display: block !important;
+    }
+
+    /* Nuclear Scrim */
+    #ultimate-scrim {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
         height: 100% !important;
         background: rgba(0,0,0,0.6) !important;
-        z-index: 199999 !important; /* Just below drawer */
+        z-index: 299999 !important;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease !important;
+    }
+
+    #ultimate-scrim.visible {
         display: block !important;
+        opacity: 1 !important;
+    }
+
+    /* Hide ALL MDK drawers to prevent noise */
+    #default-drawer, .mdk-drawer, [id*="drawer"] {
+        display: none !important;
     }
 }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
