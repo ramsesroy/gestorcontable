@@ -1,12 +1,12 @@
 /**
- * Mobile Menu Fix - v7.3 (Accessibility & Scrolling)
+ * Mobile Menu Fix - v7.4 (Touch-Scroll Fix)
  * Ensures the MDK drawer opens correctly on mobile devices by providing a robust toggle fallback.
  */
 (function($) {
     'use strict';
 
     function initMobileToggle() {
-        console.log('[MobileFix v7.0] NUCLEAR RESTORATION ACTIVE...');
+        console.log('[MobileFix v7.4] NUCLEAR TOUCH-SCROLL ACTIVE...');
         
         const createNuclearNav = () => {
             if ($('#ultimate-mobile-nav').length > 0) return;
@@ -14,8 +14,8 @@
             // 1. Find the sidebar source
             const $source = $('.sidebar').first();
             if ($source.length && $source.find('.sidebar-menu-item').length > 0) {
-                // 2. Clone it DEEPLY to keep events (like logout)
-                const $clone = $source.clone(true);
+                // 2. Clone it CLEANLY (false) - Don't clone library event listeners
+                const $clone = $source.clone(false);
                 
                 // 3. CLEAN UP: Strip ALL MDK/Library artifacts from the clone
                 $clone.removeClass('mdk-drawer js-mdk-drawer perfect-scrollbar sidebar-dark sidebar-dark-pickled-bluewood')

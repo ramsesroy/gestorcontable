@@ -73,6 +73,7 @@
         background: var(--sidebar-bg) !important;
         overflow-y: scroll !important; /* Force scrollbar */
         -webkit-overflow-scrolling: touch !important; /* Smooth touch scroll */
+        touch-action: pan-y !important; /* Allow vertical touch gestures */
         box-sizing: border-box !important;
         border-right: 1px solid rgba(255,255,255,0.1) !important;
     }
