@@ -593,7 +593,7 @@
                 setQuickFilter('month');
                 loadAuditLog();
                 loadMassiveUpdateBranches();
-                loadOverdueAlert();
+                loadOverdueshowToast();
                 if (profile.branch_id) {
                     $('#viewToggle').show();
                     loadCajeroDashboard(user.id, profile.branch_id);
@@ -602,7 +602,7 @@
                 $('#adminView').hide();
                 $('#cajeroView').show();
                 loadCajeroDashboard(user.id, profile.branch_id);
-                loadOverdueAlert(profile.branch_id);
+                loadOverdueshowToast(profile.branch_id);
             }
             loadBirthdays(profile);
         }
@@ -921,7 +921,7 @@
             });
         }
 
-        async function loadOverdueAlert(branchId = null) {
+        async function loadOverdueshowToast(branchId = null) {
             const today = new Date();
             const todayStr = today.toISOString().split('T')[0];
             const firstOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
@@ -1012,7 +1012,7 @@
             const sel = $('#massUpdateBranch');
             (data || []).forEach(b => sel.append(`<option value="${b.id}">${b.name}</option>`));
         }
-        async function massiveUpdate() { showToast('Zona Crítica: Contacte al soporte para actualizaciones masivas.'); }
+        async function massiveUpdate() { showToast('Zona Crítica: Contacte al soporte para actualizaciones masivas.', 'warning'); }
         function printTicket(id, num, name, dni, date, amount, total, totalA, rem, course, concept) { window.open(`ticket.html?id=${id}&num=${num}&name=${encodeURIComponent(name)}&dni=${encodeURIComponent(dni || '')}&date=${encodeURIComponent(date || '')}&amount=${amount}&course=${encodeURIComponent(course || '')}&total=${total || ''}&concept=${encodeURIComponent(concept || '')}`, '_blank'); }
     </script>
 
@@ -1024,6 +1024,7 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
 
 
 
