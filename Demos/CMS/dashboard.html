@@ -53,6 +53,7 @@
     <!-- Supabase & Auth Guard -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
+    <script src="../../public/js/db.js"></script>
     <script src="../../public/js/auth-guard.js"></script>
 </head>
 
@@ -73,7 +74,7 @@
 
             <!-- Navbar -->
             <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
-                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button" data-toggle="drawer">
+                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button" data-toggle="drawer" data-target="#default-drawer">
                     <span class="material-icons">short_text</span>
                 </button>
                 <a href="dashboard.html" class="navbar-brand mr-16pt">
@@ -1036,6 +1037,8 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
+
 
 
 

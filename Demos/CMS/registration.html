@@ -37,6 +37,7 @@
     <!-- Supabase & Auth Guard -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
+    <script src="../../public/js/db.js"></script>
     <script src="../../public/js/auth-guard.js"></script>
 </head>
 
@@ -58,7 +59,7 @@
             <!-- Navbar -->
             <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
                 <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button"
-                    data-toggle="drawer">
+                    data-toggle="drawer" data-target="#default-drawer">
                     <span class="material-icons">short_text</span>
                 </button>
                 <a href="dashboard.html" class="navbar-brand mr-16pt">
@@ -182,8 +183,8 @@
 
                             <div class="form-group mb-24pt">
                                 <div class="custom-control custom-switch">
-                                    <input type="checkbox" class="custom-control-input" id="specialPlanSwitch">
-                                    <label class="custom-control-label" for="specialPlanSwitch">¿Es un Plan Especial o Beca? <i class="material-icons help-icon" data-toggle="tooltip" title="Activa esto para definir un monto total y cantidad de pagos específicos (ej. becas o planes personalizados).">help_outline</i></label>
+                                    <input type="checkbox" class="custom-control-input" id="specialPlanSwitch" style="z-index: 5; cursor: pointer;">
+                                    <label class="custom-control-label" for="specialPlanSwitch" style="cursor: pointer;">¿Es un Plan Especial o Beca? <i class="material-icons help-icon" data-toggle="tooltip" title="Activa esto para definir un monto total y cantidad de pagos específicos (ej. becas o planes personalizados).">help_outline</i></label>
                                 </div>
                             </div>
 
@@ -387,8 +388,10 @@
                 courses.forEach(c => $('#course').append(`<option value="${c.id}">${c.name}</option>`));
             }
 
-            $('#specialPlanSwitch').on('change', function() {
-                const checked = $(this).is(':checked');
+            // Better switch toggle logic
+            $(document).on('click', '#specialPlanSwitch', function() {
+                const checked = $(this).prop('checked');
+                console.log('Switch toggled:', checked);
                 if (checked) {
                     $('#standardPlanFields').addClass('d-none');
                     $('#specialPlanFields').removeClass('d-none');
@@ -545,6 +548,8 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
+
 
 
 
