@@ -101,10 +101,10 @@
 
             <!-- Navbar -->
             <div class="navbar navbar-expand navbar-light border-bottom-2 no-print" id="default-navbar" data-primary>
-                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button" data-toggle="sidebar">
+                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button" data-toggle="drawer">
                     <span class="material-icons">short_text</span>
                 </button>
-                <a href="index.html" class="navbar-brand mr-16pt">
+                <a href="dashboard.html" class="navbar-brand mr-16pt">
                     <span class="avatar avatar-sm navbar-brand-icon mr-0 mr-lg-8pt">
                         <span class="avatar-title rounded bg-primary"><img src="logoplayer.svg" alt="logo" class="img-fluid" /></span>
                     </span>
@@ -267,7 +267,7 @@
         <div class="mdk-drawer js-mdk-drawer no-print" id="default-drawer">
             <div class="mdk-drawer__content">
                 <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
-                    <a href="index.html" class="sidebar-brand">
+                    <a href="dashboard.html" class="sidebar-brand">
                         <span class="avatar avatar-xl sidebar-brand-icon h-auto">
                             <span class="avatar-title rounded bg-primary"><img src="logoplayer.svg" class="img-fluid" alt="logo" /></span>
                         </span>
@@ -361,7 +361,60 @@
     
 
 <script src="../../public/js/utils.js"></script>
-<script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const params = new URLSearchParams(window.location.search);
+            const branchId = params.get('branch_id');
+            const from = params.get('from');
+            const to = params.get('to');
+            const type = params.get('type');
+
+            // Load Branches for the filter
+            const { data: branches } = await supabaseClient.from('branches').select('id, name').eq('is_active', true);
+            const selBranch = document.getElementById('selBranch');
+            if (branches) {
+                branches.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.id;
+                    opt.textContent = b.name;
+                    if (branchId === b.id) opt.selected = true;
+                    selBranch.appendChild(opt);
+                });
+            }
+
+            if (!branchId || !from || !to) {
+                // No params, show filter form only
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('selectorUI').style.display = 'block'; 
+                document.getElementById('content').style.display = 'none';
+                return;
+            }
+
+            // If we have params, generate report
+            try {
+                document.getElementById('reportDisplay').style.display = 'block';
+                document.getElementById('filterForm').style.display = 'none';
+                
+                const fromDate = from + 'T00:00:00';
+                const toDate = to + 'T23:59:59';
+
+                let query = supabaseClient.from('audit_log')
+                    .select('*, profiles(first_name)')
+                    .eq('action', 'pago')
+                    .gte('created_at', fromDate)
+                    .lte('created_at', toDate);
+
+                if (branchId !== 'all') {
+                    query = query.eq('details->>branch_id', branchId);
+                }
+
+                const { data: logs, error } = await query.order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('reportTableBody');
+                tbody.innerHTML = '';
+                let grandTotal = 0;
 
                 if (logs && logs.length > 0) {
                     logs.forEach(log => {
@@ -388,7 +441,6 @@
                 document.getElementById('totalAmount').textContent = fmt.format(grandTotal);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
-                // Auto-print removido — use el botón Imprimir para imprimir el reporte
 
             } catch (err) {
                 console.error(err);
@@ -444,6 +496,8 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
+
 
 
 

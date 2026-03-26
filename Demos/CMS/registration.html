@@ -58,10 +58,10 @@
             <!-- Navbar -->
             <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
                 <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button"
-                    data-toggle="sidebar">
+                    data-toggle="drawer">
                     <span class="material-icons">short_text</span>
                 </button>
-                <a href="index.html" class="navbar-brand mr-16pt">
+                <a href="dashboard.html" class="navbar-brand mr-16pt">
                     <span class="avatar avatar-sm navbar-brand-icon mr-0 mr-lg-8pt">
                         <span class="avatar-title rounded bg-primary"><img
                                 src="logoplayer.svg" alt="logo"
@@ -258,7 +258,7 @@
         <div class="mdk-drawer js-mdk-drawer" id="default-drawer">
             <div class="mdk-drawer__content">
                 <div class="sidebar sidebar-dark-pickled-bluewood sidebar-left" data-perfect-scrollbar>
-                    <a href="index.html" class="sidebar-brand">
+                    <a href="dashboard.html" class="sidebar-brand">
                         <span class="avatar avatar-xl sidebar-brand-icon h-auto">
                             <span class="avatar-title rounded bg-primary"><img
                                     src="logoplayer.svg" class="img-fluid"
@@ -365,7 +365,8 @@
                 window.currentUserRole = profile ? profile.role : 'cajero';
             }
 
-            $('[data-toggle="tooltip"]').tooltip();
+            // Tooltips initialization (Hover)
+            $('[data-toggle="tooltip"]').tooltip({ trigger: 'hover' });
             
             const todayISO = new Date().toISOString().split('T')[0];
             $('#classStartDate').val(todayISO);
@@ -388,8 +389,13 @@
 
             $('#specialPlanSwitch').on('change', function() {
                 const checked = $(this).is(':checked');
-                $('#standardPlanFields').toggleClass('d-none', checked);
-                $('#specialPlanFields').toggleClass('d-none', !checked);
+                if (checked) {
+                    $('#standardPlanFields').addClass('d-none');
+                    $('#specialPlanFields').removeClass('d-none');
+                } else {
+                    $('#standardPlanFields').removeClass('d-none');
+                    $('#specialPlanFields').addClass('d-none');
+                }
             });
 
             $('#btnAddCourse').on('click', openCourseModal);
@@ -415,11 +421,20 @@
                 const isSpecial = $('#specialPlanSwitch').is(':checked');
                 const installmentsCount = parseInt(isSpecial ? $('#paymentsCountSpecial').val() : $('#installmentsCount').val());
                 const amount = isSpecial ? Math.round($('#totalAmountSpecial').val() / installmentsCount) : $('#amount').val();
-                studentData.total_payments = installmentsCount;
-
                 try {
-                    const { data: student, error: sError } = await supabaseClient.from('students').insert([studentData]).select().single();
-                    if (sError) throw sError;
+                    // Try to insert with total_payments
+                    var insertPayload = {...studentData};
+                    var { data: student, error: sError } = await supabaseClient.from('students').insert([insertPayload]).select().single();
+                    
+                    if (sError && sError.message.includes('total_payments')) {
+                        console.warn('Fallback: total_payments column missing, retrying without it...');
+                        delete insertPayload.total_payments;
+                        const { data: retryStudent, error: retryError } = await supabaseClient.from('students').insert([insertPayload]).select().single();
+                        if (retryError) throw retryError;
+                        student = retryStudent;
+                    } else if (sError) {
+                        throw sError;
+                    }
 
                     const installments = [];
                     const baseDate = new Date(studentData.start_date + 'T00:00:00');
@@ -530,6 +545,8 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
+
 
 
 
