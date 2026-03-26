@@ -101,7 +101,7 @@
         if (window.innerWidth <= 992) {
             const badge = document.createElement('div');
             badge.id = 'mobile-fix-badge-nuclear';
-            badge.innerHTML = 'NAV NUCLEAR v7.0 READY';
+            badge.innerHTML = 'NAV NUCLEAR v7.5 READY';
             badge.style = 'position:fixed; bottom:5px; right:5px; background:red; color:white; font-size:9px; padding:4px 8px; z-index:400000; border-radius:4px; font-weight:bold; border:2px solid gold;';
             document.body.appendChild(badge);
             setTimeout(() => badge.style.display = 'none', 6000);
