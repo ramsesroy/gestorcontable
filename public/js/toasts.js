@@ -10,6 +10,12 @@ window.showToast = function(msg, type = 'success') {
         document.body.appendChild(container);
     }
 
+    // Auto-detect type if it's default 'success' but message looks like an error
+    const msgLower = msg.toLowerCase();
+    if (type === 'success' && (msgLower.includes('error') || msgLower.includes('fallo') || msgLower.includes('inválido') || msgLower.includes('por favor') || msgLower.includes('ingrese') || msgLower.includes('seleccione'))) {
+        type = 'error';
+    }
+
     const toast = document.createElement('div');
     toast.className = `cms-toast ${type}`;
     

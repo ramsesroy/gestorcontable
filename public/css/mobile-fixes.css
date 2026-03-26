@@ -58,4 +58,45 @@
         text-align: center;
         width: 100%;
     }
+
+    /* UNIVERSAL DRAWER FIX: Bypass MDK logic entirely for mobile */
+    #default-drawer {
+        display: block !important;
+        visibility: visible !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: -100% !important; /* Fully hidden */
+        width: 260px !important;
+        height: 100% !important;
+        z-index: 9999 !important;
+        transition: left 0.3s ease-in-out !important;
+        background: #232231 !important; /* sidebar-dark-pickled-bluewood color */
+    }
+
+    #default-drawer.mdk-drawer--open {
+        left: 0 !important;
+        box-shadow: 10px 0 25px rgba(0,0,0,0.5) !important;
+    }
+
+    #default-drawer .mdk-drawer__content,
+    #default-drawer .sidebar {
+        width: 260px !important;
+        height: 100% !important;
+        display: block !important;
+        visibility: visible !important;
+        transform: none !important;
+    }
+
+    /* Scrim/Overlay Fallback */
+    body.has-drawer-opened::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 9998;
+        display: block;
+    }
 }
