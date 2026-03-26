@@ -36,6 +36,13 @@
                 const $nav = $('<div id="ultimate-mobile-nav"></div>').append($clone);
                 const $scrim = $('<div id="ultimate-scrim"></div>');
                 
+                // UX: Move theme toggle to top for mobile
+                const $toggleLi = $nav.find('[id*="themeToggle"]').closest('li');
+                if ($toggleLi.length) {
+                    $nav.find('.sidebar-menu').prepend($toggleLi);
+                    $toggleLi.css({ 'margin-top': '10px', 'margin-bottom': '10px', 'border-bottom': '1px solid rgba(255,255,255,0.1)', 'padding-bottom': '15px' });
+                }
+
                 $('body').prepend($nav).prepend($scrim);
                 
                 // Close on scrim click

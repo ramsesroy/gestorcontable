@@ -89,6 +89,7 @@
         background: transparent !important;
         position: static !important;
         transform: none !important;
+        padding-bottom: 50px !important; /* Enough space for scrolling last items */
     }
 
     #ultimate-mobile-nav .sidebar-menu-item {
