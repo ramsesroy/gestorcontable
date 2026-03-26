@@ -1,6 +1,6 @@
 /* Mobile UX/UI Specific Fixes - CMS Cobranzas */
 
-@media (max-width: 576px) {
+@media (max-width: 992px) {
     /* Center Quick Guide Headers */
     .card-body .d-flex.align-items-center.mb-8pt {
         flex-direction: column !important;
@@ -59,8 +59,8 @@
         width: 100%;
     }
 
-    /* UNIVERSAL DRAWER FIX: Bypass MDK logic entirely for mobile */
-    #default-drawer {
+    /* UNIVERSAL DRAWER FIX: Bypass MDK logic entirely for mobile/tablets */
+    #default-drawer, [id*="drawer"] {
         display: block !important;
         visibility: visible !important;
         position: fixed !important;
@@ -68,23 +68,27 @@
         left: -100% !important; /* Fully hidden */
         width: 260px !important;
         height: 100% !important;
-        z-index: 9999 !important;
-        transition: left 0.3s ease-in-out !important;
+        z-index: 10001 !important; /* Above everything */
+        transition: left 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) !important;
         background: #232231 !important; /* sidebar-dark-pickled-bluewood color */
     }
 
-    #default-drawer.mdk-drawer--open {
+    #default-drawer.mdk-drawer--open, 
+    #default-drawer.mdk-drawer--visible,
+    [id*="drawer"].mdk-drawer--open {
         left: 0 !important;
-        box-shadow: 10px 0 25px rgba(0,0,0,0.5) !important;
+        box-shadow: 15px 0 35px rgba(0,0,0,0.6) !important;
     }
 
     #default-drawer .mdk-drawer__content,
-    #default-drawer .sidebar {
+    #default-drawer .sidebar,
+    [id*="drawer"] .sidebar {
         width: 260px !important;
         height: 100% !important;
         display: block !important;
         visibility: visible !important;
         transform: none !important;
+        opacity: 1 !important;
     }
 
     /* Scrim/Overlay Fallback */
@@ -95,8 +99,11 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 9998;
+        background: rgba(0,0,0,0.6);
+        z-index: 10000;
         display: block;
+        animation: fadeIn 0.3s ease;
     }
 }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

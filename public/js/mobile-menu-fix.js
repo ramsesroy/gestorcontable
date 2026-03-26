@@ -51,10 +51,26 @@
                 console.log('[MobileFix] Force-toggled mdk-drawer--open class. New state:', !isOpen);
             }
         });
+
+        // 3. Visual Debug Helper (Mobile only)
+        if (window.innerWidth <= 992) {
+            const $debug = $('<div id="mobile-fix-badge" style="position: fixed; bottom: 5px; right: 5px; background: rgba(0,255,0,0.7); color: black; font-size: 8px; padding: 2px 5px; z-index: 10002; border-radius: 3px; pointer-events: none;">NavFix Active</div>');
+            $('#mobile-fix-badge').remove();
+            $('body').append($debug);
+            setTimeout(() => $debug.fadeOut(), 5000);
+        }
     }
 
     // Run on ready and also after a short delay to ensure MDK is loaded
     $(document).ready(initMobileToggle);
     setTimeout(initMobileToggle, 1000);
+    setTimeout(initMobileToggle, 3000); // Second pass for slow connections
+
+    // Re-init on significant resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(initMobileToggle, 500);
+    });
 
 })(jQuery);
