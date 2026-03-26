@@ -455,7 +455,7 @@
             const to = document.getElementById('selTo').value;
             const type = document.getElementById('selType').value;
 
-            if (!branchId || !from || !to) { showToast('Por favor ', 'error'); return; }
+            if (!branchId || !from || !to) { showToast('Por favor complete todos los campos.', 'error'); return; }
 
             const params = new URLSearchParams({ branch_id: branchId, from: from, to: to, type: type });
             window.location.href = 'report.html?' + params.toString();
@@ -497,6 +497,8 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
+
 
 
 

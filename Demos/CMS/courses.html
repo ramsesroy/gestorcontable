@@ -485,7 +485,7 @@
             const id = $('#courseId').val();
             const name = $('#courseName').val().trim();
 
-            if (!name) return showToast('Ingrese ', 'error');
+            if (!name) return showToast('Por favor ingrese los datos requeridos.', 'error');
 
             try {
                 if (id) {
@@ -501,7 +501,7 @@
                 await loadCourses();
             } catch (err) {
                 if (err.code === '23505') {
-                    showToast('Error: ', 'error');
+                    showToast('Error al procesar la solicitud.', 'error');
                 } else {
                     showToast('Error al guardar: ' + err.message);
                 }
@@ -546,6 +546,8 @@
 </body>
 
 </html>
+
+
 
 
 

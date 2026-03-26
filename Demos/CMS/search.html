@@ -652,7 +652,7 @@
                 $('#paymentModal').modal('hide');
                 if (currentStudent) doSearch(currentStudent.dni);
             } else {
-                showToast('Error: ', 'error');
+                showToast('Error al procesar la solicitud.', 'error');
             }
             btn.prop('disabled', false).text('Confirmar Pago');
         }
@@ -712,6 +712,8 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
+
 
 
 
