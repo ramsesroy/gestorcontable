@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" dir="ltr">
 
 <head>
@@ -347,6 +347,95 @@
 
 <script src="../../public/js/utils.js"></script>
 <script>
+
+        var currentEditingBranchId = null;
+
+        $(document).ready(initBranches);
+
+        async function initBranches() {
+            // Check if user is admin
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
+            const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', user.id).single();
+            if (profile && profile.role === 'admin') {
+                $('#adminActions').html('<button class="btn btn-outline-primary" onclick="openBranchModal()"><i class="material-icons mr-8pt">add</i>Nueva Sucursal</button>');
+            } else {
+                window.location.replace('dashboard.html'); // Prevent access to non-admins
+            }
+            loadBranches();
+        }
+
+        async function loadBranches() {
+            const { data: branches, error } = await supabaseClient.from('branches').select('*').eq('active', true).order('name');
+            const tbody = $('#branchTableBody');
+            tbody.empty();
+            if (error || !branches || branches.length === 0) {
+                tbody.append('<tr><td colspan="4" class="text-center">No hay sucursales activas.</td></tr>');
+                return;
+            }
+            for (const b of branches) {
+                // Count users in this branch
+                const { count: usersInBranch } = await supabaseClient.from('profiles').select('*', { count: 'exact', head: true }).eq('branch_id', b.id);
+                tbody.append(`
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm avatar-4by3 mr-12pt">
+                                    <span class="avatar-title rounded bg-soft-primary text-primary"><i class="material-icons">store</i></span>
+                                </div>
+                                <div class="flex">
+                                    <span class="font-weight-bold">${b.name}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="text-50 small">${new Date(b.created_at).toLocaleDateString()}</span></td>
+                        <td><span class="badge badge-notifications badge-soft-secondary">${usersInBranch || 0} Usuarios</span></td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-outline-primary" onclick="openBranchDetailModal('${b.id}', '${b.name}')">Ver Detalles</button>
+                            <button class="btn btn-sm btn-light" onclick="openBranchModal('${b.id}', '${b.name}')"><i class="material-icons" style="font-size:16px;">edit</i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="archiveBranch('${b.id}')"><i class="material-icons" style="font-size:16px;">archive</i></button>
+                        </td>
+                    </tr>
+                `);
+            }
+        }
+
+        window.openBranchModal = function(id = null, name = '') {
+            currentEditingBranchId = id;
+            $('#branchId').val(id || '');
+            $('#branchName').val(name || '');
+            $('#branchModalTitle').text(id ? 'Editar Sucursal' : 'Nueva Sucursal');
+            $('#branchModal').modal('show');
+        };
+
+        window.saveBranch = async function() {
+            const name = $('#branchName').val().trim();
+            if (!name) return showToast('El nombre es obligatorio', 'warning');
+            try {
+                if (currentEditingBranchId) {
+                    await supabaseClient.from('branches').update({ name }).eq('id', currentEditingBranchId);
+                    showToast('Sucursal actualizada', 'success');
+                } else {
+                    await supabaseClient.from('branches').insert([{ name, active: true }]);
+                    showToast('Sucursal creada con éxito', 'success');
+                }
+                $('#branchModal').modal('hide');
+                loadBranches();
+            } catch (err) {
+                showToast('Error al guardar sucursal', 'error');
+            }
+        };
+
+        window.archiveBranch = async function(id) {
+            if (!confirm('¿Seguro que desea archivar esta sucursal? Dejará de aparecer en los selectores.')) return;
+            try {
+                await supabaseClient.from('branches').update({ active: false }).eq('id', id);
+                showToast('Sucursal archivada', 'success');
+                loadBranches();
+            } catch (err) {
+                showToast('Error al archivar sucursal', 'error');
+            }
+        };
 
         window.openBranchDetailModal = async function(id, name) {
             currentEditingBranchId = id;

@@ -426,8 +426,8 @@
                 userBranchId = profile.branch_id;
                 if (profile.role === 'admin') {
                     isAdmin = true;
-                    $('#sidebarUsersItem').show();
-                    $('#sidebarBranchesItem').show();
+                    
+                    
                     $('#branchFilterContainer, #branchColHeader, #expenseBranchContainer').removeClass('d-none');
                     await loadBranchOptions();
                 }

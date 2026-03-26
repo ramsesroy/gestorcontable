@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es" dir="ltr">
 
 <head>
@@ -367,7 +367,7 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 const { data: profile } = await supabaseClient.from('profiles').select('role, branch_id').eq('id', session.user.id).single();
-                if (profile && profile.role === 'admin') { $('#sidebarUsersItem').show(); $('#sidebarBranchesItem').show(); }
+                if (profile && profile.role === 'admin') {   }
                 window.currentUserBranchId = profile ? profile.branch_id : null;
                 window.currentUserRole = profile ? profile.role : 'cajero';
             }
