@@ -1,5 +1,5 @@
 /**
- * Mobile Menu Fix - v2.9.2
+ * Mobile Menu Fix - v7.3 (Accessibility & Scrolling)
  * Ensures the MDK drawer opens correctly on mobile devices by providing a robust toggle fallback.
  */
 (function($) {
@@ -18,9 +18,15 @@
                 const $clone = $source.clone(true);
                 
                 // 3. CLEAN UP: Strip ALL MDK/Library artifacts from the clone
-                $clone.removeClass('mdk-drawer__content js-mdk-drawer perfect-scrollbar sidebar-dark-pickled-bluewood')
+                $clone.removeClass('mdk-drawer js-mdk-drawer perfect-scrollbar sidebar-dark sidebar-dark-pickled-bluewood')
                       .removeAttr('data-perfect-scrollbar')
+                      .removeAttr('data-mdk-drawer')
+                      .removeAttr('data-mdk-reveal')
                       .removeAttr('data-domfactory-upgraded');
+                
+                // Force height auto for native scroll
+                $clone.css('height', 'auto');
+                $clone.find('*').css('height', 'auto');
                 
                 // Remove MDK specific wrapping if any
                 $clone.find('.mdk-drawer__content').contents().unwrap();
@@ -30,7 +36,7 @@
                     $(this).attr('id', $(this).attr('id') + '-nuclear');
                 });
 
-                console.log('[MobileFix v7.1] Sidebar cloned. Toggle exists:', $clone.find('[id*="themeToggle"]').length > 0);
+                console.log('[MobileFix v7.3] Sidebar cleaned (Native Scroll Ready).');
 
                 // 4. Wrap and Inject
                 const $nav = $('<div id="ultimate-mobile-nav"></div>').append($clone);

@@ -71,7 +71,8 @@
         z-index: 300000 !important; /* Higher than everything */
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         background: var(--sidebar-bg) !important;
-        overflow-y: auto !important;
+        overflow-y: scroll !important; /* Force scrollbar */
+        -webkit-overflow-scrolling: touch !important; /* Smooth touch scroll */
         box-sizing: border-box !important;
         border-right: 1px solid rgba(255,255,255,0.1) !important;
     }
@@ -89,7 +90,16 @@
         background: transparent !important;
         position: static !important;
         transform: none !important;
-        padding-bottom: 50px !important; /* Enough space for scrolling last items */
+        height: auto !important; /* Essential for scrolling */
+        min-height: 101% !important; /* Ensure content is tall enough to trigger scroll */
+        padding-bottom: 80px !important; 
+    }
+
+    #ultimate-mobile-nav .sidebar-menu-text,
+    #ultimate-mobile-nav .sidebar-menu-icon,
+    #ultimate-mobile-nav .sidebar-menu-category {
+        color: #ffffff !important; /* Absolute highest contrast for mobile */
+        opacity: 1 !important;
     }
 
     #ultimate-mobile-nav .sidebar-menu-item {
