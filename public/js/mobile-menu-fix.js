@@ -30,6 +30,8 @@
                     $(this).attr('id', $(this).attr('id') + '-nuclear');
                 });
 
+                console.log('[MobileFix v7.1] Sidebar cloned. Toggle exists:', $clone.find('[id*="themeToggle"]').length > 0);
+
                 // 4. Wrap and Inject
                 const $nav = $('<div id="ultimate-mobile-nav"></div>').append($clone);
                 const $scrim = $('<div id="ultimate-scrim"></div>');

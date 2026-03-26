@@ -37,11 +37,14 @@
         localStorage.setItem('cms-theme', next);
         applyTheme();
         
-        // Find and update any toggle button text if needed
-        const btn = document.getElementById('themeToggle');
-        if (btn) {
-            // Optional: update text if needed, though usually icon is enough
-        }
+        // Update ALL toggle buttons (original and mobile clones)
+        const btns = document.querySelectorAll('#themeToggle, [id*="themeToggle"]');
+        btns.forEach(btn => {
+            // Success highlight
+            btn.style.transition = 'all 0.3s ease';
+            btn.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)';
+            setTimeout(() => btn.style.boxShadow = 'none', 500);
+        });
     };
 
     // Apply on load

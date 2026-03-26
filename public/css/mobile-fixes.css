@@ -93,6 +93,13 @@
 
     #ultimate-mobile-nav .sidebar-menu-item {
         display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    #ultimate-mobile-nav .sidebar-search {
+        display: block !important;
+        opacity: 1 !important;
     }
 
     /* Nuclear Scrim */
