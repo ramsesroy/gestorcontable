@@ -59,51 +59,54 @@
         width: 100%;
     }
 
-    /* UNIVERSAL DRAWER FIX: Bypass MDK logic entirely for mobile/tablets */
-    #default-drawer, [id*="drawer"] {
-        display: block !important;
-        visibility: visible !important;
+    /* CUSTOM HIGH-STABILITY MOBILE NAV (Final Solution) */
+    #custom-mobile-nav {
         position: fixed !important;
         top: 0 !important;
-        left: -100% !important; /* Fully hidden */
-        width: 260px !important;
+        left: -300px !important;
+        width: 280px !important;
         height: 100% !important;
-        z-index: 10001 !important; /* Above everything */
-        transition: left 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) !important;
-        background: #232231 !important; /* sidebar-dark-pickled-bluewood color */
-    }
-
-    #default-drawer.mdk-drawer--open, 
-    #default-drawer.mdk-drawer--visible,
-    [id*="drawer"].mdk-drawer--open {
-        left: 0 !important;
+        z-index: 30000 !important;
+        background: #232231 !important;
         box-shadow: 15px 0 35px rgba(0,0,0,0.6) !important;
-    }
-
-    #default-drawer .mdk-drawer__content,
-    #default-drawer .sidebar,
-    [id*="drawer"] .sidebar {
-        width: 260px !important;
-        height: 100% !important;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow-y: auto !important;
         display: block !important;
         visibility: visible !important;
-        transform: none !important;
+    }
+
+    #custom-mobile-nav.open {
+        left: 0 !important;
+    }
+
+    #custom-mobile-nav .sidebar {
+        width: 100% !important;
+        display: block !important;
+        visibility: visible !important;
+        position: static !important;
+    }
+
+    /* Custom Scrim */
+    #custom-mobile-scrim {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0,0,0,0.6) !important;
+        z-index: 29999 !important;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease !important;
+    }
+
+    #custom-mobile-scrim.visible {
+        display: block !important;
         opacity: 1 !important;
     }
 
-    /* Scrim/Overlay Fallback */
-    body.has-drawer-opened::after {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.6);
-        z-index: 10000;
-        display: block;
-        animation: fadeIn 0.3s ease;
-    }
+    /* Hide MDK Drawer on smaller screens to avoid confusion */
+    .mdk-drawer { display: none !important; }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

@@ -6,78 +6,75 @@
     'use strict';
 
     function initMobileToggle() {
-        console.log('[MobileFix] Initializing mobile toggle handlers...');
+        console.log('[MobileFix] Initializing high-stability custom handlers...');
         
-        // 0. RELOCATE DRAWER TO BODY (to prevent clipping by mdk-drawer-layout)
-        const $drawer = $('#default-drawer, [id*="drawer"]');
-        if ($drawer.length && !$drawer.parent().is('body')) {
-            $('body').prepend($drawer);
-            console.log('[MobileFix] Moved drawer to <body> for viewport stability.');
-        }
+        // 1. CLONE SIDEBAR FOR STABLE MOBILE NAV
+        if ($('#custom-mobile-nav').length === 0) {
+            const $originalSidebar = $('#default-drawer .sidebar').first();
+            if ($originalSidebar.length) {
+                const $clone = $originalSidebar.clone(true);
+                $clone.find('[id]').each(function() {
+                    $(this).attr('id', $(this).attr('id') + '-clone');
+                });
+                
+                const $nav = $('<div id="custom-mobile-nav"></div>').append($clone);
+                const $scrim = $('<div id="custom-mobile-scrim"></div>');
+                
+                $('body').prepend($nav).prepend($scrim);
+                
+                // Close on scrim click
+                $scrim.on('click', function() {
+                    $nav.removeClass('open');
+                    $scrim.removeClass('visible');
+                    $('body').removeClass('has-drawer-opened');
+                });
 
-        // 1. Force Upgrade MDK Components
-        if (typeof domFactory !== 'undefined') {
-            try {
-                domFactory.handler.upgradeAll();
-                console.log('[MobileFix] MDK components upgraded.');
-            } catch (e) {
-                console.error('[MobileFix] Error upgrading MDK components:', e);
+                console.log('[MobileFix] Custom mobile nav created.');
             }
         }
 
-        // 2. Manual Toggle Listener
+        // 2. Override Toggle Listener
         $(document).off('click.mobiletoggle').on('click.mobiletoggle', '[data-toggle="sidebar"]', function(e) {
+            if (window.innerWidth > 992) return; // Only for mobile/tablet
+
             e.preventDefault();
             e.stopPropagation();
             
-            const target = $(this).attr('data-target') || '#default-drawer';
-            const drawerEl = document.querySelector(target);
+            console.log('[MobileFix] Custom toggle triggered.');
+
+            const $nav = $('#custom-mobile-nav');
+            const $scrim = $('#custom-mobile-scrim');
             
-            console.log('[MobileFix] Toggle clicked for:', target);
-
-            if (drawerEl && drawerEl.mdkDrawer) {
-                try {
-                    drawerEl.mdkDrawer.toggle();
-                    console.log('[MobileFix] Toggled using mdkDrawer property.');
-                } catch (err) {
-                    console.error('[MobileFix] MDK Toggle Error:', err);
-                }
-            }
-
-            // FORCE CLASS TOGGLE AS FAIL-SAFE
-            const $drawer = $(target);
-            if ($drawer.length) {
-                const isOpen = $drawer.hasClass('mdk-drawer--open');
-                if (isOpen) {
-                    $drawer.removeClass('mdk-drawer--open');
-                    $('body').removeClass('has-drawer-opened');
-                } else {
-                    $drawer.addClass('mdk-drawer--open');
-                    $('body').addClass('has-drawer-opened');
-                }
-                console.log('[MobileFix] Force-toggled mdk-drawer--open class. New state:', !isOpen);
+            if ($nav.hasClass('open')) {
+                $nav.removeClass('open');
+                $scrim.removeClass('visible');
+                $('body').removeClass('has-drawer-opened');
+            } else {
+                $nav.addClass('open');
+                $scrim.addClass('visible');
+                $('body').addClass('has-drawer-opened');
             }
         });
 
-        // 3. Visual Debug Helper (Mobile only)
+        // 3. Visual Debug Helper
         if (window.innerWidth <= 992) {
-            const $debug = $('<div id="mobile-fix-badge" style="position: fixed; bottom: 5px; right: 5px; background: rgba(0,255,0,0.7); color: black; font-size: 8px; padding: 2px 5px; z-index: 10002; border-radius: 3px; pointer-events: none;">NavFix Active</div>');
-            $('#mobile-fix-badge').remove();
-            $('body').append($debug);
-            setTimeout(() => $debug.fadeOut(), 5000);
+            if ($('#mobile-fix-badge').length === 0) {
+                const $debug = $('<div id="mobile-fix-badge" style="position: fixed; bottom: 5px; right: 5px; background: rgba(0,255,0,0.7); color: black; font-size: 8px; padding: 2px 5px; z-index: 30001; border-radius: 3px; pointer-events: none;">NavFix v3 Active</div>');
+                $('body').append($debug);
+                setTimeout(() => $debug.fadeOut(), 5000);
+            }
         }
     }
 
-    // Run on ready and also after a short delay to ensure MDK is loaded
+    // Run on ready and also after a short delay
     $(document).ready(initMobileToggle);
-    setTimeout(initMobileToggle, 1000);
-    setTimeout(initMobileToggle, 3000); // Second pass for slow connections
+    setTimeout(initMobileToggle, 1500); // Wait for other scripts to populate sidebar
 
-    // Re-init on significant resize
-    let resizeTimer;
     window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(initMobileToggle, 500);
+        if (window.innerWidth > 992) {
+            $('#custom-mobile-nav').removeClass('open');
+            $('#custom-mobile-scrim').removeClass('visible');
+        }
     });
 
 })(jQuery);
