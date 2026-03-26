@@ -1,12 +1,12 @@
 /**
- * Mobile Menu Fix - v7.4 (Touch-Scroll Fix)
+ * Mobile Menu Fix - v7.6 (Scroll Wrapper Fix)
  * Ensures the MDK drawer opens correctly on mobile devices by providing a robust toggle fallback.
  */
 (function($) {
     'use strict';
 
     function initMobileToggle() {
-        console.log('[MobileFix v7.4] NUCLEAR TOUCH-SCROLL ACTIVE...');
+        console.log('[MobileFix v7.6] NUCLEAR SCROLL-WRAPPER ACTIVE...');
         
         const createNuclearNav = () => {
             if ($('#ultimate-mobile-nav').length > 0) return;
@@ -39,7 +39,8 @@
                 console.log('[MobileFix v7.3] Sidebar cleaned (Native Scroll Ready).');
 
                 // 4. Wrap and Inject
-                const $nav = $('<div id="ultimate-mobile-nav"></div>').append($clone);
+                const $scrollWrapper = $('<div class="nuclear-scroll-wrapper"></div>').append($clone);
+                const $nav = $('<div id="ultimate-mobile-nav"></div>').append($scrollWrapper);
                 const $scrim = $('<div id="ultimate-scrim"></div>');
                 
                 // UX: Move theme toggle to top for mobile
@@ -101,7 +102,7 @@
         if (window.innerWidth <= 992) {
             const badge = document.createElement('div');
             badge.id = 'mobile-fix-badge-nuclear';
-            badge.innerHTML = 'NAV NUCLEAR v7.5 READY';
+            badge.innerHTML = 'NAV NUCLEAR v7.6 READY';
             badge.style = 'position:fixed; bottom:5px; right:5px; background:red; color:white; font-size:9px; padding:4px 8px; z-index:400000; border-radius:4px; font-weight:bold; border:2px solid gold;';
             document.body.appendChild(badge);
             setTimeout(() => badge.style.display = 'none', 6000);

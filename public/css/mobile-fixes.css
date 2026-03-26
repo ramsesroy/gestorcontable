@@ -71,11 +71,17 @@
         z-index: 300000 !important; /* Higher than everything */
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         background: var(--sidebar-bg) !important;
-        overflow-y: scroll !important; /* Force scrollbar */
-        -webkit-overflow-scrolling: touch !important; /* Smooth touch scroll */
-        touch-action: pan-y !important; /* Allow vertical touch gestures */
+        overflow: hidden !important; /* Wrapper will handle scroll */
         box-sizing: border-box !important;
         border-right: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    .nuclear-scroll-wrapper {
+        width: 100% !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
     }
 
     #ultimate-mobile-nav.active {
@@ -85,8 +91,7 @@
 
     body.has-drawer-opened {
         overflow: hidden !important;
-        position: fixed !important;
-        width: 100% !important;
+        /* position: fixed removed as it can block touch-scroll in some engines */
     }
 
     /* Target original sidebar classes inside the custom container */
