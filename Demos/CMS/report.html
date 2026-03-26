@@ -371,7 +371,7 @@
             const type = params.get('type');
 
             // Load Branches for the filter
-            const { data: branches } = await supabaseClient.from('branches').select('id, name').eq('is_active', true);
+            const { data: branches } = await supabaseClient.from('branches').select('id, name').eq('active', true).order('name');
             const selBranch = document.getElementById('selBranch');
             if (branches) {
                 branches.forEach(b => {
@@ -455,7 +455,7 @@
             const to = document.getElementById('selTo').value;
             const type = document.getElementById('selType').value;
 
-            if (!branchId || !from || !to) { showToast('Por favor complete todos los campos.'); return; }
+            if (!branchId || !from || !to) { showToast('Por favor ', 'error'); return; }
 
             const params = new URLSearchParams({ branch_id: branchId, from: from, to: to, type: type });
             window.location.href = 'report.html?' + params.toString();
@@ -480,7 +480,7 @@
         window.exportToExcel = function() {
             var table = document.getElementById("reportTable");
             if (!table || table.rows.length <= 1) {
-                showToast("No hay datos para exportar.");
+                showToast("No hay datos para exportar.", "warning");
                 return;
             }
 
@@ -497,6 +497,7 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
 
 
 

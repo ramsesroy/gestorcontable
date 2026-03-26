@@ -990,7 +990,7 @@
 
         async function exportToExcel() {
             const { data } = await supabaseClient.from('audit_log').select('created_at, details').eq('action', 'pago').gte('created_at', toArgDate($('#dateFrom').val())).lte('created_at', toArgDateEnd($('#dateTo').val())).order('created_at', { ascending: false });
-            if (!data || data.length === 0) { showToast('No hay datos para exportar en el período seleccionado.'); return; }
+            if (!data || data.length === 0) { showToast('No hay ', 'warning'); return; }
             const rows = data.map(r => ({
                 'Fecha': new Date(r.created_at).toLocaleString('es-AR'),
                 'Alumno': r.details.student_name || '',
@@ -1006,7 +1006,7 @@
         }
         async function exportStudentList() {
             const { data } = await supabaseClient.from('students').select('full_name, dni, phone, email, branches(name), courses(name)').eq('status', 'activo').order('full_name');
-            if (!data || data.length === 0) { showToast('No hay alumnos activos.'); return; }
+            if (!data || data.length === 0) { showToast('No hay ', 'warning'); return; }
             const rows = data.map(s => ({
                 'Nombre': s.full_name,
                 'DNI': s.dni,
@@ -1037,6 +1037,7 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
 
 
 

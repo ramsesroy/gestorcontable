@@ -458,7 +458,7 @@
                 loadAvailableUsers(currentEditingBranchId);
                 loadBranches(); // Refresh overview counts
             } catch (err) {
-                showToast('Error al asignar usuario.');
+                showToast('Error: ', 'error');
             }
         };
 
@@ -471,7 +471,7 @@
                 loadAvailableUsers(currentEditingBranchId);
                 loadBranches(); // Refresh overview counts
             } catch (err) {
-                showToast('Error al desvincular usuario.');
+                showToast('Error: ', 'error');
             }
         };
     </script>
@@ -481,6 +481,7 @@
 </body>
 
 </html>
+
 
 
 

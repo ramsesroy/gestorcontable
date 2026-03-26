@@ -495,7 +495,7 @@
         function openCourseModal() { $('#courseModal').modal('show'); }
         async function saveNewCourse() {
             const name = $('#newCourseName').val().trim();
-            if (!name) return showToast('Ingrese un nombre');
+            if (!name) return showToast('Ingrese ', 'error');
             try {
                 const { data, error } = await supabaseClient.from('courses').insert([{ name }]).select();
                 if (error) throw error;
@@ -510,7 +510,7 @@
                 // Select the new one
                 if (data && data[0]) sel.val(data[0].id);
                 showToast('Curso creado y seleccionado', 'success');
-            } catch (err) { showToast('Error: ' + err.message); }
+            } catch (err) { showToast('Error: ', 'error'); }
         }
 
         function showToast(msg, type) {
@@ -548,6 +548,7 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
 
 
 

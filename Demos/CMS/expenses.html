@@ -586,11 +586,11 @@
 
             if (isAdmin) {
                 branchId = $('#expenseBranchId').val();
-                if (!branchId) return showToast('Seleccione una sucursal.');
+                if (!branchId) return showToast('Seleccione una sucursal.', 'error');
             }
 
             if (!description || !category || isNaN(amount) || !date) {
-                return showToast('Por favor complete todos los campos requeridos.');
+                return showToast('Por favor ', 'error');
             }
 
             try {
@@ -637,6 +637,7 @@
 <script src="../../public/js/global-search.js"></script>
 </body>
 </html>
+
 
 
 

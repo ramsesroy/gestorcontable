@@ -485,7 +485,7 @@
             const id = $('#courseId').val();
             const name = $('#courseName').val().trim();
 
-            if (!name) return showToast('Ingrese un nombre para el curso.');
+            if (!name) return showToast('Ingrese ', 'error');
 
             try {
                 if (id) {
@@ -501,7 +501,7 @@
                 await loadCourses();
             } catch (err) {
                 if (err.code === '23505') {
-                    showToast('Error: Ya existe un curso con ese nombre.');
+                    showToast('Error: ', 'error');
                 } else {
                     showToast('Error al guardar: ' + err.message);
                 }
@@ -546,6 +546,7 @@
 </body>
 
 </html>
+
 
 
 
