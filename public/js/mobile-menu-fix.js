@@ -8,10 +8,12 @@
     function initMobileToggle() {
         console.log('[MobileFix] Initializing high-stability custom handlers...');
         
-        // 1. CLONE SIDEBAR FOR STABLE MOBILE NAV
-        if ($('#custom-mobile-nav').length === 0) {
+        const tryClone = () => {
+            if ($('#custom-mobile-nav').length > 0) return;
+
             const $originalSidebar = $('#default-drawer .sidebar').first();
-            if ($originalSidebar.length) {
+            // Check if sidebar has menu items before cloning
+            if ($originalSidebar.length && $originalSidebar.find('.sidebar-menu-item').length > 0) {
                 const $clone = $originalSidebar.clone(true);
                 $clone.find('[id]').each(function() {
                     $(this).attr('id', $(this).attr('id') + '-clone');
@@ -29,22 +31,39 @@
                     $('body').removeClass('has-drawer-opened');
                 });
 
-                console.log('[MobileFix] Custom mobile nav created.');
+                console.log('[MobileFix] Custom mobile nav created successfully with content.');
+                return true;
             }
+            return false;
+        };
+
+        // 1. Initial attempt
+        if (!tryClone()) {
+            // 2. Poll every second for 5 seconds
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                if (tryClone() || attempts > 5) clearInterval(interval);
+            }, 1000);
         }
 
         // 2. Override Toggle Listener
         $(document).off('click.mobiletoggle').on('click.mobiletoggle', '[data-toggle="sidebar"]', function(e) {
-            if (window.innerWidth > 992) return; // Only for mobile/tablet
+            if (window.innerWidth > 992) return;
 
             e.preventDefault();
             e.stopPropagation();
             
-            console.log('[MobileFix] Custom toggle triggered.');
-
             const $nav = $('#custom-mobile-nav');
             const $scrim = $('#custom-mobile-scrim');
             
+            console.log('[MobileFix] Custom toggle triggered. Nav exists:', $nav.length);
+
+            if ($nav.length === 0) {
+                // Last ditch attempt to clone
+                tryClone();
+            }
+
             if ($nav.hasClass('open')) {
                 $nav.removeClass('open');
                 $scrim.removeClass('visible');
@@ -58,17 +77,16 @@
 
         // 3. Visual Debug Helper
         if (window.innerWidth <= 992) {
-            if ($('#mobile-fix-badge').length === 0) {
-                const $debug = $('<div id="mobile-fix-badge" style="position: fixed; bottom: 5px; right: 5px; background: rgba(0,255,0,0.7); color: black; font-size: 8px; padding: 2px 5px; z-index: 30001; border-radius: 3px; pointer-events: none;">NavFix v3 Active</div>');
-                $('body').append($debug);
-                setTimeout(() => $debug.fadeOut(), 5000);
-            }
+            const $debug = $('<div id="mobile-fix-badge" style="position: fixed; bottom: 5px; right: 5px; background: rgba(0,255,0,0.8); color: black; font-size: 9px; padding: 4px 8px; z-index: 30005; border-radius: 4px; pointer-events: none; font-weight: bold; border: 1px solid black;">NavFix v4.1 Ready</div>');
+            $('#mobile-fix-badge').remove();
+            $('body').append($debug);
+            setTimeout(() => $debug.fadeOut(1000), 8000);
         }
     }
 
-    // Run on ready and also after a short delay
+    // Run immediately and on ready
+    initMobileToggle();
     $(document).ready(initMobileToggle);
-    setTimeout(initMobileToggle, 1500); // Wait for other scripts to populate sidebar
 
     window.addEventListener('resize', () => {
         if (window.innerWidth > 992) {
