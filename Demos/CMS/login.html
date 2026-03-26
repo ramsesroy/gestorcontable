@@ -87,29 +87,6 @@
 
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script src="../../public/vendor/jquery.min.js"></script>
-    <script src="../../public/vendor/popper.min.js"></script>
-    <script src="../../public/vendor/bootstrap.min.js"></script>
-    <script src="../../public/vendor/perfect-scrollbar.min.js"></script>
-    <script src="../../public/vendor/dom-factory.js"></script>
-    <script src="../../public/vendor/material-design-kit.js"></script>
-    <script src="../../public/js/app.js"></script>
-    <script src="../../public/js/preloader.js"></script>
-
-    <script>
-        // CONFIGURACIÓN DE SUPABASE
-            <script src="../../public/js/db.js"></script>
-    <script src="../../public/js/utils.js"></script>
-
-        // Check if already logged in
-        supabaseClient.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                window.location.replace('dashboard.html');
-            }
-        });
-
         // Password Toggle
         $('#togglePassword').on('click', function () {
             var input = $('#password');
