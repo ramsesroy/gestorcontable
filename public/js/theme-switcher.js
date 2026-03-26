@@ -13,22 +13,19 @@
         if (theme === 'institutional') {
             document.body.classList.add('theme-institutional');
             if (themeMeta) themeMeta.setAttribute('content', INST_COLOR);
-            logos.forEach(img => {
-                if (img.tagName === 'IMG') img.src = INST_LOGO;
-                else {
-                    const childImg = img.querySelector('img');
-                    if (childImg) childImg.src = INST_LOGO;
-                }
+            
+            // Comprehensive logo selector including nuclear clones
+            const allLogos = document.querySelectorAll('.navbar-brand-icon img, .sidebar-brand-icon img, .navbar-brand img, .login-logo, #ultimate-mobile-nav img');
+            allLogos.forEach(img => {
+                if (img.src.indexOf('logoplayer.svg') === -1) img.src = INST_LOGO;
             });
         } else {
             document.body.classList.remove('theme-institutional');
             if (themeMeta) themeMeta.setAttribute('content', CLASSIC_COLOR);
-            logos.forEach(img => {
-                if (img.tagName === 'IMG') img.src = CLASSIC_LOGO;
-                else {
-                    const childImg = img.querySelector('img');
-                    if (childImg) childImg.src = CLASSIC_LOGO;
-                }
+            
+            const allLogos = document.querySelectorAll('.navbar-brand-icon img, .sidebar-brand-icon img, .navbar-brand img, .login-logo, #ultimate-mobile-nav img');
+            allLogos.forEach(img => {
+                if (img.src.indexOf('white.svg') === -1) img.src = CLASSIC_LOGO;
             });
         }
     }

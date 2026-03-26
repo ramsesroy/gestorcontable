@@ -70,7 +70,7 @@
         height: 100% !important;
         z-index: 300000 !important; /* Higher than everything */
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        background: #232231 !important;
+        background: var(--sidebar-bg) !important;
         overflow-y: auto !important;
         box-sizing: border-box !important;
         border-right: 1px solid rgba(255,255,255,0.1) !important;
