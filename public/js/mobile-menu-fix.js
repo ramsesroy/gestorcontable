@@ -89,6 +89,8 @@
 
             if ($nav.hasClass('active')) {
                 $nav.removeClass('active');
+                // Keep it closed by default on initial injection
+                // Mobile menus should only open via explicit user interaction
                 $scrim.removeClass('visible');
                 $('body').removeClass('has-drawer-opened');
             } else {
@@ -109,6 +111,12 @@
         }
     }
 
-    $(document).ready(initMobileToggle);
+    $(document).ready(function() {
+        if (window.innerWidth <= 992) {
+            initMobileToggle();
+        } else {
+            console.log('[MobileFix v7.9] Desktop detected. Nuclear menu skipped.');
+        }
+    });
 
 })(jQuery);

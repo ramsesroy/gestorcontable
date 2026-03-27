@@ -20,12 +20,9 @@
     <link type="text/css" href="../../public/css/preloader.css" rel="stylesheet">
     <link type="text/css" href="../../public/css/app.css" rel="stylesheet">
 
-    <!-- Supabase JS -->
-    
-	<link rel="stylesheet" href="../../public/css/theme.css">
+    <link rel="stylesheet" href="../../public/css/theme.css">
     <!-- Supabase & Auth Guard -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script src="../../public/js/db.js"></script>
     <script src="../../public/js/auth-guard.js"></script>
 </head>
@@ -302,8 +299,20 @@
 
     
 
-<script src="../../public/js/utils.js"></script>
-<script>
+    <!-- Vendor Scripts (Required before logic) -->
+    <script src="../../public/vendor/jquery.min.js"></script>
+    <script src="../../public/vendor/popper.min.js"></script>
+    <script src="../../public/vendor/bootstrap.min.js"></script>
+    <script src="../../public/vendor/perfect-scrollbar.min.js"></script>
+    <script src="../../public/vendor/dom-factory.js"></script>
+    <script src="../../public/vendor/material-design-kit.js"></script>
+    <script src="../../public/vendor/Chart.min.js"></script>
+    <script src="../../public/js/app.js"></script>
+    <script src="../../public/js/mobile-menu-fix.js"></script>
+    <script src="../../public/js/preloader.js"></script>
+
+    <script src="../../public/js/utils.js"></script>
+    <script>
 
         let branches = [];
 
@@ -311,11 +320,16 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) return window.location.replace('login.html');
             
-            // Redirigir si no es admin
-            const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).single();
+            // RBAC Redirect & Sidebar Sync
+            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', session.user.id).single();
             if (!profile || profile.role !== 'admin') {
                 window.location.replace('dashboard.html');
+                return;
             }
+
+            // Sync Sidebar Visibility
+            if (document.getElementById('sidebarBranchesItem')) document.getElementById('sidebarBranchesItem').style.display = 'block';
+            if (document.getElementById('sidebarUsersItem')) document.getElementById('sidebarUsersItem').style.display = 'block';
 
             await loadBranches();
             await loadUsers();
@@ -589,18 +603,6 @@
         $(document).on('mousemove keydown click touchstart', resetInactivityTimer);
         resetInactivityTimer();
     </script>
-    <!-- Scripts -->
-    <script src="../../public/vendor/jquery.min.js"></script>
-    <script src="../../public/vendor/popper.min.js"></script>
-    <script src="../../public/vendor/bootstrap.min.js"></script>
-    <script src="../../public/vendor/perfect-scrollbar.min.js"></script>
-    <script src="../../public/vendor/dom-factory.js"></script>
-    <script src="../../public/vendor/material-design-kit.js"></script>
-    <script src="../../public/vendor/Chart.min.js"></script>
-    <script src="../../public/js/app.js"></script>
-    <script src="../../public/js/mobile-menu-fix.js"></script>
-    <script src="../../public/js/preloader.js"></script>
-
     <script src="../../public/js/theme-switcher.js"></script>
     <script src="../../public/js/toasts.js"></script>
     <script src="../../public/js/global-search.js"></script>
