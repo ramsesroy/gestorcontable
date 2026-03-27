@@ -160,7 +160,21 @@
             </div>
 
             <div class="container page__container py-32pt">
-                <!-- Selector UI (Hidden by default) -->
+                <div class="row align-items-center mb-24pt no-print">
+                    <div class="col">
+                        <h1 class="h2 mb-0">Reporte de Cobranzas</h1>
+                    </div>
+                    <div id="actionButtons" class="col-auto" style="display: none;">
+                        <button class="btn btn-outline-success mr-8pt" onclick="exportToExcel()">
+                            <i class="material-icons mr-4pt">description</i> Exportar a Excel
+                        </button>
+                        <button class="btn btn-primary" onclick="window.print()">
+                            <i class="material-icons mr-4pt">print</i> Imprimir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selector UI (Filters) -->
                 <div id="selectorUI" class="card card-body no-print mb-24pt" style="display:none; max-width: 600px; margin: auto;">
                     <h2 class="text-center">Generar Reporte</h2>
                     <p class="text-center text-50 mb-24pt">Seleccione los parámetros para el cierre de caja</p>
@@ -170,20 +184,6 @@
                         <select id="selBranch" class="form-control custom-select">
                             <option value="">Seleccione una sucursal</option>
                         </select>
-                    </div>
-
-                    <div class="row align-items-center mb-24pt no-print">
-                        <div class="col">
-                            <h1 class="h2 mb-0">Reporte de Cobranzas</h1>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-outline-success mr-8pt" onclick="exportToExcel()">
-                                <i class="material-icons mr-4pt">description</i> Exportar a Excel
-                            </button>
-                            <button class="btn btn-primary" onclick="window.print()">
-                                <i class="material-icons mr-4pt">print</i> Imprimir
-                            </button>
-                        </div>
                     </div>
 
                     <div class="row">
@@ -386,6 +386,7 @@
                 // No params, show filter form only
                 if (document.getElementById('loader')) document.getElementById('loader').style.display = 'none';
                 if (document.getElementById('selectorUI')) document.getElementById('selectorUI').style.display = 'block'; 
+                if (document.getElementById('actionButtons')) document.getElementById('actionButtons').style.display = 'none';
                 if (document.getElementById('content')) document.getElementById('content').style.display = 'none';
                 return;
             }
@@ -393,6 +394,7 @@
             // If we have params, generate report
             try {
                 if (document.getElementById('content')) document.getElementById('content').style.display = 'block';
+                if (document.getElementById('actionButtons')) document.getElementById('actionButtons').style.display = 'block';
                 if (document.getElementById('selectorUI')) document.getElementById('selectorUI').style.display = 'none';
                 
                 const fromDate = from + 'T00:00:00';
