@@ -384,16 +384,16 @@
 
             if (!branchId || !from || !to) {
                 // No params, show filter form only
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('selectorUI').style.display = 'block'; 
-                document.getElementById('content').style.display = 'none';
+                if (document.getElementById('loader')) document.getElementById('loader').style.display = 'none';
+                if (document.getElementById('selectorUI')) document.getElementById('selectorUI').style.display = 'block'; 
+                if (document.getElementById('content')) document.getElementById('content').style.display = 'none';
                 return;
             }
 
             // If we have params, generate report
             try {
-                document.getElementById('reportDisplay').style.display = 'block';
-                document.getElementById('filterForm').style.display = 'none';
+                if (document.getElementById('content')) document.getElementById('content').style.display = 'block';
+                if (document.getElementById('selectorUI')) document.getElementById('selectorUI').style.display = 'none';
                 
                 const fromDate = from + 'T00:00:00';
                 const toDate = to + 'T23:59:59';
@@ -412,7 +412,8 @@
 
                 if (error) throw error;
 
-                const tbody = document.getElementById('reportTableBody');
+                const tbody = document.getElementById('reportItems');
+                if (!tbody) return;
                 tbody.innerHTML = '';
                 let grandTotal = 0;
 
