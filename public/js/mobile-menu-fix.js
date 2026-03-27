@@ -99,13 +99,13 @@
         });
 
         // 6. Final Status Badge
-        if (window.innerWidth <= 992) {
+        if (window.innerWidth <= 992 && !$('#mobile-fix-badge-nuclear').length) {
             const badge = document.createElement('div');
             badge.id = 'mobile-fix-badge-nuclear';
-            badge.innerHTML = 'NAV NUCLEAR v7.6 READY';
-            badge.style = 'position:fixed; bottom:5px; right:5px; background:red; color:white; font-size:9px; padding:4px 8px; z-index:400000; border-radius:4px; font-weight:bold; border:2px solid gold;';
+            badge.innerHTML = 'NAV NUCLEAR v7.9 READY (Desktop Fix Active)';
+            badge.style = 'position:fixed; bottom:5px; right:5px; background:green; color:white; font-size:9px; padding:4px 8px; z-index:400000; border-radius:4px; font-weight:bold; border:2px solid white;';
             document.body.appendChild(badge);
-            setTimeout(() => badge.style.display = 'none', 6000);
+            setTimeout(() => { if(badge) badge.style.display = 'none'; }, 6000);
         }
     }
 

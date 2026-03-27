@@ -1,5 +1,12 @@
 /* Mobile UX/UI Specific Fixes - CMS Cobranzas */
 
+/* Force Hide Mobile-Only Elements on Desktop by Default */
+#ultimate-mobile-nav, 
+#ultimate-scrim, 
+#mobile-fix-badge-nuclear {
+    display: none !important;
+}
+
 @media (max-width: 992px) {
     /* Center Quick Guide Headers */
     .card-body .d-flex.align-items-center.mb-8pt {
@@ -150,6 +157,15 @@
     #ultimate-scrim.visible {
         display: block !important;
         opacity: 1 !important;
+    }
+
+    /* Force Show Mobile-Only Elements on Mobile */
+    #ultimate-mobile-nav {
+        display: block !important;
+        visibility: visible !important;
+    }
+    #mobile-fix-badge-nuclear {
+        display: block !important;
     }
 
     /* Hide ALL MDK drawers to prevent noise */
