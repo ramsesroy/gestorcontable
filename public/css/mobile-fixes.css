@@ -75,18 +75,21 @@
         left: -320px !important;
         width: 280px !important;
         height: 100% !important;
-        z-index: 300000 !important; /* Higher than everything */
+        height: 100dvh !important;
+        z-index: 300000 !important;
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         background: var(--sidebar-bg) !important;
-        overflow: hidden !important; /* Wrapper will handle scroll */
+        overflow: clip !important;  /* clip doesn't intercept touch events like 'hidden' does */
         box-sizing: border-box !important;
         border-right: 1px solid rgba(255,255,255,0.1) !important;
     }
 
     .nuclear-scroll-wrapper {
         width: 100% !important;
-        height: 100vh !important;
-        overflow-y: scroll !important;  /* scroll, not auto — iOS Safari requires this */
+        height: 100% !important;
+        height: 100dvh !important;        /* iOS address bar aware */
+        overflow-x: hidden !important;
+        overflow-y: scroll !important;    /* 'scroll' required for iOS, not 'auto' */
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         overscroll-behavior: contain !important;
@@ -98,8 +101,11 @@
     }
 
     body.has-drawer-opened {
+        /* Use position:fixed instead of overflow:hidden.
+           overflow:hidden on body breaks child scroll on iOS Safari. */
         overflow: hidden !important;
-        /* position: fixed removed as it can block touch-scroll in some engines */
+        position: fixed !important;
+        width: 100% !important;
     }
 
     /* Target original sidebar classes inside the custom container */

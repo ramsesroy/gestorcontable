@@ -54,9 +54,7 @@
                 
                 // Close on scrim click
                 $scrim.on('click', function() {
-                    $nav.removeClass('active');
-                    $scrim.removeClass('visible');
-                    $('body').removeClass('has-drawer-opened');
+                    closeNavDrawer($nav, $scrim);
                 });
 
                 console.log('[MobileFix v7.0] Nuclear menu injected successfully.');
@@ -88,17 +86,41 @@
             if ($nav.length === 0) createNuclearNav();
 
             if ($nav.hasClass('active')) {
-                $nav.removeClass('active');
-                // Keep it closed by default on initial injection
-                // Mobile menus should only open via explicit user interaction
-                $scrim.removeClass('visible');
-                $('body').removeClass('has-drawer-opened');
+                closeNavDrawer($nav, $scrim);
             } else {
-                $nav.addClass('active');
-                $scrim.addClass('visible');
-                $('body').addClass('has-drawer-opened');
+                openNavDrawer($nav, $scrim);
             }
         });
+
+        function openNavDrawer($nav, $scrim) {
+            // Save scroll position so body:fixed doesn't jump
+            window._navScrollY = window.scrollY || document.documentElement.scrollTop;
+            document.body.style.top = '-' + window._navScrollY + 'px';
+            $nav.addClass('active');
+            $scrim.addClass('visible');
+            $('body').addClass('has-drawer-opened');
+
+            // iOS: prevent body touchmove, allow scroll inside wrapper
+            document.addEventListener('touchmove', _bodyTouchLock, { passive: false });
+        }
+
+        function closeNavDrawer($nav, $scrim) {
+            $nav.removeClass('active');
+            $scrim.removeClass('visible');
+            $('body').removeClass('has-drawer-opened');
+            // Restore scroll position after un-fixing body
+            const scrollY = window._navScrollY || 0;
+            document.body.style.top = '';
+            window.scrollTo(0, scrollY);
+
+            document.removeEventListener('touchmove', _bodyTouchLock, { passive: false });
+        }
+
+        function _bodyTouchLock(e) {
+            // Allow scroll only inside .nuclear-scroll-wrapper
+            if (e.target.closest && e.target.closest('.nuclear-scroll-wrapper')) return;
+            e.preventDefault();
+        }
 
         // 6. Final Status Badge
         if (window.innerWidth <= 992 && !$('#mobile-fix-badge-nuclear').length) {
