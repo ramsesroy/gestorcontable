@@ -192,13 +192,24 @@
                             </div>
 
                             <div id="standardPlanFields">
-                                <div class="form-group mb-24pt">
+                                <div class="form-group mb-16pt">
                                     <label class="form-label" for="amount">Monto de la cuota mensual: <i class="material-icons help-icon" data-toggle="tooltip" title="Monto fijo que el alumno pagará cada mes.">help_outline</i></label>
                                     <div class="input-group input-group-merge">
                                         <input id="amount" type="number" class="form-control form-control-prepended">
                                         <div class="input-group-prepend">
                                             <div class="input-group-text">Gs.</div>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sync helper -->
+                                <div class="form-group mb-24pt">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="syncFeeCheck">
+                                        <label class="custom-control-label text-muted" for="syncFeeCheck" style="cursor:pointer;">
+                                            <i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:2px;">link</i>
+                                            La matrícula es igual al monto de la cuota
+                                        </label>
                                     </div>
                                 </div>
 
@@ -409,6 +420,23 @@
                 }
             });
 
+            // ── Sync matrícula = cuota ─────────────────────────
+            function syncFee() {
+                if ($('#syncFeeCheck').is(':checked')) {
+                    const val = $('#amount').val();
+                    $('#enrollmentFee').val(val).prop('disabled', true).css('background', '#f8f9fa');
+                }
+            }
+            $('#syncFeeCheck').on('change', function () {
+                if ($(this).is(':checked')) {
+                    syncFee();
+                } else {
+                    $('#enrollmentFee').prop('disabled', false).css('background', '').val(0);
+                }
+            });
+            $('#amount').on('input', syncFee);
+            // ── End sync ───────────────────────────────────────
+
             $('#btnAddCourse').on('click', openCourseModal);
 
             $('#enrollmentForm').on('submit', async function (e) {
@@ -491,6 +519,9 @@
 
                     $('#successAlert').removeClass('d-none');
                     $('#enrollmentForm')[0].reset();
+                    // Reset sync checkbox state
+                    $('#syncFeeCheck').prop('checked', false);
+                    $('#enrollmentFee').prop('disabled', false).css('background', '').val(0);
                     $('#classStartDate').val(todayISO);
                 } catch (err) {
                     $('#errorAlert').removeClass('d-none').text('Error: ' + err.message);
