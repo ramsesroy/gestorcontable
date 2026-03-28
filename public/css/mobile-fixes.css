@@ -125,12 +125,9 @@
     }
 
     #ultimate-mobile-nav * {
-        pointer-events: auto !important; /* Ensure children catch touches */
-        /* touch-action must NOT be 'auto' here — it would block pan-y scroll */
-    }
-    /* Allow vertical pan inside the scroll wrapper without interference */
-    #ultimate-mobile-nav .nuclear-scroll-wrapper * {
-        touch-action: pan-y !important;
+        pointer-events: auto !important;
+        /* Do NOT set touch-action here — let the scroll wrapper's pan-y handle scroll,
+           and children keep their default 'auto' so links/buttons remain tappable on Android */
     }
 
     #ultimate-mobile-nav .sidebar-menu-text,
