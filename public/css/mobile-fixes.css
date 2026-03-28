@@ -85,10 +85,11 @@
 
     .nuclear-scroll-wrapper {
         width: 100% !important;
-        height: 100% !important;
-        overflow-y: auto !important;
+        height: 100vh !important;
+        overflow-y: scroll !important;  /* scroll, not auto — iOS Safari requires this */
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
+        overscroll-behavior: contain !important;
     }
 
     #ultimate-mobile-nav.active {
@@ -119,7 +120,11 @@
 
     #ultimate-mobile-nav * {
         pointer-events: auto !important; /* Ensure children catch touches */
-        touch-action: auto !important;
+        /* touch-action must NOT be 'auto' here — it would block pan-y scroll */
+    }
+    /* Allow vertical pan inside the scroll wrapper without interference */
+    #ultimate-mobile-nav .nuclear-scroll-wrapper * {
+        touch-action: pan-y !important;
     }
 
     #ultimate-mobile-nav .sidebar-menu-text,
