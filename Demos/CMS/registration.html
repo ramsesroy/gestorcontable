@@ -474,18 +474,20 @@
                             paid_at: new Date().toISOString(),
                             concept: 'MATRÍCULA'
                         }]);
-                        $('#btnPrintEnrollment').on('click', () => {
-                            const params = new URLSearchParams({
-                                name: student.full_name,
-                                dni: student.dni,
-                                concept: 'Matrícula',
-                                amount: enrollmentAmount,
-                                date: new Date().toLocaleDateString()
-                            });
-                            window.open('ticket.html?' + params.toString());
-                        });
-                        $('#successActions').removeClass('d-none');
                     }
+
+                    // Always show print button — fee ticket if paid, enrollment confirmation otherwise
+                    $('#btnPrintEnrollment').off('click').on('click', () => {
+                        const params = new URLSearchParams({
+                            name: student.full_name,
+                            dni: student.dni,
+                            concept: enrollmentAmount > 0 ? 'Matrícula' : 'Inscripción',
+                            amount: enrollmentAmount,
+                            date: new Date().toLocaleDateString()
+                        });
+                        window.open('ticket.html?' + params.toString());
+                    });
+                    $('#successActions').removeClass('d-none');
 
                     $('#successAlert').removeClass('d-none');
                     $('#enrollmentForm')[0].reset();
