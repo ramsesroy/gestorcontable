@@ -66,7 +66,7 @@
         width: 100%;
     }
 
-    /* NUCLEAR SIDEBAR FIX (v7.0) - Library-Agnostic */
+    /* NUCLEAR SIDEBAR FIX (v8.0) - Nav scrolls directly */
     #ultimate-mobile-nav {
         display: block !important;
         visibility: visible !important;
@@ -79,20 +79,20 @@
         z-index: 300000 !important;
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         background: var(--sidebar-bg) !important;
-        overflow: clip !important;  /* clip doesn't intercept touch events like 'hidden' does */
         box-sizing: border-box !important;
         border-right: 1px solid rgba(255,255,255,0.1) !important;
-    }
-
-    .nuclear-scroll-wrapper {
-        width: 100% !important;
-        height: 100% !important;
-        height: 100dvh !important;        /* iOS address bar aware */
+        /* Scroll is on the nav itself - simplest reliable pattern for all mobile browsers */
         overflow-x: hidden !important;
-        overflow-y: scroll !important;    /* 'scroll' required for iOS, not 'auto' */
+        overflow-y: scroll !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         overscroll-behavior: contain !important;
+    }
+
+    /* Scroll wrapper just holds the content, no overflow needed */
+    .nuclear-scroll-wrapper {
+        width: 100% !important;
+        min-height: 101% !important; /* Must be taller than the nav to trigger scroll */
     }
 
     #ultimate-mobile-nav.active {
@@ -108,7 +108,7 @@
         width: 100% !important;
     }
 
-    /* Target original sidebar classes inside the custom container */
+    /* Sidebar inside nav - height auto so it can overflow and be scrolled */
     #ultimate-mobile-nav .sidebar {
         display: block !important;
         visibility: visible !important;

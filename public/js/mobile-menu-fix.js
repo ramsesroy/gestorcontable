@@ -117,8 +117,8 @@
         }
 
         function _bodyTouchLock(e) {
-            // Allow scroll only inside .nuclear-scroll-wrapper
-            if (e.target.closest && e.target.closest('.nuclear-scroll-wrapper')) return;
+            // Allow scroll inside the nav drawer (the nav itself is the scroll container now)
+            if (e.target.closest && e.target.closest('#ultimate-mobile-nav')) return;
             e.preventDefault();
         }
 
