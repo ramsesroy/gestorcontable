@@ -81,46 +81,25 @@
             const $nav = $('#ultimate-mobile-nav');
             const $scrim = $('#ultimate-scrim');
             
-            console.log('[MobileFix v7.0] Toggle triggered. Nav exists:', $nav.length);
-
             if ($nav.length === 0) createNuclearNav();
 
             if ($nav.hasClass('active')) {
-                closeNavDrawer($nav, $scrim);
+                $nav.removeClass('active');
+                $scrim.removeClass('visible');
+                $('html, body').removeClass('has-drawer-opened');
             } else {
-                openNavDrawer($nav, $scrim);
+                $nav.addClass('active');
+                $scrim.addClass('visible');
+                $('html, body').addClass('has-drawer-opened');
             }
         });
 
-        function openNavDrawer($nav, $scrim) {
-            // Save scroll position so body:fixed doesn't jump
-            window._navScrollY = window.scrollY || document.documentElement.scrollTop;
-            document.body.style.top = '-' + window._navScrollY + 'px';
-            $nav.addClass('active');
-            $scrim.addClass('visible');
-            $('body').addClass('has-drawer-opened');
-
-            // iOS: prevent body touchmove, allow scroll inside wrapper
-            document.addEventListener('touchmove', _bodyTouchLock, { passive: false });
-        }
-
-        function closeNavDrawer($nav, $scrim) {
-            $nav.removeClass('active');
-            $scrim.removeClass('visible');
-            $('body').removeClass('has-drawer-opened');
-            // Restore scroll position after un-fixing body
-            const scrollY = window._navScrollY || 0;
-            document.body.style.top = '';
-            window.scrollTo(0, scrollY);
-
-            document.removeEventListener('touchmove', _bodyTouchLock, { passive: false });
-        }
-
-        function _bodyTouchLock(e) {
-            // Allow scroll inside the nav drawer (the nav itself is the scroll container now)
-            if (e.target.closest && e.target.closest('#ultimate-mobile-nav')) return;
-            e.preventDefault();
-        }
+        // Close on scrim click (delegated if needed, but here we attach to the instance)
+        $(document).on('click', '#ultimate-scrim', function() {
+            $('#ultimate-mobile-nav').removeClass('active');
+            $(this).removeClass('visible');
+            $('html, body').removeClass('has-drawer-opened');
+        });
 
         // 6. Final Status Badge
         if (window.innerWidth <= 992 && !$('#mobile-fix-badge-nuclear').length) {
