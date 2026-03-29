@@ -88,11 +88,11 @@
                 <div class="ml-auto d-flex align-items-center">
                     <div id="viewToggle" class="mr-16pt" style="display:none;">
                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                            <label class="btn btn-sm btn-outline-primary active" id="labelViewAdmin">
-                                <input type="radio" name="viewMode" value="admin" checked> Global
+                            <label class="btn btn-sm btn-outline-primary" id="labelViewAdmin">
+                                <input type="radio" name="viewMode" value="admin"> Global
                             </label>
-                            <label class="btn btn-sm btn-outline-primary" id="labelViewCajero">
-                                <input type="radio" name="viewMode" value="cajero"> Sucursal
+                            <label class="btn btn-sm btn-outline-primary active" id="labelViewCajero">
+                                <input type="radio" name="viewMode" value="cajero" checked> Sucursal
                             </label>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
             </div>
 
             <!-- ADMIN VIEW -->
-            <div id="adminView">
+            <div id="adminView" style="display:none;">
                 <div class="py-32pt bg-alt border-bottom-2">
                     <div class="container page__container">
                         <div class="d-flex flex-column flex-md-row align-items-center">
@@ -355,7 +355,7 @@
             </div>
 
             <!-- CAJERO VIEW -->
-            <div id="cajeroView" style="display:none;">
+            <div id="cajeroView">
                 <div class="py-32pt bg-alt border-bottom-2">
                     <div class="container page__container">
                         <h3 class="mb-8pt">¡Bienvenido/a! 👋</h3>
@@ -546,11 +546,11 @@
                                 <span class="sidebar-menu-text">Reportes</span>
                             </a>
                         </li>
-                                            <li class="sidebar-menu-item">
+                        <li class="sidebar-menu-item">
                             <div class="sidebar-search" style="padding-top: 0;">
-                                <button id="themeToggle" class="btn btn-outline-light btn-block btn-sm" onclick="toggleTheme()">
+                                <button id="themeToggle" class="btn btn-white btn-block btn-sm shadow-sm" onclick="toggleTheme()" style="color: #1917ca; font-weight: bold;">
                                     <i class="material-icons" style="position: static; vertical-align: middle; margin-right: 4px;">style</i>
-                                    Cambiar Vista
+                                    Tema Institucional
                                 </button>
                             </div>
                         </li>
@@ -607,8 +607,6 @@
 
             currentUserRole = profile.role;
             if (profile.role === 'admin') {
-                
-                
                 $('#btnChangePassword').show();
                 setQuickFilter('month');
                 loadAuditLog();
@@ -616,7 +614,16 @@
                 loadOverdueshowToast();
                 if (profile.branch_id) {
                     $('#viewToggle').show();
+                    // Admin with branch: show Cajero/Sucursal view by default as requested
+                    $('#adminView').hide();
+                    $('#cajeroView').show();
                     loadCajeroDashboard(user.id, profile.branch_id);
+                } else {
+                    // Admin without branch (Superadmin): must see Global view
+                    $('#adminView').show();
+                    $('#cajeroView').hide();
+                    $('input[name="viewMode"][value="admin"]').prop('checked', true).parent().addClass('active');
+                    $('input[name="viewMode"][value="cajero"]').prop('checked', false).parent().removeClass('active');
                 }
             } else {
                 $('#adminView').hide();

@@ -194,6 +194,42 @@
         opacity: 1 !important;
     }
 
+    /* ── 9. MOBILE HEADER ACTIONS (v10.1) ───────────────── */
+    .mobile-header-actions {
+        display: flex !important;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto !important;
+        padding-right: 8px;
+    }
+    .mobile-header-actions .btn {
+        padding: 4px 8px !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .mobile-header-actions .btn i {
+        font-size: 18px !important;
+    }
+
+    /* Adjust navbar brand on mobile to prevent squishing */
+    .navbar-brand {
+        margin-right: 8px !important;
+        flex-shrink: 1;
+        overflow: hidden;
+    }
+    .navbar-brand span.avatar {
+        width: 30px !important;
+        height: 30px !important;
+    }
+    
+    /* Hide the original desktop toggle area on mobile */
+    #viewToggle, #btnChangePassword {
+        display: none !important;
+    }
+
     /* ── SCRIM (backdrop) ────────────────────────────────── */
     #ultimate-scrim {
         position: fixed !important;

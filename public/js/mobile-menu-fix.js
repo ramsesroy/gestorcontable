@@ -40,81 +40,134 @@
     }
     // ──────────────────────────────────────────────────────────────────────────
 
+    function relocateHeaderButtons() {
+        if ($('.mobile-header-actions').length > 0) return;
+        
+        // Find navbar logo (brand)
+        const $brand = $('.navbar-brand').first();
+        if (!$brand.length) return;
+
+        // Create a dedicated container in the navbar for our top buttons
+        const $actions = $('<div class="mobile-header-actions d-flex align-items-center ml-auto"></div>');
+        
+        // 1. View Toggle Button (Cajeras usually don't have this, only admins)
+        // We'll check if #viewToggle exists in the DOM (indicating admin role)
+        const $origToggle = $('#viewToggle');
+        if ($origToggle.length) {
+            const $viewBtn = $('<button class="btn btn-sm btn-primary mr-8pt shadow-sm" id="mobileViewToggle" title="Cambiar Vista">' +
+                               '<i class="material-icons">style</i></button>');
+            
+            $viewBtn.on('click', function() {
+                const current = $('input[name="viewMode"]:checked').val();
+                const next = current === 'admin' ? 'cajero' : 'admin';
+                $(`input[name="viewMode"][value="${next}"]`).prop('checked', true).trigger('change');
+                
+                // Visual feedback to show active state on the solid button
+                $(this).toggleClass('btn-primary btn-secondary');
+            });
+            $actions.append($viewBtn);
+        }
+
+        // 2. Logout Button
+        const $logoutBtn = $('<button class="btn btn-sm btn-danger shadow-sm" title="Cerrar Sesión">' +
+                             '<i class="material-icons">exit_to_app</i></button>');
+        $logoutBtn.on('click', function() {
+            if (confirm('¿Cerrar sesión?')) {
+                if (typeof logout === 'function') logout();
+                else window.location.replace('login.html');
+            }
+        });
+        $actions.append($logoutBtn);
+
+        // Inject into the navbar
+        $brand.after($actions);
+        
+        // Hide the original large radio buttons and password button on mobile to save space
+        $('#viewToggle, #btnChangePassword').addClass('d-none d-lg-block');
+    }
+
     function initMobileToggle() {
+        const isMobile = window.innerWidth <= 992;
+
+        if (!isMobile) {
+            // Cleanup: remove header icons and restore desktop toggles
+            $('.mobile-header-actions').remove();
+            $('#viewToggle, #btnChangePassword').removeClass('d-none d-lg-block');
+            
+            // Optionally close the drawer if it was open
+            const $nav = $('#ultimate-mobile-nav');
+            const $scrim = $('#ultimate-scrim');
+            if ($nav.hasClass('active')) closeNavDrawer($nav, $scrim);
+            return;
+        }
+
+        // --- MOBILE MODE ---
+        relocateHeaderButtons();
 
         const createNuclearNav = () => {
             if ($('#ultimate-mobile-nav').length > 0) return true;
 
             const $source = $('.sidebar').first();
             if ($source.length && $source.find('.sidebar-menu-item').length > 0) {
-
-                // Clone cleanly — don't carry library event listeners
                 const $clone = $source.clone(false);
-
-                // Strip ALL MDK/PerfectScrollbar artifacts
                 $clone.removeClass('mdk-drawer js-mdk-drawer perfect-scrollbar sidebar-dark sidebar-dark-pickled-bluewood')
                       .removeAttr('data-perfect-scrollbar data-mdk-drawer data-mdk-reveal data-domfactory-upgraded');
-
-                // Allow natural height so the sidebar can overflow the nav container
+                
                 $clone.css('height', 'auto');
                 $clone.find('*').css('height', 'auto');
-
-                // Unwrap any MDK inner content wrapper
                 $clone.find('.mdk-drawer__content').contents().unwrap();
 
-                // Suffix IDs to avoid DOM conflicts with the original sidebar
+                // Clean up: remove redundancy
+                $clone.find('[onclick="logout()"], #themeToggle').closest('li').remove();
+
                 $clone.find('[id]').each(function() {
                     $(this).attr('id', $(this).attr('id') + '-nuclear');
                 });
 
-                // Build the nav: scroll wrapper (content) → nav (scroll container)
                 const $scrollWrapper = $('<div class="nuclear-scroll-wrapper"></div>').append($clone);
                 const $nav = $('<div id="ultimate-mobile-nav"></div>').append($scrollWrapper);
                 const $scrim = $('<div id="ultimate-scrim"></div>');
 
                 $('body').prepend($nav).prepend($scrim);
-
-                // Close on scrim click
-                $scrim.on('click', function() {
-                    closeNavDrawer($nav, $scrim);
-                });
-
+                $scrim.on('click', () => closeNavDrawer($nav, $scrim));
                 return true;
             }
             return false;
         };
 
-        // Poll for dynamic content loaded by Supabase
-        if (!createNuclearNav()) {
-            let attempts = 0;
-            const interval = setInterval(() => {
-                attempts++;
-                if (createNuclearNav() || attempts > 8) clearInterval(interval);
-            }, 800);
+        // Static listener for hamburger (only attach once)
+        if (!window._mobileToggleInitialized) {
+            $(document).on('click.mobiletoggle', '[data-toggle="sidebar"]', function(e) {
+                if (window.innerWidth > 992) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const $nav = $('#ultimate-mobile-nav');
+                const $scrim = $('#ultimate-scrim');
+                if ($nav.length === 0) createNuclearNav();
+
+                if ($nav.hasClass('active')) closeNavDrawer($nav, $scrim);
+                else openNavDrawer($nav, $scrim);
+            });
+            window._mobileToggleInitialized = true;
         }
 
-        // Hamburger toggle
-        $(document).off('click.mobiletoggle').on('click.mobiletoggle', '[data-toggle="sidebar"]', function(e) {
-            if (window.innerWidth > 992) return;
-            e.preventDefault();
-            e.stopPropagation();
-
-            const $nav = $('#ultimate-mobile-nav');
-            const $scrim = $('#ultimate-scrim');
-            if ($nav.length === 0) createNuclearNav();
-
-            if ($nav.hasClass('active')) {
-                closeNavDrawer($nav, $scrim);
-            } else {
-                openNavDrawer($nav, $scrim);
-            }
-        });
+        // Poll for dynamic content
+        let attempts = 0;
+        const interval = setInterval(() => {
+            attempts++;
+            relocateHeaderButtons(); 
+            if (createNuclearNav() || attempts > 10) clearInterval(interval);
+        }, 800);
     }
 
     $(document).ready(function() {
-        if (window.innerWidth <= 992) {
-            initMobileToggle();
-        }
+        initMobileToggle();
+    });
+
+    // Handle orientation change and resizing for a seamless experience
+    $(window).on('resize orientationchange', function() {
+        initMobileToggle();
     });
 
 })(jQuery);
