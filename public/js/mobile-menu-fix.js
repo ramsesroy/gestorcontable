@@ -84,21 +84,33 @@
             if ($nav.length === 0) createNuclearNav();
 
             if ($nav.hasClass('active')) {
+                // --- CLOSE ---
                 $nav.removeClass('active');
                 $scrim.removeClass('visible');
+                // Restore body position BEFORE removing class (Android Chrome)
+                const savedY = window._mobileNavScrollY || 0;
+                document.body.style.top = '';
                 $('html, body').removeClass('has-drawer-opened');
+                window.scrollTo(0, savedY);
             } else {
+                // --- OPEN ---
+                // Save scroll position so body:fixed doesn't jump (Android Chrome fix)
+                window._mobileNavScrollY = window.scrollY || document.documentElement.scrollTop;
+                document.body.style.top = '-' + window._mobileNavScrollY + 'px';
                 $nav.addClass('active');
                 $scrim.addClass('visible');
                 $('html, body').addClass('has-drawer-opened');
             }
         });
 
-        // Close on scrim click (delegated if needed, but here we attach to the instance)
+        // Close on scrim click
         $(document).on('click', '#ultimate-scrim', function() {
+            const savedY = window._mobileNavScrollY || 0;
+            document.body.style.top = '';
             $('#ultimate-mobile-nav').removeClass('active');
             $(this).removeClass('visible');
             $('html, body').removeClass('has-drawer-opened');
+            window.scrollTo(0, savedY);
         });
 
         // 6. Final Status Badge

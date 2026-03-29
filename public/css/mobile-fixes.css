@@ -83,11 +83,12 @@
         box-sizing: border-box !important;
         border-right: 1px solid rgba(255,255,255,0.1) !important;
         
-        /* Direct Scroll */
+        /* Direct Scroll - compatible Android Chrome + iOS Safari */
         overflow-x: hidden !important;
         overflow-y: scroll !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
+        overscroll-behavior: contain !important;
     }
 
     /* Scroll wrapper just holds the content, no overflow needed */
@@ -101,11 +102,19 @@
         box-shadow: 20px 0 60px rgba(0,0,0,0.8) !important;
     }
 
-    html.has-drawer-opened,
+    /* 
+     * Android Chrome FIX: overflow:hidden on html+body blocks touch scroll
+     * on ALL children including position:fixed elements.
+     * Google's recommended solution: use position:fixed on body instead.
+     * https://css-tricks.com/prevent-page-scrolling-when-a-modal-is-open/
+     */
     body.has-drawer-opened {
+        position: fixed !important;
+        width: 100% !important;
+        overflow-y: scroll !important; /* keep scrollbar width to avoid layout shift */
+    }
+    html.has-drawer-opened {
         overflow: hidden !important;
-        height: 100% !important;
-        overscroll-behavior: none !important;
     }
 
     /* Sidebar inside nav - height auto so it can overflow and be scrolled */
