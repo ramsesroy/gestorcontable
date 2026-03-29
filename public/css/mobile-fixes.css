@@ -1,14 +1,18 @@
-/* Mobile UX/UI Specific Fixes - CMS Cobranzas */
+/* ============================================================
+   Mobile UX/UI Specific Fixes - CMS Cobranzas
+   v9.4 - Comprehensive Audit Fixes (2026-03-29)
+   ============================================================ */
 
-/* Force Hide Mobile-Only Elements on Desktop by Default */
-#ultimate-mobile-nav, 
-#ultimate-scrim, 
+/* ── Hide Mobile-Only Elements on Desktop ──────────────────── */
+#ultimate-mobile-nav,
+#ultimate-scrim,
 #mobile-fix-badge-nuclear {
     display: none !important;
 }
 
 @media (max-width: 992px) {
-    /* Center Quick Guide Headers */
+
+    /* ── 1. QUICK GUIDE HEADERS ──────────────────────────── */
     .card-body .d-flex.align-items-center.mb-8pt {
         flex-direction: column !important;
         text-align: center !important;
@@ -19,7 +23,7 @@
         font-size: 32px !important;
     }
 
-    /* Improve Button Touch Targets */
+    /* ── 2. BUTTON TOUCH TARGETS ─────────────────────────── */
     .btn-sm {
         padding: 0.5rem 1rem !important;
         font-size: 0.875rem !important;
@@ -28,25 +32,41 @@
         align-items: center;
         justify-content: center;
     }
-    
     .btn i.material-icons {
         font-size: 18px !important;
     }
 
-    /* Table Column Optimization */
-    .table-mobile-optimized thead th:nth-child(2), 
-    .table-mobile-optimized tbody td:nth-child(2),
-    .table-mobile-optimized thead th:nth-child(3), 
-    .table-mobile-optimized tbody td:nth-child(3) {
+    /* ── 3. OVERDUE ALERT BANNER — stack vertically ──────── */
+    #overdueAlertBanner .alert,
+    .alert.d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+    }
+    #overdueAlertBanner .alert > div:last-child,
+    .alert.d-flex.align-items-center > div.d-flex:last-child {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    #overdueAlertBanner .alert .btn,
+    .alert.d-flex.align-items-center .btn {
+        width: 100% !important;
+        margin-right: 0 !important;
+    }
+
+    /* ── 4. COURSES TABLE — hide "Alumnos" column on mobile
+            so the "Acciones" column is always reachable      */
+    #courseTableBody tr td:nth-child(2) {
         display: none !important;
     }
 
-    /* Fix KPI Spacing */
-    .page-section .row > [class*="col-"] {
-        margin-bottom: 16px !important;
+    /* Ensure all responsive tables scroll horizontally rather than overflow */
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
-    /* Search Results Table - Hide non-essential columns on mobile */
+    /* ── 5. SEARCH RESULTS TABLE ─────────────────────────── */
     #studentListBody tr td:nth-child(2),
     #studentListBody tr td:nth-child(3),
     #studentListSection thead th:nth-child(2),
@@ -54,19 +74,35 @@
         display: none !important;
     }
 
-    /* Installments Table - Hide DNI/Date on mobile search */
+    /* ── 6. INSTALLMENTS TABLE ───────────────────────────── */
     #installmentsBody tr td:nth-child(2),
     #installmentsTable thead th:nth-child(2) {
         display: none !important;
     }
-    
-    /* Center Page Titles */
+
+    /* ── 7. TABLE COLUMN OPTIMIZATION (generic class) ────── */
+    .table-mobile-optimized thead th:nth-child(2),
+    .table-mobile-optimized tbody td:nth-child(2),
+    .table-mobile-optimized thead th:nth-child(3),
+    .table-mobile-optimized tbody td:nth-child(3) {
+        display: none !important;
+    }
+
+    /* ── 8. PAGE LAYOUT SPACING ──────────────────────────── */
+    .page-section .row > [class*="col-"] {
+        margin-bottom: 16px !important;
+    }
     .page-separator__text {
         text-align: center;
         width: 100%;
     }
 
-    /* NUCLEAR SIDEBAR FIX (v9.0) - Standard Scroll Pattern */
+    /* ══════════════════════════════════════════════════════
+       NUCLEAR SIDEBAR FIX (v9.4)
+       - Nav element scrolls directly
+       - Keeps Android Chrome compatibility
+       ══════════════════════════════════════════════════════ */
+
     #ultimate-mobile-nav {
         display: block !important;
         visibility: visible !important;
@@ -82,8 +118,6 @@
         background: var(--sidebar-bg) !important;
         box-sizing: border-box !important;
         border-right: 1px solid rgba(255,255,255,0.1) !important;
-        
-        /* Direct Scroll - compatible Android Chrome + iOS Safari */
         overflow-x: hidden !important;
         overflow-y: scroll !important;
         -webkit-overflow-scrolling: touch !important;
@@ -91,10 +125,10 @@
         overscroll-behavior: contain !important;
     }
 
-    /* Scroll wrapper just holds the content, no overflow needed */
+    /* Scroll wrapper: content holder only, no overflow needed */
     .nuclear-scroll-wrapper {
         width: 100% !important;
-        min-height: 101% !important; /* Must be taller than the nav to trigger scroll */
+        min-height: 101% !important;
     }
 
     #ultimate-mobile-nav.active {
@@ -102,47 +136,57 @@
         box-shadow: 20px 0 60px rgba(0,0,0,0.8) !important;
     }
 
-    /* 
+    /*
      * Android Chrome FIX: overflow:hidden on html+body blocks touch scroll
-     * on ALL children including position:fixed elements.
-     * Google's recommended solution: use position:fixed on body instead.
+     * even on position:fixed children. Google's fix: use position:fixed on body.
      * https://css-tricks.com/prevent-page-scrolling-when-a-modal-is-open/
      */
     body.has-drawer-opened {
         position: fixed !important;
         width: 100% !important;
-        overflow-y: scroll !important; /* keep scrollbar width to avoid layout shift */
+        overflow-y: scroll !important;
     }
     html.has-drawer-opened {
         overflow: hidden !important;
     }
 
-    /* Sidebar inside nav - height auto so it can overflow and be scrolled */
+    /* ── SIDEBAR CONTENT ─────────────────────────────────── */
     #ultimate-mobile-nav .sidebar {
         display: block !important;
         visibility: visible !important;
         width: 100% !important;
         background: transparent !important;
-        position: relative !important; /* Changed from static */
+        position: relative !important;
         top: 0 !important;
         left: 0 !important;
         transform: none !important;
-        height: auto !important; /* Essential for scrolling */
-        min-height: 101vh !important; /* Force touch responsiveness */
-        padding-bottom: 120px !important; 
+        height: auto !important;
+        min-height: 101vh !important;
+        padding-bottom: 120px !important;
         pointer-events: auto !important;
     }
 
+    /* Logo size cap — prevents large logo eating menu real estate */
+    #ultimate-mobile-nav .sidebar-brand .avatar,
+    #ultimate-mobile-nav .avatar-xl {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    #ultimate-mobile-nav .sidebar-brand img {
+        max-height: 52px !important;
+        width: auto !important;
+    }
+
+    /* Touch events — do NOT force touch-action on children (breaks Android taps) */
     #ultimate-mobile-nav * {
         pointer-events: auto !important;
-        /* Do NOT set touch-action here — let the scroll wrapper's pan-y handle scroll,
-           and children keep their default 'auto' so links/buttons remain tappable on Android */
     }
 
+    /* Text contrast */
     #ultimate-mobile-nav .sidebar-menu-text,
     #ultimate-mobile-nav .sidebar-menu-icon,
     #ultimate-mobile-nav .sidebar-menu-category {
-        color: #ffffff !important; /* Absolute highest contrast for mobile */
+        color: #ffffff !important;
         opacity: 1 !important;
     }
 
@@ -157,7 +201,7 @@
         opacity: 1 !important;
     }
 
-    /* Nuclear Scrim */
+    /* ── SCRIM (backdrop) ────────────────────────────────── */
     #ultimate-scrim {
         position: fixed !important;
         top: 0 !important;
@@ -176,21 +220,24 @@
         opacity: 1 !important;
     }
 
-    /* Force Show Mobile-Only Elements on Mobile */
+    /* Show mobile nav elements */
     #ultimate-mobile-nav {
         display: block !important;
         visibility: visible !important;
     }
+
+    /* Hide debug badge in all environments */
     #mobile-fix-badge-nuclear {
-        display: block !important;
+        display: none !important;
     }
 
-    /* Hide ALL MDK drawers to prevent noise */
+    /* Hide ALL MDK drawers to prevent layout conflicts */
     #default-drawer, .mdk-drawer, [id*="drawer"] {
         display: none !important;
     }
 }
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
