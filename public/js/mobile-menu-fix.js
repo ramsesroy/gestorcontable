@@ -1,134 +1,119 @@
 /**
- * Mobile Menu Fix - v7.6 (Scroll Wrapper Fix)
- * Ensures the MDK drawer opens correctly on mobile devices by providing a robust toggle fallback.
+ * Mobile Menu Fix - v10.0 (Pure JS Touchmove Lock)
+ * 
+ * STRATEGY: Zero CSS body locking.
+ * - body/html get NO overflow:hidden, NO position:fixed
+ * - Body scroll is prevented purely via JS touchmove interception
+ * - Nav scroll works via its own overflow-y:scroll + native browser handling
+ * 
+ * WHY THIS WORKS ON ANDROID:
+ *   When we DON'T call preventDefault() for touches inside #ultimate-mobile-nav,
+ *   the browser sees overflow-y:scroll + touch-action:pan-y on the nav and
+ *   handles scroll natively at the compositor level. No CSS context creates
+ *   interference.
  */
 (function($) {
     'use strict';
 
-    function initMobileToggle() {
-        console.log('[MobileFix v7.6] NUCLEAR SCROLL-WRAPPER ACTIVE...');
-        
-        const createNuclearNav = () => {
-            if ($('#ultimate-mobile-nav').length > 0) return;
+    // ── Body scroll lock (pure JS, no CSS needed) ─────────────────────────────
+    function _onBodyTouchMove(e) {
+        // Touch is inside the nav → let native nav scroll handle it
+        if (e.target && e.target.closest && e.target.closest('#ultimate-mobile-nav')) {
+            return; // DO NOT preventDefault — nav handles this via overflow-y:scroll
+        }
+        // Touch is outside the nav (page content, scrim) → block body scroll
+        e.preventDefault();
+    }
 
-            // 1. Find the sidebar source
+    function openNavDrawer($nav, $scrim) {
+        $nav.addClass('active');
+        $scrim.addClass('visible');
+        // Lock body scroll via JS only — no CSS required
+        document.addEventListener('touchmove', _onBodyTouchMove, { passive: false });
+    }
+
+    function closeNavDrawer($nav, $scrim) {
+        $nav.removeClass('active');
+        $scrim.removeClass('visible');
+        // Release body scroll
+        document.removeEventListener('touchmove', _onBodyTouchMove, { passive: false });
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
+    function initMobileToggle() {
+
+        const createNuclearNav = () => {
+            if ($('#ultimate-mobile-nav').length > 0) return true;
+
             const $source = $('.sidebar').first();
             if ($source.length && $source.find('.sidebar-menu-item').length > 0) {
-                // 2. Clone it CLEANLY (false) - Don't clone library event listeners
+
+                // Clone cleanly — don't carry library event listeners
                 const $clone = $source.clone(false);
-                
-                // 3. CLEAN UP: Strip ALL MDK/Library artifacts from the clone
+
+                // Strip ALL MDK/PerfectScrollbar artifacts
                 $clone.removeClass('mdk-drawer js-mdk-drawer perfect-scrollbar sidebar-dark sidebar-dark-pickled-bluewood')
-                      .removeAttr('data-perfect-scrollbar')
-                      .removeAttr('data-mdk-drawer')
-                      .removeAttr('data-mdk-reveal')
-                      .removeAttr('data-domfactory-upgraded');
-                
-                // Force height auto for native scroll
+                      .removeAttr('data-perfect-scrollbar data-mdk-drawer data-mdk-reveal data-domfactory-upgraded');
+
+                // Allow natural height so the sidebar can overflow the nav container
                 $clone.css('height', 'auto');
                 $clone.find('*').css('height', 'auto');
-                
-                // Remove MDK specific wrapping if any
+
+                // Unwrap any MDK inner content wrapper
                 $clone.find('.mdk-drawer__content').contents().unwrap();
 
-                // Clean child IDs to avoid conflicts with original
+                // Suffix IDs to avoid DOM conflicts with the original sidebar
                 $clone.find('[id]').each(function() {
                     $(this).attr('id', $(this).attr('id') + '-nuclear');
                 });
 
-                console.log('[MobileFix v7.3] Sidebar cleaned (Native Scroll Ready).');
-
-                // 4. Wrap and Inject
+                // Build the nav: scroll wrapper (content) → nav (scroll container)
                 const $scrollWrapper = $('<div class="nuclear-scroll-wrapper"></div>').append($clone);
                 const $nav = $('<div id="ultimate-mobile-nav"></div>').append($scrollWrapper);
                 const $scrim = $('<div id="ultimate-scrim"></div>');
-                
-                // UX: Move theme toggle to top for mobile
-                const $toggleLi = $nav.find('[id*="themeToggle"]').closest('li');
-                if ($toggleLi.length) {
-                    $nav.find('.sidebar-menu').prepend($toggleLi);
-                    $toggleLi.css({ 'margin-top': '10px', 'margin-bottom': '10px', 'border-bottom': '1px solid rgba(255,255,255,0.1)', 'padding-bottom': '15px' });
-                }
 
                 $('body').prepend($nav).prepend($scrim);
-                
+
                 // Close on scrim click
                 $scrim.on('click', function() {
                     closeNavDrawer($nav, $scrim);
                 });
 
-                console.log('[MobileFix v7.0] Nuclear menu injected successfully.');
                 return true;
             }
             return false;
         };
 
-        // Aggressive polling to wait for dynamic content (Supabase)
+        // Poll for dynamic content loaded by Supabase
         if (!createNuclearNav()) {
             let attempts = 0;
             const interval = setInterval(() => {
                 attempts++;
-                if (createNuclearNav() || attempts > 5) clearInterval(interval);
-            }, 1000);
+                if (createNuclearNav() || attempts > 8) clearInterval(interval);
+            }, 800);
         }
 
-        // 5. Override Toggle Listener (Global Delegation)
+        // Hamburger toggle
         $(document).off('click.mobiletoggle').on('click.mobiletoggle', '[data-toggle="sidebar"]', function(e) {
             if (window.innerWidth > 992) return;
             e.preventDefault();
             e.stopPropagation();
-            
+
             const $nav = $('#ultimate-mobile-nav');
             const $scrim = $('#ultimate-scrim');
-            
             if ($nav.length === 0) createNuclearNav();
 
             if ($nav.hasClass('active')) {
-                // --- CLOSE ---
-                $nav.removeClass('active');
-                $scrim.removeClass('visible');
-                // Restore body position BEFORE removing class (Android Chrome)
-                const savedY = window._mobileNavScrollY || 0;
-                document.body.style.top = '';
-                $('html, body').removeClass('has-drawer-opened');
-                window.scrollTo(0, savedY);
+                closeNavDrawer($nav, $scrim);
             } else {
-                // --- OPEN ---
-                // Save scroll position so body:fixed doesn't jump (Android Chrome fix)
-                window._mobileNavScrollY = window.scrollY || document.documentElement.scrollTop;
-                document.body.style.top = '-' + window._mobileNavScrollY + 'px';
-                $nav.addClass('active');
-                $scrim.addClass('visible');
-                $('html, body').addClass('has-drawer-opened');
+                openNavDrawer($nav, $scrim);
             }
         });
-
-        // Close on scrim click
-        $(document).on('click', '#ultimate-scrim', function() {
-            const savedY = window._mobileNavScrollY || 0;
-            document.body.style.top = '';
-            $('#ultimate-mobile-nav').removeClass('active');
-            $(this).removeClass('visible');
-            $('html, body').removeClass('has-drawer-opened');
-            window.scrollTo(0, savedY);
-        });
-
-        // 6. Final Status Badge
-        if (window.innerWidth <= 992 && !$('#mobile-fix-badge-nuclear').length) {
-            const badge = document.createElement('div');
-            badge.id = 'mobile-fix-badge-nuclear';
-            badge.innerHTML = 'NAV NUCLEAR v7.9 READY (Desktop Fix Active)';
-            badge.style = 'position:fixed; bottom:5px; right:5px; background:green; color:white; font-size:9px; padding:4px 8px; z-index:400000; border-radius:4px; font-weight:bold; border:2px solid white;';
-            document.body.appendChild(badge);
-            setTimeout(() => { if(badge) badge.style.display = 'none'; }, 6000);
-        }
     }
 
     $(document).ready(function() {
         if (window.innerWidth <= 992) {
             initMobileToggle();
-        } else {
-            console.log('[MobileFix v7.9] Desktop detected. Nuclear menu skipped.');
         }
     });
 

@@ -137,18 +137,11 @@
     }
 
     /*
-     * Android Chrome FIX: overflow:hidden on html+body blocks touch scroll
-     * even on position:fixed children. Google's fix: use position:fixed on body.
-     * https://css-tricks.com/prevent-page-scrolling-when-a-modal-is-open/
+     * Body scroll lock is handled PURELY via JavaScript (touchmove interception).
+     * No CSS position:fixed or overflow:hidden on body — these break Android Chrome's
+     * ability to route touch events to fixed-position scroll containers.
+     * See mobile-menu-fix.js → openNavDrawer() / closeNavDrawer()
      */
-    body.has-drawer-opened {
-        position: fixed !important;
-        width: 100% !important;
-        overflow-y: scroll !important;
-    }
-    html.has-drawer-opened {
-        overflow: hidden !important;
-    }
 
     /* ── SIDEBAR CONTENT ─────────────────────────────────── */
     #ultimate-mobile-nav .sidebar {
