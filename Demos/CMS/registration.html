@@ -396,9 +396,9 @@
             if (branches) {
                 branches.forEach(b => $('#branch').append(`<option value="${b.id}">${b.name}</option>`));
             }
-            // Lock branch selector for cajero
-            if (window.currentUserRole === 'cajero' && window.currentUserBranchId) {
-                $('#branch').val(window.currentUserBranchId).prop('disabled', true);
+            // Preselect user's branch for convenience, but do NOT disable it (allow cross-branch registration)
+            if (window.currentUserBranchId) {
+                $('#branch').val(window.currentUserBranchId);
             }
 
             // Fetch Courses
@@ -452,7 +452,7 @@
                     phone: $('#phone').val(),
                     birth_date: $('#birthDate').val() || null,
                     start_date: $('#classStartDate').val(),
-                    branch_id: window.currentUserRole === 'cajero' ? window.currentUserBranchId : $('#branch').val(),
+                    branch_id: $('#branch').val(),
                     course_id: $('#course').val() || null,
                     additional_info: $('#additionalInfo').val()
                 };
