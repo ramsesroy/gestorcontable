@@ -164,7 +164,8 @@
                         <div class="flex">
                             <h4 id="studentName">—</h4>
                             <p class="text-50 mb-8pt">
-                                DNI: <span id="studentDni"></span> |
+                                DNI: <span id="studentDni" class="font-weight-bold"></span> 
+                                <a href="javascript:void(0)" onclick="$('#btnEditStudent').click(); setTimeout(()=>$('#editDni').focus(), 500)" class="text-primary mr-2" data-toggle="tooltip" title="Editar DNI"><i class="material-icons" style="font-size:14px;vertical-align:text-bottom">edit</i></a> |
                                 Nacimiento: <span id="studentBirthDate"></span> |
                                 Sucursal: <span id="studentBranch"></span> |
                                 <span class="text-primary font-weight-bold">Inicia: <span id="studentStartDate"></span></span> |
