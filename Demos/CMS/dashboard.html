@@ -393,7 +393,14 @@
                     <div class="row">
                         <div class="col-lg-4 mb-24pt">
                             <div class="card card-body flex-row align-items-center m-0">
-                                <div class="flex"><h4 class="mb-0" id="cajeroTodayTotal">Gs. 0</h4><p class="text-50 mb-0">Cobros de Hoy</p></div>
+                                <div class="flex">
+                                    <h4 class="mb-0" id="cajeroTodayTotal">Gs. 0</h4>
+                                    <p class="text-50 mb-0">Cobros de Hoy</p>
+                                    <div class="alert alert-soft-secondary mb-0 p-1 mt-2 d-inline-block">
+                                        <small><i class="material-icons" style="font-size:12px;vertical-align:middle">account_balance_wallet</i> Saldo en Mano:</small>
+                                        <h5 class="mb-0 text-success d-inline ml-1" id="cajeroCashOnHand">Gs. 0</h5>
+                                    </div>
+                                </div>
                                 <div class="avatar avatar-sm ml-12pt"><span class="avatar-title rounded bg-soft-success text-success"><i class="material-icons">attach_money</i></span></div>
                             </div>
                         </div>
@@ -414,6 +421,7 @@
                     <div class="row mb-16pt">
                         <div class="col-md-6"><h4>Gestión Diaria</h4></div>
                         <div class="col-md-6 text-md-right">
+                            <button class="btn btn-warning text-white mr-8pt" onclick="openCashDropModal()" data-toggle="tooltip" title="Rendir Efectivo"><i class="material-icons mr-4pt" style="font-size:16px;vertical-align:text-bottom">point_of_sale</i> Rendir Efectivo</button>
                             <button class="btn btn-outline-secondary mr-8pt" onclick="generateReport('today')">Cierre Diario</button>
                             <button class="btn btn-outline-secondary" onclick="generateReport('month')">Cierre Mensual</button>
                         </div>
@@ -586,6 +594,10 @@
                     <div class="alert alert-soft-warning mb-24pt">
                         Registra el dinero en efectivo que ha sido depositado o entregado, para descontarlo de tu saldo en mano.
                     </div>
+                    <div class="form-group" id="cashDropBranchGroup" style="display:none;">
+                        <label class="form-label">Sucursal</label>
+                        <select class="form-control" id="cashDropBranch"></select>
+                    </div>
                     <div class="form-group">
                         <label class="form-label">Monto a Rendir (Gs.)</label>
                         <input type="number" class="form-control" id="cashDropAmount" min="0">
@@ -753,6 +765,11 @@
             const { data: todayP } = await supabaseClient.from('audit_log').select('details').in('user_id', userIds).eq('action', 'pago').gte('created_at', isoFrom).lte('created_at', isoTo);
             const totalT = (todayP || []).reduce((s, e) => s + parseFloat(e.details.amount || 0), 0);
             $('#cajeroTodayTotal').text(fmt.format(totalT));
+
+            // Saldo en mano Cajero
+            const { data: cDrops } = await supabaseClient.from('cash_deposits').select('amount').eq('branch_id', branchId).gte('date_registered', isoFrom).lte('date_registered', isoTo);
+            const dropsT = (cDrops || []).reduce((s, e) => s + parseFloat(e.amount), 0);
+            $('#cajeroCashOnHand').text(fmt.format(Math.max(0, totalT - dropsT)));
 
             // Month Collections
             const { data: monthP } = await supabaseClient.from('audit_log').select('details').in('user_id', userIds).eq('action', 'pago').gte('created_at', toArgDate(range.from)).lte('created_at', toArgDateEnd(range.to));
@@ -1098,11 +1115,21 @@
         async function massiveUpdate() { showToast('Zona Crítica: Contacte al soporte para actualizaciones masivas.', 'warning'); }
         function printTicket(id, num, name, dni, date, amount, total, totalA, rem, course, concept) { window.open(`ticket.html?id=${id}&num=${num}&name=${encodeURIComponent(name)}&dni=${encodeURIComponent(dni || '')}&date=${encodeURIComponent(date || '')}&amount=${amount}&course=${encodeURIComponent(course || '')}&total=${total || ''}&concept=${encodeURIComponent(concept || '')}`, '_blank'); }
 
-        function openCashDropModal() {
+        async function openCashDropModal() {
             $('#cashDropAmount').val('');
             $('#cashDropRecipient').val('');
             $('#cashDropNotes').val('');
             $('#cashDropFile').val('');
+            
+            if (currentUserRole === 'admin') {
+                $('#cashDropBranchGroup').show();
+                const { data } = await supabaseClient.from('branches').select('*').eq('active', true);
+                const sel = $('#cashDropBranch').empty();
+                (data || []).forEach(b => sel.append(`<option value="${b.id}">${b.name}</option>`));
+            } else {
+                $('#cashDropBranchGroup').hide();
+            }
+
             $('#cashDropModal').modal('show');
         }
 
@@ -1134,12 +1161,14 @@
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', user.id).single();
 
+                const branchId = currentUserRole === 'admin' ? $('#cashDropBranch').val() : profile.branch_id;
+
                 const dropData = {
                     amount: amount,
                     recipient: recipient,
                     notes: notes,
                     receipt_url: receiptUrl,
-                    branch_id: profile.branch_id,
+                    branch_id: branchId,
                     user_id: user.id
                 };
 
@@ -1155,6 +1184,7 @@
                 showToast('Rendición registrada exitosamente.', 'success');
                 $('#cashDropModal').modal('hide');
                 applyFilter();
+                if (currentUserRole !== 'admin') loadCajeroDashboard(user.id, profile.branch_id);
 
             } catch (err) {
                 showToast(err.message, 'error');
