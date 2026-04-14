@@ -207,9 +207,14 @@
                                 </button>
                             </div>
                             <div class="form-group mb-md-0 ml-md-8pt">
-                                <button class="btn btn-warning text-white" onclick="openCashDropModal()" data-toggle="tooltip" title="Registra las salidas de efectivo entregado o depositado para descontarlo de tu caja fuerte.">
-                                    <i class="material-icons mr-4pt">point_of_sale</i> Rendir Efectivo
-                                </button>
+                                <div class="btn-group">
+                                    <button class="btn btn-warning text-white" onclick="openCashDropModal()" data-toggle="tooltip" title="Registra las salidas de efectivo entregado o depositado para descontarlo de tu caja fuerte.">
+                                        <i class="material-icons mr-4pt">point_of_sale</i> Rendir Efectivo
+                                    </button>
+                                    <button class="btn btn-outline-warning" onclick="openCashDropHistoryModal()" data-toggle="tooltip" title="Ver Historial de Rendiciones">
+                                        <i class="material-icons">history</i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="form-group mb-md-0 ml-md-8pt">
                                 <button class="btn btn-outline-secondary" onclick="exportStudentList()" data-toggle="tooltip" title="Descarga la lista completa de alumnos de todas las sucursales con su información de contacto.">
@@ -421,7 +426,10 @@
                     <div class="row mb-16pt">
                         <div class="col-md-6"><h4>Gestión Diaria</h4></div>
                         <div class="col-md-6 text-md-right">
-                            <button class="btn btn-warning text-white mr-8pt" onclick="openCashDropModal()" data-toggle="tooltip" title="Rendir Efectivo"><i class="material-icons mr-4pt" style="font-size:16px;vertical-align:text-bottom">point_of_sale</i> Rendir Efectivo</button>
+                            <div class="btn-group mr-8pt">
+                                <button class="btn btn-warning text-white" onclick="openCashDropModal()" data-toggle="tooltip" title="Rendir Efectivo"><i class="material-icons mr-4pt" style="font-size:16px;vertical-align:text-bottom">point_of_sale</i> Rendir Efectivo</button>
+                                <button class="btn btn-outline-warning" onclick="openCashDropHistoryModal()" data-toggle="tooltip" title="Ver Historial"><i class="material-icons" style="font-size:16px;vertical-align:text-bottom">history</i></button>
+                            </div>
                             <button class="btn btn-outline-secondary mr-8pt" onclick="generateReport('today')">Cierre Diario</button>
                             <button class="btn btn-outline-secondary" onclick="generateReport('month')">Cierre Mensual</button>
                         </div>
@@ -618,6 +626,29 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-warning text-white" id="btnConfirmCashDrop" onclick="confirmCashDrop()">Registrar Salida</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Historial de Rendiciones -->
+    <div class="modal fade" id="cashDropHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-white">Historial de Rendiciones de Efectivo</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead><tr><th>Fecha</th><th>Sucursal</th><th>Destinatario</th><th>Observaciones</th><th class="text-right">Monto</th><th class="text-center">Comp.</th></tr></thead>
+                            <tbody id="cashDropHistoryBody"><tr><td colspan="6" class="text-center">Cargando...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -1184,13 +1215,60 @@
                 showToast('Rendición registrada exitosamente.', 'success');
                 $('#cashDropModal').modal('hide');
                 applyFilter();
-                if (currentUserRole !== 'admin') loadCajeroDashboard(user.id, profile.branch_id);
+                if (currentUserRole !== 'admin') {
+                    const { data: userProfile } = await supabaseClient.from('profiles').select('branch_id').eq('id', user.id).single();
+                    loadCajeroDashboard(user.id, userProfile.branch_id);
+                }
 
             } catch (err) {
                 showToast(err.message, 'error');
             } finally {
                 btn.prop('disabled', false).text('Registrar Salida');
             }
+        }
+
+        async function openCashDropHistoryModal() {
+            $('#cashDropHistoryModal').modal('show');
+            $('#cashDropHistoryBody').html('<tr><td colspan="6" class="text-center">Cargando...</td></tr>');
+            
+            const today = todayISO();
+            const dateFrom = $('#dateFrom').val() ? toArgDate($('#dateFrom').val()) : toArgDate(today);
+            const dateTo = $('#dateTo').val() ? toArgDateEnd($('#dateTo').val()) : toArgDateEnd(today);
+
+            let q = supabaseClient.from('cash_deposits').select('*, branches(name), profiles(first_name)').gte('date_registered', dateFrom).lte('date_registered', dateTo).order('date_registered', { ascending: false });
+            
+            if (currentUserRole !== 'admin') {
+                const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', (await supabaseClient.auth.getUser()).data.user.id).single();
+                q = q.eq('branch_id', profile.branch_id);
+            }
+
+            const { data, error } = await q;
+            const body = $('#cashDropHistoryBody').empty();
+
+            if (error) {
+                body.html('<tr><td colspan="6" class="text-center text-danger">Error al cargar.</td></tr>');
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                body.html('<tr><td colspan="6" class="text-center text-muted p-3">No hay rendiciones en el periodo seleccionado.</td></tr>');
+                return;
+            }
+
+            data.forEach(r => {
+                const d = new Date(r.date_registered).toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+                const btnFile = r.receipt_url ? `<a href="${r.receipt_url}" target="_blank" class="btn btn-sm btn-outline-info"><i class="material-icons" style="font-size:16px;vertical-align:text-bottom">receipt</i></a>` : '-';
+                body.append(`
+                    <tr>
+                        <td>${d}</td>
+                        <td><small>${r.branches ? r.branches.name : '-'}</small></td>
+                        <td>${r.recipient}<br><small class="text-muted text-50">Cajero: ${r.profiles ? r.profiles.first_name : '-'}</small></td>
+                        <td><small>${r.notes || ''}</small></td>
+                        <td class="text-right text-danger font-weight-bold">Gs. ${fmt.format(r.amount)}</td>
+                        <td class="text-center">${btnFile}</td>
+                    </tr>
+                `);
+            });
         }
     </script>
 
