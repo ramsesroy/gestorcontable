@@ -207,6 +207,11 @@
                                 </button>
                             </div>
                             <div class="form-group mb-md-0 ml-md-8pt">
+                                <button class="btn btn-warning text-white" onclick="openCashDropModal()" data-toggle="tooltip" title="Registra las salidas de efectivo entregado o depositado para descontarlo de tu caja fuerte.">
+                                    <i class="material-icons mr-4pt">point_of_sale</i> Rendir Efectivo
+                                </button>
+                            </div>
+                            <div class="form-group mb-md-0 ml-md-8pt">
                                 <button class="btn btn-outline-secondary" onclick="exportStudentList()" data-toggle="tooltip" title="Descarga la lista completa de alumnos de todas las sucursales con su información de contacto.">
                                     <i class="material-icons mr-4pt">people</i> Exportar Alumnos
                                 </button>
@@ -228,6 +233,10 @@
                                 <div class="flex">
                                     <h4 class="mb-0" id="totalIncome">Gs. 0</h4>
                                     <p class="text-50 mb-0">Ingresos del Período <i class="material-icons help-icon" data-toggle="tooltip" title="Suma de todos los cobros (matrículas y cuotas) realizados dentro del rango de fechas que has filtrado arriba.">help_outline</i></p>
+                                    <div class="alert alert-soft-secondary mb-0 p-1 mt-2 d-inline-block">
+                                        <small><i class="material-icons" style="font-size:12px;vertical-align:middle">account_balance_wallet</i> Saldo en Mano:</small>
+                                        <h5 class="mb-0 text-success d-inline ml-1" id="cashOnHand">Gs. 0</h5>
+                                    </div>
                                 </div>
                                 <div class="avatar avatar-sm ml-12pt">
                                     <span class="avatar-title rounded bg-soft-success text-success"><i class="material-icons">trending_up</i></span>
@@ -565,6 +574,43 @@
             </div>
         </div>
 
+    <!-- MODAL: Rendición de Efectivo -->
+    <div class="modal fade" id="cashDropModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-white">Rendición de Efectivo</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-soft-warning mb-24pt">
+                        Registra el dinero en efectivo que ha sido depositado o entregado, para descontarlo de tu saldo en mano.
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Monto a Rendir (Gs.)</label>
+                        <input type="number" class="form-control" id="cashDropAmount" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Destinatario / Entidad Bancaria</label>
+                        <input type="text" class="form-control" id="cashDropRecipient" placeholder="Ej: Banco Familiar / Administrador">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Observaciones</label>
+                        <textarea id="cashDropNotes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Comprobante / Ticket (Foto)</label>
+                        <input type="file" class="form-control" id="cashDropFile" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning text-white" id="btnConfirmCashDrop" onclick="confirmCashDrop()">Registrar Salida</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="../../public/vendor/jquery.min.js"></script>
     <script src="../../public/vendor/popper.min.js"></script>
@@ -796,6 +842,16 @@
             const { data: paid } = await incomeQuery;
             const total = (paid || []).reduce((s, i) => s + parseFloat(i.amount), 0);
             $('#totalIncome').text(fmt.format(total));
+
+            // Saldo en Mano
+            let cashDropQuery = supabaseClient.from('cash_deposits').select('amount').gte('date_registered', isoF).lte('date_registered', isoT);
+            if (currentUserRole === 'cajero') {
+                const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', (await supabaseClient.auth.getUser()).data.user.id).single();
+                cashDropQuery = cashDropQuery.eq('branch_id', profile.branch_id);
+            }
+            const { data: cashDrops } = await cashDropQuery;
+            const totalDrops = (cashDrops || []).reduce((s, drop) => s + parseFloat(drop.amount), 0);
+            $('#cashOnHand').text(fmt.format(Math.max(0, total - totalDrops)));
 
             loadBillingBreakdown(isoF, isoT);
             loadRecentPayments(isoF, isoT);
@@ -1041,6 +1097,71 @@
         }
         async function massiveUpdate() { showToast('Zona Crítica: Contacte al soporte para actualizaciones masivas.', 'warning'); }
         function printTicket(id, num, name, dni, date, amount, total, totalA, rem, course, concept) { window.open(`ticket.html?id=${id}&num=${num}&name=${encodeURIComponent(name)}&dni=${encodeURIComponent(dni || '')}&date=${encodeURIComponent(date || '')}&amount=${amount}&course=${encodeURIComponent(course || '')}&total=${total || ''}&concept=${encodeURIComponent(concept || '')}`, '_blank'); }
+
+        function openCashDropModal() {
+            $('#cashDropAmount').val('');
+            $('#cashDropRecipient').val('');
+            $('#cashDropNotes').val('');
+            $('#cashDropFile').val('');
+            $('#cashDropModal').modal('show');
+        }
+
+        async function confirmCashDrop() {
+            const btn = $('#btnConfirmCashDrop');
+            const amount = parseFloat($('#cashDropAmount').val());
+            const recipient = $('#cashDropRecipient').val().trim();
+            const notes = $('#cashDropNotes').val().trim();
+            const fileInput = document.getElementById('cashDropFile');
+            const file = fileInput.files[0];
+
+            if (!amount || amount <= 0 || !recipient) {
+                return showToast('Monto y Destinatario son obligatorios.', 'error');
+            }
+
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Subiendo...');
+
+            try {
+                let receiptUrl = null;
+                if (file) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                    const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('receipts').upload(fileName, file);
+                    if (uploadError) throw new Error('Error subiendo imagen: ' + uploadError.message);
+                    const { data: publicData } = supabaseClient.storage.from('receipts').getPublicUrl(fileName);
+                    receiptUrl = publicData.publicUrl;
+                }
+
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', user.id).single();
+
+                const dropData = {
+                    amount: amount,
+                    recipient: recipient,
+                    notes: notes,
+                    receipt_url: receiptUrl,
+                    branch_id: profile.branch_id,
+                    user_id: user.id
+                };
+
+                const { error: insertError } = await supabaseClient.from('cash_deposits').insert([dropData]);
+                if (insertError) throw new Error('Error al registrar saldo: ' + insertError.message);
+
+                await supabaseClient.from('audit_log').insert({
+                    user_id: user.id,
+                    action: 'rendicion_caja',
+                    details: dropData
+                });
+
+                showToast('Rendición registrada exitosamente.', 'success');
+                $('#cashDropModal').modal('hide');
+                applyFilter();
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.prop('disabled', false).text('Registrar Salida');
+            }
+        }
     </script>
 
     <!-- Modals -->
