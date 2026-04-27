@@ -529,7 +529,7 @@
                     $('#enrollmentFee').prop('disabled', false).css('background', '').val(0);
                     $('#classStartDate').val(todayISO);
                 } catch (err) {
-                    $('#errorAlert').removeClass('d-none').text('Error: ' + err.message);
+                    showToast('Error: ' + err.message, 'error');
                 } finally {
                     $('#btnText').removeClass('d-none');
                     $('#btnLoader').addClass('d-none');

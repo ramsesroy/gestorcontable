@@ -620,7 +620,7 @@
                 $('#expenseModal').modal('hide');
                 loadExpenses();
             } catch (err) {
-                showToast('Error al guardar el gasto: ' + err.message);
+                showToast('Error al guardar el gasto: ' + err.message, 'error');
             }
         }
 
@@ -631,7 +631,7 @@
                 if (error) throw error;
                 loadExpenses();
             } catch (err) {
-                showToast('Error al eliminar: ' + err.message);
+                showToast('Error al eliminar: ' + err.message, 'error');
             }
         }
 
