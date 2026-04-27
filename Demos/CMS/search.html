@@ -446,7 +446,7 @@
                     <div class="form-group">
                         <label class="form-label">Monto de la nueva cuota (Mensual)</label>
                         <div class="input-group input-group-merge">
-                            <input type="number" class="form-control form-control-prepended" id="extendAmount" min="0">
+                            <input type="text" class="form-control form-control-prepended" id="extendAmount" placeholder="Ej: 150000">
                             <div class="input-group-prepend"><div class="input-group-text">Gs.</div></div>
                         </div>
                     </div>
@@ -794,7 +794,8 @@
         async function confirmExtendPlan() {
             const btn = $('#btnConfirmExtend');
             const months = parseInt($('#extendMonths').val());
-            const amount = parseFloat($('#extendAmount').val());
+            const rawAmount = $('#extendAmount').val() || '';
+            const amount = parseFloat(rawAmount.replace(/\./g, '').replace(/,/g, ''));
             if (!months || months < 1 || isNaN(amount) || amount < 0) return showToast('Datos inválidos', 'error');
 
             btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Generando...');
