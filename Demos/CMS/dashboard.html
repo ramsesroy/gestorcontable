@@ -608,7 +608,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Monto a Rendir (Gs.)</label>
-                        <input type="number" class="form-control" id="cashDropAmount" min="0">
+                        <input type="text" class="form-control" id="cashDropAmount" placeholder="Ej: 500000">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Destinatario / Entidad Bancaria</label>
@@ -1166,7 +1166,8 @@
 
         async function confirmCashDrop() {
             const btn = $('#btnConfirmCashDrop');
-            const amount = parseFloat($('#cashDropAmount').val());
+            const rawAmount = $('#cashDropAmount').val() || '';
+            const amount = parseFloat(rawAmount.replace(/\./g, '').replace(/,/g, ''));
             const recipient = $('#cashDropRecipient').val().trim();
             const notes = $('#cashDropNotes').val().trim();
             const fileInput = document.getElementById('cashDropFile');

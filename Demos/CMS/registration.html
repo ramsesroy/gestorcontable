@@ -195,7 +195,7 @@
                                 <div class="form-group mb-16pt">
                                     <label class="form-label" for="amount">Monto de la cuota mensual: <i class="material-icons help-icon" data-toggle="tooltip" title="Monto fijo que el alumno pagará cada mes.">help_outline</i></label>
                                     <div class="input-group input-group-merge">
-                                        <input id="amount" type="number" class="form-control form-control-prepended">
+                                        <input id="amount" type="text" class="form-control form-control-prepended" placeholder="Ej: 150000">
                                         <div class="input-group-prepend">
                                             <div class="input-group-text">Gs.</div>
                                         </div>
@@ -221,7 +221,7 @@
                                 <div class="form-group mb-24pt">
                                     <label class="form-label" for="enrollmentFee">Monto de Matrícula (Único): <i class="material-icons help-icon" data-toggle="tooltip" title="Monto que se cobra una única vez al momento de la inscripción.">help_outline</i></label>
                                     <div class="input-group input-group-merge">
-                                        <input id="enrollmentFee" type="number" class="form-control form-control-prepended" value="0">
+                                        <input id="enrollmentFee" type="text" class="form-control form-control-prepended" value="0">
                                         <div class="input-group-prepend">
                                             <div class="input-group-text">Gs.</div>
                                         </div>
@@ -232,7 +232,7 @@
                             <div id="specialPlanFields" class="d-none">
                                 <div class="form-group mb-24pt">
                                     <label class="form-label" for="totalAmountSpecial">Monto Total del Paquete (Gs.):</label>
-                                    <input id="totalAmountSpecial" type="number" class="form-control">
+                                    <input id="totalAmountSpecial" type="text" class="form-control" placeholder="Ej: 1500000">
                                 </div>
                                 <div class="form-group mb-24pt">
                                     <label class="form-label" for="paymentsCountSpecial">Cantidad de Pagos:</label>
@@ -459,7 +459,11 @@
 
                 const isSpecial = $('#specialPlanSwitch').is(':checked');
                 const installmentsCount = parseInt(isSpecial ? $('#paymentsCountSpecial').val() : $('#installmentsCount').val());
-                const amount = isSpecial ? Math.round($('#totalAmountSpecial').val() / installmentsCount) : $('#amount').val();
+                const rawAmount = isSpecial ? $('#totalAmountSpecial').val() : $('#amount').val();
+                let amountParsed = parseFloat((rawAmount || '').replace(/\./g, '').replace(/,/g, ''));
+                if (isNaN(amountParsed)) amountParsed = 0;
+                
+                const amount = isSpecial ? Math.round(amountParsed / installmentsCount) : amountParsed;
                 try {
                     // Try to insert with total_payments
                     var insertPayload = {...studentData};
@@ -490,7 +494,8 @@
                     await supabaseClient.from('installments').insert(installments);
 
                     // Enrollment Fee
-                    const enrollmentAmount = parseFloat($('#enrollmentFee').val()) || 0;
+                    const rawEnrollment = $('#enrollmentFee').val() || '';
+                    const enrollmentAmount = parseFloat(rawEnrollment.replace(/\./g, '').replace(/,/g, '')) || 0;
                     if (enrollmentAmount > 0) {
                         await supabaseClient.from('installments').insert([{
                             student_id: student.id,

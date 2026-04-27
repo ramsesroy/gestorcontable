@@ -360,7 +360,7 @@
                     <div class="form-group mb-0">
                         <label class="form-label">¿Cuánto está pagando el alumno ahora?</label>
                         <div class="input-group input-group-merge">
-                            <input type="number" id="paymentModalAmount" class="form-control form-control-prepended">
+                            <input type="text" id="paymentModalAmount" class="form-control form-control-prepended" placeholder="Ej: 50000">
                             <div class="input-group-prepend"><div class="input-group-text">Gs.</div></div>
                         </div>
                     </div>
@@ -656,10 +656,13 @@
         async function confirmPayment() {
             var btn = $('#btnConfirmPayment');
             var id = $('#paymentModalId').val();
-            var paying = parseFloat($('#paymentModalAmount').val());
             var rem = parseFloat($('#paymentModalRemainingAmount').val());
             var paid = parseFloat($('#paymentModalPaidAmount').val());
-            if (paying <= 0 || paying > rem) return showToast('Monto inválido', 'error');
+            
+            const rawPaying = $('#paymentModalAmount').val() || '';
+            var paying = parseFloat(rawPaying.replace(/\./g, '').replace(/,/g, ''));
+            
+            if (isNaN(paying) || paying <= 0 || paying > rem) return showToast('Monto inválido', 'error');
 
             btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Procesando...');
             var newPaid = paid + paying;

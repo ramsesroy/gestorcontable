@@ -353,7 +353,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="expenseAmount">Monto (Gs.):</label>
-                            <input id="expenseAmount" type="number" class="form-control" placeholder="0" required>
+                            <input id="expenseAmount" type="text" class="form-control" placeholder="Ej: 80000" required>
                         </div>
                         <div id="expenseBranchContainer" class="form-group d-none">
                             <label class="form-label" for="expenseBranchId">Sucursal:</label>
@@ -589,7 +589,10 @@
         window.saveExpense = async function() {
             const description = $('#expenseDescription').val().trim();
             const category = $('#expenseCategory').val();
-            const amount = parseFloat($('#expenseAmount').val());
+            
+            const rawAmount = $('#expenseAmount').val() || '';
+            const amount = parseFloat(rawAmount.replace(/\./g, '').replace(/,/g, ''));
+            
             const date = $('#expenseDate').val();
             let branchId = userBranchId;
 
