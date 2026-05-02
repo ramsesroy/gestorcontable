@@ -478,6 +478,43 @@
         </div>
     </div>
 
+    <!-- MODAL: Editar Cuota -->
+    <div class="modal fade" id="editInstallmentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Editar Cuota</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editInstallmentId">
+                    <div class="form-group">
+                        <label class="form-label">Concepto</label>
+                        <input type="text" class="form-control" id="editInstallmentConcept" placeholder="Ej: Cuota 1 / Matrícula">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Vencimiento</label>
+                        <input type="date" class="form-control" id="editInstallmentDueDate">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Monto de la Cuota</label>
+                        <div class="input-group input-group-merge">
+                            <input type="text" class="form-control form-control-prepended" id="editInstallmentAmount" placeholder="Ej: 150000">
+                            <div class="input-group-prepend"><div class="input-group-text">Gs.</div></div>
+                        </div>
+                    </div>
+                    <div class="alert alert-soft-warning mb-0 p-8pt">
+                        <small><strong>Nota:</strong> Los cambios afectarán los reportes financieros y el saldo del alumno.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnSaveInstallmentEdit">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Vendor Scripts (Required before logic) -->
     <script src="../../public/vendor/jquery.min.js"></script>
     <script src="../../public/vendor/popper.min.js"></script>
@@ -529,6 +566,7 @@
             $('#btnConfirmExtend').click(confirmExtendPlan);
             $('#btnDeactivateStudent').click(() => { $('#deactivateName').text(currentStudent.full_name); $('#deactivateModal').modal('show'); });
             $('#btnConfirmDeactivate').click(confirmDeactivate);
+            $('#btnSaveInstallmentEdit').click(saveInstallmentEdit);
             
             $('#courseFilter').on('change', () => { currentPage = 0; loadStudentList(); });
             $('#btnPrevPage').click(() => { if(currentPage > 0) { currentPage--; loadStudentList(); } });
@@ -624,8 +662,10 @@
                     if ((item.paid_amount || 0) > 0) {
                         var remaining = item.amount - (item.paid_amount || 0);
                         var totalInstallmentsForTicket = currentStudent.total_payments || count;
-                        actionBtn += `<button class="btn btn-sm btn-outline-success" title="Imprimir Comprobante" onclick="printTicket('${item.id}', ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${item.paid_amount}, ${totalInstallmentsForTicket}, ${item.amount}, ${remaining}, '${currentStudent.courses?.name || ''}', '${item.concept || ''}')"><i class="material-icons">receipt</i></button>`;
+                        actionBtn += `<button class="btn btn-sm btn-outline-success mr-1" title="Imprimir Comprobante" onclick="printTicket('${item.id}', ${item.installment_number}, '${currentStudent.full_name}', '${currentStudent.dni}', '${item.due_date}', ${item.paid_amount}, ${totalInstallmentsForTicket}, ${item.amount}, ${remaining}, '${currentStudent.courses?.name || ''}', '${item.concept || ''}')"><i class="material-icons">receipt</i></button>`;
                     }
+                    // Show "Edit" button
+                    actionBtn += `<button class="btn btn-sm btn-outline-primary" title="Editar Cuota" onclick="openEditInstallmentModal('${item.id}')"><i class="material-icons">edit</i></button>`;
                 }
 
                 body.append(`<tr class="${rowClass}"><td>${item.concept || 'Cuota ' + item.installment_number}</td><td>${item.due_date}</td><td>${fmt.format(item.amount)}</td><td>${fmt.format(item.paid_amount || 0)}</td><td>${item.status.toUpperCase()}</td><td class="text-right d-flex justify-content-end">${actionBtn}</td></tr>`);
@@ -781,6 +821,66 @@
                 $('#studentCard').addClass('d-none');
                 loadStudentList();
             }
+        }
+
+        async function openEditInstallmentModal(id) {
+            const { data, error } = await supabaseClient.from('installments').select('*').eq('id', id).single();
+            if (error || !data) return showToast('Error al cargar la cuota', 'error');
+            
+            $('#editInstallmentId').val(data.id);
+            $('#editInstallmentConcept').val(data.concept || '');
+            $('#editInstallmentDueDate').val(data.due_date);
+            $('#editInstallmentAmount').val(fmt.format(data.amount).replace('Gs. ', ''));
+            $('#editInstallmentModal').modal('show');
+        }
+
+        async function saveInstallmentEdit() {
+            const btn = $('#btnSaveInstallmentEdit');
+            const id = $('#editInstallmentId').val();
+            const concept = $('#editInstallmentConcept').val();
+            const dueDate = $('#editInstallmentDueDate').val();
+            const rawAmount = $('#editInstallmentAmount').val() || '';
+            const amount = parseFloat(rawAmount.replace(/\./g, '').replace(/,/g, ''));
+
+            if (!dueDate || isNaN(amount) || amount < 0) return showToast('Datos inválidos', 'error');
+
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Guardando...');
+
+            const { data: oldData } = await supabaseClient.from('installments').select('*').eq('id', id).single();
+
+            const { error } = await supabaseClient.from('installments').update({
+                concept: concept,
+                due_date: dueDate,
+                amount: amount
+            }).eq('id', id);
+
+            if (error) {
+                showToast('Error al actualizar la cuota: ' + error.message, 'error');
+            } else {
+                // Auditoría
+                try {
+                    const { data: { user } } = await supabaseClient.auth.getUser();
+                    if (user) {
+                        await supabaseClient.from('audit_log').insert({
+                            user_id: user.id,
+                            action: 'edicion_cuota',
+                            entity_type: 'installment',
+                            entity_id: id,
+                            details: {
+                                student_name: currentStudent.full_name,
+                                installment_id: id,
+                                before: { concept: oldData.concept, due_date: oldData.due_date, amount: oldData.amount },
+                                after: { concept, due_date: dueDate, amount }
+                            }
+                        });
+                    }
+                } catch (logErr) { console.warn('Audit error:', logErr); }
+
+                showToast('Cuota actualizada correctamente', 'success');
+                $('#editInstallmentModal').modal('hide');
+                doSearch(currentStudent.dni);
+            }
+            btn.prop('disabled', false).text('Guardar Cambios');
         }
 
         function openExtendModal() {
