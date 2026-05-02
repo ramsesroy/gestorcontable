@@ -58,23 +58,25 @@
 </head>
 
 <body class="layout-app ">
-    <div class="preloader">
-        <div class="sk-chase">
-            <div class="sk-chase-dot"></div>
-            <div class="sk-chase-dot"></div>
-            <div class="sk-chase-dot"></div>
-            <div class="sk-chase-dot"></div>
-            <div class="sk-chase-dot"></div>
-            <div class="sk-chase-dot"></div>
-        </div>
-    </div>
+            <div class="preloader">
+                <div class="sk-chase">
+                    <div class="sk-chase-dot"></div>
+                    <div class="sk-chase-dot"></div>
+                    <div class="sk-chase-dot"></div>
+                    <div class="sk-chase-dot"></div>
+                    <div class="sk-chase-dot"></div>
+                    <div class="sk-chase-dot"></div>
+                </div>
+            </div>
+            
+            <h1 class="sr-only">Dashboard de Gestión Contable</h1>
 
     <div class="mdk-drawer-layout js-mdk-drawer-layout" data-push data-responsive-width="992px">
         <div class="mdk-drawer-layout__content page-content">
 
             <!-- Navbar -->
             <div class="navbar navbar-expand navbar-light border-bottom-2" id="default-navbar" data-primary>
-                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button" data-toggle="sidebar" data-target="#default-drawer">
+                <button class="navbar-toggler w-auto mr-16pt d-block rounded-0" type="button" data-toggle="sidebar" data-target="#default-drawer" aria-label="Abrir menú lateral">
                     <span class="material-icons">short_text</span>
                 </button>
                 <a href="dashboard.html" class="navbar-brand mr-16pt">
@@ -99,6 +101,59 @@
                     <button class="btn btn-light btn-sm mr-8pt" title="Cambiar Contraseña" id="btnChangePassword" style="display:none;">
                         <i class="material-icons" style="font-size:18px;vertical-align:middle;">lock</i>
                     </button>
+                </div>
+            </div>
+
+            <!-- QUICK LAUNCHPAD -->
+            <div class="container page__container mt-32pt mb-16pt" id="quickLaunchpad">
+                <div class="row">
+                    <!-- Operaciones -->
+                    <div class="col-4 col-md-2 mb-16pt">
+                        <a href="search.html" class="card card-body text-center flex-column align-items-center h-100 text-decoration-none">
+                            <i class="material-icons text-primary mb-8pt" style="font-size: 28px;">search</i>
+                            <h6 class="mb-0 text-body" style="font-size:12px;">Cobranzas</h6>
+                        </a>
+                    </div>
+                    <div class="col-4 col-md-2 mb-16pt">
+                        <a href="registration.html" class="card card-body text-center flex-column align-items-center h-100 text-decoration-none">
+                            <i class="material-icons text-primary mb-8pt" style="font-size: 28px;">person_add</i>
+                            <h6 class="mb-0 text-body" style="font-size:12px;">Inscripción</h6>
+                        </a>
+                    </div>
+                    <div class="col-4 col-md-2 mb-16pt">
+                        <a href="expenses.html" class="card card-body text-center flex-column align-items-center h-100 text-decoration-none">
+                            <i class="material-icons text-primary mb-8pt" style="font-size: 28px;">payments</i>
+                            <h6 class="mb-0 text-body" style="font-size:12px;">Gastos</h6>
+                        </a>
+                    </div>
+                    <!-- Gestión -->
+                    <div class="col-4 col-md-2 mb-16pt">
+                        <a href="courses.html" class="card card-body text-center flex-column align-items-center h-100 text-decoration-none">
+                            <i class="material-icons text-primary mb-8pt" style="font-size: 28px;">library_books</i>
+                            <h6 class="mb-0 text-body" style="font-size:12px;">Cursos</h6>
+                        </a>
+                    </div>
+                    <!-- Auditoría -->
+                    <div class="col-4 col-md-2 mb-16pt">
+                        <a href="report.html" class="card card-body text-center flex-column align-items-center h-100 text-decoration-none">
+                            <i class="material-icons text-primary mb-8pt" style="font-size: 28px;">trending_up</i>
+                            <h6 class="mb-0 text-body" style="font-size:12px;">Reportes</h6>
+                        </a>
+                    </div>
+                    
+                    <!-- Admin Only -->
+                    <div class="col-4 col-md-2 mb-16pt admin-only-launchpad" style="display:none;">
+                        <a href="branches.html" class="card card-body text-center flex-column align-items-center h-100 text-decoration-none">
+                            <i class="material-icons text-primary mb-8pt" style="font-size: 28px;">store</i>
+                            <h6 class="mb-0 text-body" style="font-size:12px;">Sucursales</h6>
+                        </a>
+                    </div>
+                    <div class="col-4 col-md-2 mb-16pt admin-only-launchpad" style="display:none;">
+                        <a href="users.html" class="card card-body text-center flex-column align-items-center h-100 text-decoration-none">
+                            <i class="material-icons text-primary mb-8pt" style="font-size: 28px;">people_outline</i>
+                            <h6 class="mb-0 text-body" style="font-size:12px;">Usuarios</h6>
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -724,6 +779,7 @@
 
             currentUserRole = profile.role;
             if (profile.role === 'admin') {
+                $('.admin-only-launchpad').show(); // Show admin shortcuts
                 $('#btnChangePassword').show();
                 setQuickFilter('month');
                 loadAuditLog();

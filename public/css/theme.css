@@ -5,23 +5,27 @@
     --sidebar-active-text: #ffffff;
     --sidebar-active-border: #5567ff;
     --sidebar-text: #adb5bd;
+    --border-radius-lg: 12px;
+    --border-radius-md: 8px;
+    --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body.theme-institutional {
     --primary-color: #1917ca;
-    --bg-main: #fbf9b8;
-    --secondary-1: #6f76ba;
-    --secondary-2: #cdaa41;
+    --bg-main: #fbf9b8; /* Restaurando el amarillo institucional */
+    --secondary-1: #6f76ba; 
+    --secondary-2: #cdaa41; 
     --text-on-primary: #ffffff;
     
     /* Institutional Sidebar Overrides */
-    --sidebar-bg: #0d0c5a; /* Deep Navy */
+    --sidebar-bg: #0d0c5a; /* Deep Navy original */
     --sidebar-active-bg: rgba(255, 255, 255, 0.15);
     --sidebar-active-text: #ffffff;
-    --sidebar-active-border: #fbf9b8; /* Yellow accent */
-    --sidebar-text: #c0c5ea;
+    --sidebar-active-border: #fbf9b8; /* Acento amarillo original */
+    --sidebar-text: #c0c5ea; 
     
     background-color: var(--bg-main) !important;
+    font-family: 'Inter', 'Roboto', 'Exo 2', sans-serif;
 }
 
 /* Sidebar Hierarchy & Appearance */
@@ -70,6 +74,12 @@ body.theme-institutional .sidebar-menu-category {
 }
 
 /* Primary buttons and highlights only when theme is active */
+body.theme-institutional .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
 body.theme-institutional .btn-primary, 
 body.theme-institutional .bg-primary, 
 body.theme-institutional .navbar-dark, 
@@ -82,6 +92,8 @@ body.theme-institutional .badge-primary {
 }
 
 body.theme-institutional .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(25, 23, 202, 0.3);
     filter: brightness(1.1);
 }
 
@@ -94,16 +106,33 @@ body.theme-institutional .help-icon:hover {
 .navbar-brand, .sidebar-brand {
     font-weight: bold;
     padding: 20px !important;
+    letter-spacing: -0.5px;
 }
 
 /* Card aesthetics */
 body.theme-institutional .card {
-    border: 1px solid var(--secondary-1) !important;
-    box-shadow: 0 4px 12px rgba(25, 23, 202, 0.15) !important;
+    border: 1px solid rgba(0,0,0,0.05) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+    border-radius: 12px !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+    background: #ffffff !important;
+}
+
+body.theme-institutional .card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 30px rgba(25, 23, 202, 0.08) !important;
 }
 
 body.theme-institutional .card-header {
-    border-bottom: 2px solid var(--secondary-1) !important;
+    border-bottom: 1px solid var(--secondary-1) !important;
+    background: transparent !important;
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
+}
+
+body.theme-institutional .card-header .card-title {
+    font-weight: 700;
+    color: #1e293b;
 }
 
 /* Secondary states and icons */
@@ -120,7 +149,25 @@ body.theme-institutional .border-left-primary {
 
 /* Tables */
 body.theme-institutional .table {
-    border-color: #ddd;
+    border-color: var(--secondary-1);
+}
+
+body.theme-institutional .table thead th {
+    border-top: none;
+    border-bottom: 2px solid var(--secondary-1);
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+body.theme-institutional .table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+body.theme-institutional .table tbody tr:hover {
+    background-color: #f8fafc !important;
 }
 
 /* Toast Notifications */
@@ -139,6 +186,41 @@ body.theme-institutional .table {
 .cms-toast-content { flex: 1; }
 .cms-toast-title { font-weight: bold; font-size: 14px; display: block; margin-bottom: 2px; }
 .cms-toast-msg { font-size: 13px; color: #666; }
+
+/* Accessibility & Focus States */
+:focus {
+    outline: none !important;
+}
+.btn:focus, .form-control:focus, .custom-select:focus, a:focus {
+    box-shadow: 0 0 0 3px rgba(25, 23, 202, 0.25) !important;
+}
+
+/* Systemic Spacing & Order */
+.page-section { padding-top: 32px !important; padding-bottom: 32px !important; }
+.card { margin-bottom: 24px !important; }
+.page-separator { margin-top: 24px !important; margin-bottom: 16px !important; }
+
+/* Refined Form Elements */
+body.theme-institutional .form-control, 
+body.theme-institutional .custom-select {
+    border: 1px solid var(--secondary-1);
+    border-radius: var(--border-radius-md);
+    padding: 0.6rem 1rem;
+    height: auto;
+    transition: var(--transition-base);
+}
+
+body.theme-institutional .form-control:focus {
+    border-color: var(--primary-color);
+    background-color: #fff;
+}
+
+body.theme-institutional .form-label {
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
 
 /* Global Sidebar Search */
 .sidebar-search { padding: 16px; position: relative; }
