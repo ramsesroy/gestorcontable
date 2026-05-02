@@ -435,6 +435,34 @@
                         </div>
                     </div>
 
+                    <div class="row mb-32pt">
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-header d-flex align-items-center">
+                                    <div class="flex">
+                                        <h4 class="card-title">Flujo de Ingresos (7 días)</h4>
+                                        <p class="card-subtitle text-50">Comparativa diaria de recaudación</p>
+                                    </div>
+                                    <i class="material-icons text-20 text-70">trending_up</i>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="cajeroRevenueChart" style="height: 250px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="card-title">Balance Operativo</h4>
+                                    <p class="card-subtitle text-50">Ingresos vs Gastos (Mes)</p>
+                                </div>
+                                <div class="card-body d-flex align-items-center justify-content-center">
+                                    <canvas id="cajeroBalanceChart" style="height: 250px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="page-separator"><div class="page-separator__text">Últimos Movimientos</div></div>
                     <div class="card">
                         <div class="table-responsive">
@@ -843,6 +871,95 @@
             if (!$('#cajeroRecentBody tr').length) {
                 body.append('<tr><td colspan="4" class="text-center text-50 p-16pt">Sin movimientos recientes</td></tr>');
             }
+
+            // Charts for Cajero
+            renderCajeroRevenueChart(branchId);
+            renderCajeroBalanceChart(totalM, totalE);
+        }
+
+        async function renderCajeroRevenueChart(branchId) {
+            const today = new Date();
+            const labels = [];
+            const dataMap = {};
+            
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(today.getDate() - i);
+                const iso = d.toISOString().split('T')[0];
+                labels.push(d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric' }));
+                dataMap[iso] = 0;
+            }
+
+            const from = new Date(); from.setDate(today.getDate() - 6);
+            const { data } = await supabaseClient.from('audit_log')
+                .select('created_at, details')
+                .eq('action', 'pago')
+                .gte('created_at', toArgDate(from.toISOString().split('T')[0]))
+                .lte('created_at', toArgDateEnd(today.toISOString().split('T')[0]));
+
+            (data || []).forEach(r => {
+                const d = r.details || {};
+                const profileBranchId = d.branch_id; // Check if branch_id is in details
+                // In loadCajeroDashboard we already filter by userIds of that branch, 
+                // but for the chart we can be more explicit if needed.
+                const iso = r.created_at.split('T')[0];
+                if (dataMap[iso] !== undefined) dataMap[iso] += parseFloat(d.amount || 0);
+            });
+
+            const values = Object.values(dataMap);
+            const ctx = document.getElementById('cajeroRevenueChart').getContext('2d');
+            if (window.cajeroRevenueChartInstance) window.cajeroRevenueChartInstance.destroy();
+            window.cajeroRevenueChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Ingresos Diarios',
+                        data: values,
+                        borderColor: '#1917ca',
+                        backgroundColor: 'rgba(25, 23, 202, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#1917ca'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true, callback: v => fmt.format(v) } }]
+                    },
+                    tooltips: {
+                        callbacks: { label: (item) => fmt.format(item.yLabel) }
+                    }
+                }
+            });
+        }
+
+        async function renderCajeroBalanceChart(income, expenses) {
+            const ctx = document.getElementById('cajeroBalanceChart').getContext('2d');
+            if (window.cajeroBalanceChartInstance) window.cajeroBalanceChartInstance.destroy();
+            window.cajeroBalanceChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Ingresos', 'Gastos'],
+                    datasets: [{
+                        data: [income, expenses],
+                        backgroundColor: ['#27ae60', '#eb5757'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    legend: { position: 'bottom' },
+                    cutoutPercentage: 70,
+                    tooltips: {
+                        callbacks: { label: (item, data) => data.labels[item.index] + ': ' + fmt.format(data.datasets[0].data[item.index]) }
+                    }
+                }
+            });
         }
 
         function showPayDetail(encoded) {
