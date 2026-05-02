@@ -802,7 +802,7 @@
             const { data: cExp } = await supabaseClient.from('expenses').select('amount').eq('branch_id', branchId).gte('date', today).lte('date', today);
             const dropsT = (cDrops || []).reduce((s, e) => s + parseFloat(e.amount), 0);
             const expT = (cExp || []).reduce((s, e) => s + parseFloat(e.amount), 0);
-            $('#cajeroCashOnHand').text(fmt.format(Math.max(0, totalT - dropsT - expT)));
+            $('#cajeroCashOnHand').text(fmt.format(totalT - dropsT - expT));
 
             // Month Collections
             const { data: monthP } = await supabaseClient.from('audit_log').select('details').in('user_id', userIds).eq('action', 'pago').gte('created_at', toArgDate(range.from)).lte('created_at', toArgDateEnd(range.to));
@@ -909,7 +909,7 @@
             const totalDrops = (cashDrops || []).reduce((s, drop) => s + parseFloat(drop.amount), 0);
             const totalExpensesForBalance = (expensesForBalance || []).reduce((s, exp) => s + parseFloat(exp.amount), 0);
             
-            $('#cashOnHand').text(fmt.format(Math.max(0, total - totalDrops - totalExpensesForBalance)));
+            $('#cashOnHand').text(fmt.format(total - totalDrops - totalExpensesForBalance));
 
             loadBillingBreakdown(isoF, isoT);
             loadRecentPayments(isoF, isoT);
