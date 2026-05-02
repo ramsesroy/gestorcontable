@@ -797,10 +797,12 @@
             const totalT = (todayP || []).reduce((s, e) => s + parseFloat(e.details.amount || 0), 0);
             $('#cajeroTodayTotal').text(fmt.format(totalT));
 
-            // Saldo en mano Cajero
+            // Saldo en mano Cajero (Ingresos - Rendiciones - Gastos)
             const { data: cDrops } = await supabaseClient.from('cash_deposits').select('amount').eq('branch_id', branchId).gte('date_registered', isoFrom).lte('date_registered', isoTo);
+            const { data: cExp } = await supabaseClient.from('expenses').select('amount').eq('branch_id', branchId).gte('date', today).lte('date', today);
             const dropsT = (cDrops || []).reduce((s, e) => s + parseFloat(e.amount), 0);
-            $('#cajeroCashOnHand').text(fmt.format(Math.max(0, totalT - dropsT)));
+            const expT = (cExp || []).reduce((s, e) => s + parseFloat(e.amount), 0);
+            $('#cajeroCashOnHand').text(fmt.format(Math.max(0, totalT - dropsT - expT)));
 
             // Month Collections
             const { data: monthP } = await supabaseClient.from('audit_log').select('details').in('user_id', userIds).eq('action', 'pago').gte('created_at', toArgDate(range.from)).lte('created_at', toArgDateEnd(range.to));
@@ -891,15 +893,23 @@
             const total = (paid || []).reduce((s, i) => s + parseFloat(i.amount), 0);
             $('#totalIncome').text(fmt.format(total));
 
-            // Saldo en Mano
+            // Saldo en Mano (Ingresos - Rendiciones - Gastos)
             let cashDropQuery = supabaseClient.from('cash_deposits').select('amount').gte('date_registered', isoF).lte('date_registered', isoT);
+            let expenseQuery = supabaseClient.from('expenses').select('amount').gte('date', from).lte('date', to);
+            
             if (currentUserRole === 'cajero') {
                 const { data: profile } = await supabaseClient.from('profiles').select('branch_id').eq('id', (await supabaseClient.auth.getUser()).data.user.id).single();
                 cashDropQuery = cashDropQuery.eq('branch_id', profile.branch_id);
+                expenseQuery = expenseQuery.eq('branch_id', profile.branch_id);
             }
+            
             const { data: cashDrops } = await cashDropQuery;
+            const { data: expensesForBalance } = await expenseQuery;
+            
             const totalDrops = (cashDrops || []).reduce((s, drop) => s + parseFloat(drop.amount), 0);
-            $('#cashOnHand').text(fmt.format(Math.max(0, total - totalDrops)));
+            const totalExpensesForBalance = (expensesForBalance || []).reduce((s, exp) => s + parseFloat(exp.amount), 0);
+            
+            $('#cashOnHand').text(fmt.format(Math.max(0, total - totalDrops - totalExpensesForBalance)));
 
             loadBillingBreakdown(isoF, isoT);
             loadRecentPayments(isoF, isoT);

@@ -587,12 +587,11 @@
         }
 
         window.saveExpense = async function() {
+            const btn = $('#expenseModal .btn-primary');
             const description = $('#expenseDescription').val().trim();
             const category = $('#expenseCategory').val();
-            
             const rawAmount = $('#expenseAmount').val() || '';
             const amount = parseFloat(rawAmount.replace(/\./g, '').replace(/,/g, ''));
-            
             const date = $('#expenseDate').val();
             let branchId = userBranchId;
 
@@ -605,22 +604,46 @@
                 return showToast('Por favor complete todos los campos.', 'error');
             }
 
-            try {
-                const { error } = await supabaseClient.from('expenses').insert([{
-                    description,
-                    category,
-                    amount,
-                    date,
-                    branch_id: branchId,
-                    user_id: currentUser.id
-                }]);
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span> Procesando...');
 
-                if (error) throw error;
+            try {
+                // Llamamos a la función RPC atómica para registrar el gasto con validación de saldo
+                const { data, error } = await supabaseClient.rpc('register_expense_atomic', {
+                    p_description: description,
+                    p_category: category,
+                    p_amount: amount,
+                    p_date: date,
+                    p_branch_id: branchId,
+                    p_user_id: currentUser.id
+                });
+
+                if (error) {
+                    // Fallback si la función RPC no existe aún en la base de datos
+                    if (error.message.includes('function') && error.message.includes('does not exist')) {
+                        console.warn('RPC register_expense_atomic no encontrada. Usando inserción simple (sin validación atómica de saldo).');
+                        const { error: insError } = await supabaseClient.from('expenses').insert([{
+                            description, category, amount, date, branch_id: branchId, user_id: currentUser.id
+                        }]);
+                        if (insError) throw insError;
+                        
+                        showToast('Gasto registrado (Advertencia: Función RPC no instalada)', 'warning');
+                    } else {
+                        throw error;
+                    }
+                } else if (data && !data.success) {
+                    // Error de validación de saldo devuelto por la función RPC
+                    btn.prop('disabled', false).text('Guardar Gasto');
+                    return showToast(data.message, 'error');
+                } else {
+                    showToast('Gasto registrado correctamente', 'success');
+                }
                 
                 $('#expenseModal').modal('hide');
                 loadExpenses();
             } catch (err) {
                 showToast('Error al guardar el gasto: ' + err.message, 'error');
+            } finally {
+                btn.prop('disabled', false).text('Guardar Gasto');
             }
         }
 
